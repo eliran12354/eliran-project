@@ -36,16 +36,20 @@ const planIcon = createGoogleStyleIcon('#4285f4'); // Google blue
 
 // Helper function to convert ITM coordinates to WGS84 (lat/lng)
 const convertITMToWGS84 = (x: number, y: number): [number, number] => {
-  // This is a simplified conversion - for production use a proper library
-  // ITM to WGS84 conversion constants for Israel
-  const a = 6378137.0; // WGS84 semi-major axis
-  const f = 1/298.257223563; // WGS84 flattening
-  const e2 = 2*f - f*f; // First eccentricity squared
+  // More accurate ITM to WGS84 conversion for Israel
+  // Based on the official Israeli TM Grid (ITM) parameters
   
-  // ITM projection parameters
-  const k0 = 1.0000067; // Scale factor
-  const lat0 = 31.734393611111; // Central latitude in radians
-  const lon0 = 35.204516944444; // Central longitude in radians
+  // WGS84 ellipsoid parameters
+  const a = 6378137.0; // Semi-major axis
+  const f = 1/298.257223563; // Flattening
+  const e2 = 2*f - f*f; // First eccentricity squared
+  const e4 = e2 * e2;
+  const e6 = e4 * e2;
+  
+  // ITM projection parameters (Israeli Transverse Mercator)
+  const k0 = 1.0000067; // Scale factor at central meridian
+  const lat0 = 31.734393611111 * Math.PI / 180; // Central latitude in radians
+  const lon0 = 35.204516944444 * Math.PI / 180; // Central longitude in radians
   const x0 = 219529.584; // False easting
   const y0 = 626907.39; // False northing
   
@@ -53,10 +57,30 @@ const convertITMToWGS84 = (x: number, y: number): [number, number] => {
   const x_adj = x - x0;
   const y_adj = y - y0;
   
-  const lat = lat0 + (y_adj / (a * k0)) * (1 - e2/2 - 3*e2*e2/8);
-  const lon = lon0 + (x_adj / (a * k0 * Math.cos(lat0)));
+  // Calculate latitude
+  const M = y_adj / (a * k0);
+  const mu = M / (1 - e2/4 - 3*e4/64 - 5*e6/256);
   
-  return [lat, lon];
+  const e1 = (1 - Math.sqrt(1 - e2)) / (1 + Math.sqrt(1 - e2));
+  const J1 = 3*e1/2 - 27*e1*e1*e1/32;
+  const J2 = 21*e1*e1/16 - 55*e1*e1*e1*e1/32;
+  const J3 = 151*e1*e1*e1/96;
+  const J4 = 1097*e1*e1*e1*e1/512;
+  
+  const fp = mu + J1*Math.sin(2*mu) + J2*Math.sin(4*mu) + J3*Math.sin(6*mu) + J4*Math.sin(8*mu);
+  
+  const e_2 = e2 / (1 - e2);
+  const C1 = e_2 * Math.cos(fp) * Math.cos(fp);
+  const T1 = Math.tan(fp) * Math.tan(fp);
+  const N1 = a / Math.sqrt(1 - e2 * Math.sin(fp) * Math.sin(fp));
+  const R1 = a * (1 - e2) / Math.pow(1 - e2 * Math.sin(fp) * Math.sin(fp), 1.5);
+  const D = x_adj / (N1 * k0);
+  
+  const lat = fp - (N1 * Math.tan(fp) / R1) * (D*D/2 - (5 + 3*T1 + 10*C1 - 4*C1*C1 - 9*e_2)*D*D*D*D/24 + (61 + 90*T1 + 298*C1 + 45*T1*T1 - 252*e_2 - 3*C1*C1)*D*D*D*D*D*D/720);
+  
+  const lon = lon0 + (D - (1 + 2*T1 + C1)*D*D*D/6 + (5 - 2*C1 + 28*T1 - 3*C1*C1 + 8*e_2 + 24*T1*T1)*D*D*D*D*D/120) / Math.cos(fp);
+  
+  return [lat * 180 / Math.PI, lon * 180 / Math.PI];
 };
 
 // Helper function to extract coordinates from govmap plan

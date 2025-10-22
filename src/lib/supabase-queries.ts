@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Property, Project, Deal, GovmapPlan } from './supabase'
+import type { Property, Project, Deal, GovmapPlan, UrbanRenewalLocation } from './supabase'
 
 // Properties queries
 export const propertyQueries = {
@@ -492,6 +492,90 @@ export const govmapQueries = {
     
     if (error) throw error
     return data as GovmapPlan
+  }
+}
+
+// Urban Renewal Locations queries
+export const urbanRenewalQueries = {
+  // Get all urban renewal locations
+  async getAll() {
+    const { data, error } = await supabase
+      .from('urban_renewal_locations')
+      .select('*')
+      .order('id', { ascending: true })
+    
+    if (error) throw error
+    return data as UrbanRenewalLocation[]
+  },
+
+  // Get urban renewal locations with pagination
+  async getPaginated(page: number = 1, limit: number = 100) {
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+    
+    const { data, error, count } = await supabase
+      .from('urban_renewal_locations')
+      .select('*', { count: 'exact' })
+      .order('id', { ascending: true })
+      .range(from, to)
+    
+    if (error) throw error
+    
+    return {
+      data: data || [],
+      total: count || 0,
+      page,
+      limit,
+      totalPages: Math.ceil((count || 0) / limit)
+    }
+  },
+
+  // Get locations by object_id
+  async getByObjectId(object_id: number) {
+    const { data, error } = await supabase
+      .from('urban_renewal_locations')
+      .select('*')
+      .eq('object_id', object_id)
+      .order('id', { ascending: true })
+    
+    if (error) throw error
+    return data as UrbanRenewalLocation[]
+  },
+
+  // Get locations by layer_id
+  async getByLayerId(layer_id: number) {
+    const { data, error } = await supabase
+      .from('urban_renewal_locations')
+      .select('*')
+      .eq('layer_id', layer_id)
+      .order('id', { ascending: true })
+    
+    if (error) throw error
+    return data as UrbanRenewalLocation[]
+  },
+
+  // Get locations with coordinates (for mapping)
+  async getWithCoordinates() {
+    const { data, error } = await supabase
+      .from('urban_renewal_locations')
+      .select('*')
+      .not('coordinates', 'is', null)
+      .order('id', { ascending: true })
+    
+    if (error) throw error
+    return data as UrbanRenewalLocation[]
+  },
+
+  // Get location by id
+  async getById(id: number) {
+    const { data, error } = await supabase
+      .from('urban_renewal_locations')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    return data as UrbanRenewalLocation
   }
 }
 

@@ -82,3 +82,15 @@ export interface GovmapPlan {
   fetched_at?: string
   raw: any
 }
+
+export interface UrbanRenewalLocation {
+  id: number
+  object_id?: number
+  layer_id?: number
+  geometry_type?: string
+  coordinates?: any
+  shape_area?: number
+  shape_length?: number
+  created_at?: string
+  updated_at?: string
+}
