@@ -9,7 +9,7 @@ import MapPage from "./pages/MapPage";
 import ListingsPage from "./pages/ListingsPage";
 import DealsPage from "./pages/DealsPage";
 import PlansPage from "./pages/PlansPage";
-import { UrbanRenewalPage } from "./pages/UrbanRenewalPage";
+import UrbanRenewalPage from "./pages/UrbanRenewalPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

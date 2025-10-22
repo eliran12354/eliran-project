@@ -17,9 +17,6 @@
   overflow: hidden;
 }
 
-/* Leaflet CSS */
-@import 'leaflet/dist/leaflet.css';
-
 /* Real Estate Platform Design System - Hebrew RTL Support
 All colors MUST be HSL.
 */
