@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Property, Project, Deal, GovmapPlan, UrbanRenewalLocation } from './supabase'
+import type { Property, Project, Deal, GovmapPlan, UrbanRenewalLocation, UrbanRenewalProject } from './supabase'
 
 // Properties queries
 export const propertyQueries = {
@@ -576,6 +576,150 @@ export const urbanRenewalQueries = {
     
     if (error) throw error
     return data as UrbanRenewalLocation
+  }
+}
+
+// Urban Renewal Projects queries
+export const urbanRenewalProjectQueries = {
+  // Get all urban renewal projects
+  async getAll() {
+    const { data, error } = await supabase
+      .from('urban_renewal_projects')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data as UrbanRenewalProject[]
+  },
+
+  // Get urban renewal projects with pagination
+  async getPaginated(page: number = 1, limit: number = 100) {
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+    
+    const { data, error, count } = await supabase
+      .from('urban_renewal_projects')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to)
+    
+    if (error) throw error
+    
+    return {
+      data: data || [],
+      total: count || 0,
+      page,
+      limit,
+      totalPages: Math.ceil((count || 0) / limit)
+    }
+  },
+
+  // Get projects by city
+  async getByCity(cityName: string) {
+    const { data, error } = await supabase
+      .from('urban_renewal_projects')
+      .select('*')
+      .ilike('city_name', `%${cityName}%`)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data as UrbanRenewalProject[]
+  },
+
+  // Get projects by type
+  async getByType(projectType: string) {
+    const { data, error } = await supabase
+      .from('urban_renewal_projects')
+      .select('*')
+      .ilike('project_type', `%${projectType}%`)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data as UrbanRenewalProject[]
+  },
+
+  // Get projects by status
+  async getByStatus(statusCode: number) {
+    const { data, error } = await supabase
+      .from('urban_renewal_projects')
+      .select('*')
+      .eq('status_code', statusCode)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data as UrbanRenewalProject[]
+  },
+
+  // Search projects
+  async search(query: string) {
+    const { data, error } = await supabase
+      .from('urban_renewal_projects')
+      .select('*')
+      .or(`project_name.ilike.%${query}%,city_name.ilike.%${query}%,plan_name.ilike.%${query}%,project_number.ilike.%${query}%`)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data as UrbanRenewalProject[]
+  },
+
+  // Get projects with filters
+  async getFiltered(filters: {
+    city_name?: string
+    project_type?: string
+    project_subtype?: string
+    status_code?: number
+    min_units?: number
+    max_units?: number
+  }) {
+    let query = supabase.from('urban_renewal_projects').select('*')
+    
+    if (filters.city_name) {
+      query = query.ilike('city_name', `%${filters.city_name}%`)
+    }
+    if (filters.project_type) {
+      query = query.ilike('project_type', `%${filters.project_type}%`)
+    }
+    if (filters.project_subtype) {
+      query = query.ilike('project_subtype', `%${filters.project_subtype}%`)
+    }
+    if (filters.status_code) {
+      query = query.eq('status_code', filters.status_code)
+    }
+    if (filters.min_units) {
+      query = query.gte('proposed_units', filters.min_units)
+    }
+    if (filters.max_units) {
+      query = query.lte('proposed_units', filters.max_units)
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data as UrbanRenewalProject[]
+  },
+
+  // Get project by id
+  async getById(id: number) {
+    const { data, error } = await supabase
+      .from('urban_renewal_projects')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    return data as UrbanRenewalProject
+  },
+
+  // Get project by object_id
+  async getByObjectId(objectId: number) {
+    const { data, error } = await supabase
+      .from('urban_renewal_projects')
+      .select('*')
+      .eq('object_id', objectId)
+      .single()
+    
+    if (error) throw error
+    return data as UrbanRenewalProject
   }
 }
 

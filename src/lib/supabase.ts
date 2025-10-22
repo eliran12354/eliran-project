@@ -94,3 +94,26 @@ export interface UrbanRenewalLocation {
   created_at?: string
   updated_at?: string
 }
+
+export interface UrbanRenewalProject {
+  id: number
+  object_id?: number
+  project_number?: string
+  project_name?: string
+  city_name?: string
+  plan_name?: string
+  plan_link?: string
+  project_type?: string
+  project_subtype?: string
+  status_code?: number
+  authority_status_code?: number
+  valid_date?: string
+  existing_units?: number
+  proposed_units?: number
+  additional_units?: number
+  notes?: string
+  shape_area?: number
+  shape_length?: number
+  created_at?: string
+  updated_at?: string
+}

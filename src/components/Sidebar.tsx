@@ -4,7 +4,8 @@ import {
   FileText, 
   Search, 
   Settings,
-  TrendingUp
+  TrendingUp,
+  Building2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
@@ -82,6 +83,16 @@ export function Sidebar() {
             >
               <TrendingUp className="w-6 h-6" />
               עסקאות נדל״ן
+            </Button>
+          </Link>
+        </div>
+
+        {/* פרויקטי התחדשות עירונית - כפתור רגיל */}
+        <div className="mb-4">
+          <Link to="/urban-renewal">
+            <Button className="w-full justify-start gap-4 h-14 text-base hover:bg-primary/5 hover:text-primary hover-lift transition-all duration-300">
+              <Building2 className="w-6 h-6" />
+              פרויקטי התחדשות עירונית
             </Button>
           </Link>
         </div>
