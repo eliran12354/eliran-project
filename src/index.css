@@ -1,0 +1,253 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Line clamp utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Leaflet CSS */
+@import 'leaflet/dist/leaflet.css';
+
+/* Real Estate Platform Design System - Hebrew RTL Support
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    /* Enhanced Green Theme for Real Estate Platform */
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 142 76% 32%;
+    --primary-light: 142 76% 96%;
+    --primary-glow: 142 76% 55%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(142 85% 42%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(167 85% 45%) 50%, hsl(188 85% 48%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(142 76% 98%) 100%);
+    
+    /* Shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(142 76% 36% / 0.1);
+    --shadow-medium: 0 4px 16px -4px hsl(142 76% 36% / 0.15);
+    --shadow-large: 0 8px 32px -8px hsl(142 76% 36% / 0.2);
+    --shadow-glow: 0 0 24px hsl(142 76% 55% / 0.3);
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 142 71% 95%;
+    --accent-foreground: 142 71% 45%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 142 71% 45%;
+    
+    /* Custom design tokens */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 221 83% 53%;
+    --info-foreground: 0 0% 100%;
+    
+    /* Map colors */
+    --map-background: 220 14% 96%;
+    --map-grid: 220 13% 91%;
+    --property-available: 142 71% 45%;
+    --property-sold: 0 84% 60%;
+    --property-pending: 38 92% 50%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Assistant', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-feature-settings: 'kern' 1, 'liga' 1;
+  }
+
+  /* RTL Support for Hebrew */
+  [dir="rtl"] {
+    direction: rtl;
+    text-align: right;
+  }
+
+  /* Enhanced Visual Elements */
+  .stats-gradient {
+    background: var(--gradient-primary);
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .hero-gradient {
+    background: var(--gradient-hero);
+  }
+  
+  .card-gradient {
+    background: var(--gradient-card);
+  }
+  
+  .map-grid {
+    background-color: hsl(var(--map-background));
+    background-image: 
+      linear-gradient(hsl(var(--map-grid)) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--map-grid)) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  
+  /* Smooth Animations */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  @keyframes glow {
+    from { box-shadow: var(--shadow-medium); }
+    to { box-shadow: var(--shadow-glow); }
+  }
+  
+  /* Custom Leaflet Popup Styling - Google Maps style */
+  .leaflet-popup-content-wrapper {
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    border: 1px solid #e5e7eb;
+    padding: 0;
+  }
+  
+  .leaflet-popup-content {
+    margin: 0;
+    font-family: 'Assistant', 'Inter', sans-serif;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  
+  .leaflet-popup-tip {
+    background: white;
+    border: 1px solid #e5e7eb;
+    box-shadow: none;
+  }
+  
+  .leaflet-popup-close-button {
+    top: 8px !important;
+    right: 8px !important;
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 18px !important;
+    color: #6b7280 !important;
+    background: rgba(255,255,255,0.9) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  /* Google Maps style marker */
+  .google-style-marker {
+    background: none !important;
+    border: none !important;
+  }
+  
+  /* Google Maps style tiles */
+  .google-maps-style .leaflet-tile-pane {
+    filter: contrast(1.1) saturate(1.1);
+  }
+  
+  /* Custom zoom controls */
+  .leaflet-control-zoom {
+    display: none;
+  }
+}
