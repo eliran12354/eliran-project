@@ -56,6 +56,29 @@ export interface TabaPlan {
   raw: any
 }
 
+export interface MeirimPlan {
+  id: number
+  meirim_id: number
+  plan_number: string | null
+  plan_name: string | null
+  plan_display_name: string | null
+  county_name: string | null
+  plan_character_name: string | null
+  status: string | null
+  goals_from_mavat: string | null
+  main_details_from_mavat: string | null
+  geometry: any
+  object_id: number | null
+  entity_subtype_desc: string | null
+  plan_url: string | null
+  mp_id: number | null
+  plan_new_mavat_url: string | null
+  tags: any
+  updated_at: string | null
+  scraped_at: string | null
+  created_at: string | null
+}
+
 // Tender queries
 export const tenderQueries = {
   // Get all active tenders from michrazim_active table only
@@ -156,6 +179,34 @@ export const tenderQueries = {
     
     if (error) throw error
     return data as MichrazActive[]
+  },
+
+  // Search active tenders by city (Shchuna) or tender number (MichrazID) with pagination
+  async searchActiveTenders(query: string, page: number = 1, limit: number = 60) {
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+    
+    try {
+      const { data, error, count } = await supabase
+        .from('michrazim_active')
+        .select('*', { count: 'exact' })
+        .or(`raw->>Shchuna.ilike.%${query}%,raw->>MichrazID.ilike.%${query}%,raw->>MichrazName.ilike.%${query}%`)
+        .order('last_seen_at', { ascending: false })
+        .range(from, to)
+      
+      if (error) throw error
+      
+      return {
+        data: data || [],
+        total: count || 0,
+        page,
+        limit,
+        totalPages: Math.ceil((count || 0) / limit)
+      }
+    } catch (error) {
+      console.error('Error searching active tenders:', error)
+      throw error
+    }
   },
 
   // Search from michrazim table (all tenders)
@@ -330,14 +381,14 @@ export const plansQueries = {
   // Get all plans with pagination
   async getPlansPaginated(page: number = 1, limit: number = 50) {
     try {
-      console.log('Getting plans from taba_plans table...');
+      console.log('Getting plans from meirim_plans table...');
       const from = (page - 1) * limit
       const to = from + limit - 1
       
       const { data, error, count } = await supabase
-        .from('taba_plans')
+        .from('meirim_plans')
         .select('*', { count: 'exact' })
-        .order('publication_date', { ascending: false })
+        .order('created_at', { ascending: false })
         .range(from, to)
       
       if (error) {
@@ -368,10 +419,10 @@ export const plansQueries = {
       const to = from + limit - 1
       
       const { data, error, count } = await supabase
-        .from('taba_plans')
+        .from('meirim_plans')
         .select('*', { count: 'exact' })
-        .or(`plan_name.ilike.%${query}%,area.ilike.%${query}%,plan_number.ilike.%${query}%,raw->>planNumber.ilike.%${query}%,raw->>cityText.ilike.%${query}%,raw->>status.ilike.%${query}%,raw->>mahut.ilike.%${query}%`)
-        .order('publication_date', { ascending: false })
+        .or(`plan_name.ilike.%${query}%,plan_display_name.ilike.%${query}%,county_name.ilike.%${query}%,plan_number.ilike.%${query}%,object_id::text.ilike.%${query}%,mp_id::text.ilike.%${query}%,meirim_id::text.ilike.%${query}%`)
+        .order('created_at', { ascending: false })
         .range(from, to)
       
       if (error) {
@@ -402,10 +453,10 @@ export const plansQueries = {
       const to = from + limit - 1
       
       const { data, error, count } = await supabase
-        .from('taba_plans')
+        .from('meirim_plans')
         .select('*', { count: 'exact' })
-        .eq('area', area)
-        .order('publication_date', { ascending: false })
+        .ilike('county_name', `%${area}%`)
+        .order('created_at', { ascending: false })
         .range(from, to)
       
       if (error) {
@@ -430,9 +481,9 @@ export const plansQueries = {
   async getPlanById(planId: number) {
     try {
       const { data, error } = await supabase
-        .from('taba_plans')
+        .from('meirim_plans')
         .select('*')
-        .eq('plan_id', planId)
+        .eq('meirim_id', planId)
         .single()
       
       if (error) {
@@ -440,7 +491,7 @@ export const plansQueries = {
         throw error;
       }
       
-      return data as TabaPlan
+      return data as MeirimPlan
     } catch (error) {
       console.error('Error in getPlanById:', error);
       throw error;

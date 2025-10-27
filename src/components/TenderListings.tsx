@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, MapPin, Calendar, Clock, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowRight, MapPin, Calendar, Clock, FileText, ChevronLeft, ChevronRight, Search, X, Filter, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { tenderQueries, type MichrazActive } from "@/lib/tender-queries";
 
@@ -20,16 +21,22 @@ export function TenderListings() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalTenders, setTotalTenders] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeSearchQuery, setActiveSearchQuery] = useState('');
   const itemsPerPage = 60;
 
   useEffect(() => {
     loadTenders();
-  }, [currentPage]);
+  }, [currentPage, activeSearchQuery]);
 
   const loadTenders = async () => {
     try {
       setLoading(true);
-      const result = await tenderQueries.getActivePaginated(currentPage, itemsPerPage);
+      
+      // Use search if there's a query, otherwise use regular pagination
+      const result = activeSearchQuery.trim() 
+        ? await tenderQueries.searchActiveTenders(activeSearchQuery, currentPage, itemsPerPage)
+        : await tenderQueries.getActivePaginated(currentPage, itemsPerPage);
       
       // Transform the data to include calculated fields from raw JSONB
       const tendersWithDetails = result.data.map(tender => {
@@ -93,6 +100,45 @@ export function TenderListings() {
     handlePageChange(currentPage + 1);
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleSearch = () => {
+    setActiveSearchQuery(searchQuery);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setActiveSearchQuery('');
+    setCurrentPage(1);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const isValidUrl = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
+  const getSourceUrl = (tender: TenderWithDetails): string | null => {
+    // Always build URL from MichrazID, ignore source_endpoint
+    if (tender.raw?.MichrazID) {
+      return `https://apps.land.gov.il/MichrazimSite/#/michraz/${tender.raw.MichrazID}`;
+    }
+    
+    return null;
+  };
+
   if (loading) {
     return (
       <div className="space-y-8 animate-fade-in">
@@ -120,6 +166,7 @@ export function TenderListings() {
 
   return (
     <div className="space-y-8 animate-fade-in">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <ArrowRight className="w-6 h-6 text-primary" />
@@ -129,6 +176,48 @@ export function TenderListings() {
           עמוד {currentPage} מתוך {totalPages} • {totalTenders} מכרזים בסך הכל
         </div>
       </div>
+
+      {/* Search and Filter Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="w-5 h-5" />
+            חיפוש וסינון
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <Input
+                type="text"
+                placeholder="חפש לפי עיר או מספר מכרז..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onKeyPress={handleKeyPress}
+                className="h-10"
+              />
+            </div>
+            <Button 
+              onClick={handleSearch}
+              className="h-10"
+            >
+              <Search className="w-4 h-4 ml-2" />
+              חפש
+            </Button>
+            {(searchQuery || activeSearchQuery) && (
+              <Button 
+                onClick={clearSearch} 
+                variant="outline"
+                className="h-10"
+                aria-label="נקה חיפוש"
+              >
+                <X className="w-4 h-4 mr-2" />
+                נקה
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <p className="text-xl text-muted-foreground">
         מכרזים פעילים שכדאי לעקוב אחריהם • {itemsPerPage} מכרזים בעמוד
@@ -306,9 +395,28 @@ export function TenderListings() {
                     )}
                   </div>
 
-                  <Button className="w-full h-10 bg-gradient-primary shadow-glow hover:shadow-large transition-all duration-300 font-semibold text-sm">
-                    צפה בפרטים
-                  </Button>
+                  {(() => {
+                    const sourceUrl = getSourceUrl(tender);
+                    return sourceUrl ? (
+                      <Button 
+                        className="w-full h-10 bg-gradient-primary shadow-glow hover:shadow-large transition-all duration-300 font-semibold text-sm"
+                        onClick={() => {
+                          console.log('Opening URL:', sourceUrl);
+                          window.open(sourceUrl, '_blank', 'noopener,noreferrer');
+                        }}
+                      >
+                        <ExternalLink className="w-4 h-4 ml-2" />
+                        קישור למקור הממשלתי
+                      </Button>
+                    ) : (
+                      <Button 
+                        className="w-full h-10 bg-gradient-primary shadow-glow hover:shadow-large transition-all duration-300 font-semibold text-sm"
+                        disabled
+                      >
+                        קישור לא זמין
+                      </Button>
+                    );
+                  })()}
                 </div>
               </Card>
             );

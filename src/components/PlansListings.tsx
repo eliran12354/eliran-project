@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, MapPin, Calendar, Clock, FileText, ChevronLeft, ChevronRight, Building, ExternalLink } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowRight, MapPin, Calendar, Clock, FileText, ChevronLeft, ChevronRight, Building, ExternalLink, Search, Filter, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { plansQueries, type TabaPlan } from "@/lib/tender-queries";
+import { plansQueries, type MeirimPlan } from "@/lib/tender-queries";
 
-interface PlanWithDetails extends TabaPlan {
+interface PlanWithDetails extends MeirimPlan {
   daysUntilDeadline?: number | null;
 }
 
@@ -15,6 +17,7 @@ export function PlansListings() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalPlans, setTotalPlans] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 50;
 
   useEffect(() => {
@@ -24,19 +27,19 @@ export function PlansListings() {
   const loadPlans = async () => {
     try {
       setLoading(true);
-      const result = await plansQueries.getPlansPaginated(currentPage, itemsPerPage);
+      let result;
+      
+      if (searchTerm) {
+        result = await plansQueries.searchPlans(searchTerm, currentPage, itemsPerPage);
+      } else {
+        result = await plansQueries.getPlansPaginated(currentPage, itemsPerPage);
+      }
       
       // Transform the data to include calculated fields
       const plansWithDetails = result.data.map(plan => {
-        const toDate = plan.to_date ? new Date(plan.to_date) : null;
-        const now = new Date();
-        const daysUntilDeadline = toDate ? 
-          Math.ceil((toDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 
-          null;
-        
         return {
           ...plan,
-          daysUntilDeadline: daysUntilDeadline
+          daysUntilDeadline: null
         };
       });
       
@@ -81,6 +84,19 @@ export function PlansListings() {
   const handleNextPage = () => {
     handlePageChange(currentPage + 1);
   };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setCurrentPage(1);
+    loadPlans(); // Reload with cleared filters
+  };
+
+  const handleSearch = () => {
+    setCurrentPage(1);
+    loadPlans();
+  };
+
+  const hasActiveFilters = searchTerm !== '';
 
   if (loading) {
     return (
@@ -138,6 +154,53 @@ export function PlansListings() {
         כל התוכניות הפעילות והרלוונטיות ביותר עבורך • {itemsPerPage} תוכניות בעמוד
       </p>
 
+      {/* Search and Filters */}
+      <Card className="bg-gradient-card shadow-soft border-0">
+        <div className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-semibold">חיפוש וסינון</h3>
+          </div>
+          
+          <div className="space-y-4">
+            {/* Search */}
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Input
+                  placeholder="חיפוש לפי שם תוכנית, מספר תוכנית, עיר, גוש חלקה..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  className="h-10"
+                />
+              </div>
+              <Button onClick={handleSearch} className="h-10 px-6">
+                <Search className="w-4 h-4 mr-2" />
+                חפש
+              </Button>
+              <Button onClick={() => setSearchTerm('')} variant="outline" size="sm">
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* No filters for now */}
+            </div>
+
+            {/* Clear Filters */}
+            {hasActiveFilters && (
+              <div className="flex justify-end">
+                <Button onClick={clearFilters} variant="outline" size="sm">
+                  <X className="w-4 h-4 mr-2" />
+                  נקה סינונים
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+
       {plans.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 bg-muted/20 rounded-lg border border-dashed border-border">
           <Building className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -165,7 +228,7 @@ export function PlansListings() {
                         {priorityScore}
                       </Badge>
                       <Badge variant="outline" className="text-xs px-2 py-1">
-                        #{plan.plan_id}
+                        #{plan.meirim_id}
                       </Badge>
                     </div>
                     
@@ -174,64 +237,29 @@ export function PlansListings() {
                       <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
                         <div className="font-semibold text-primary mb-1 text-xs">פרטי התוכנית:</div>
                         <div className="space-y-1 text-xs">
-                          {plan.raw?.planNumber && (
-                            <div><span className="font-medium">מספר תוכנית:</span> {plan.raw.planNumber}</div>
+                          {plan.plan_number && (
+                            <div><span className="font-medium">מספר תוכנית:</span> {plan.plan_number}</div>
                           )}
-                          {plan.raw?.planId && (
-                            <div><span className="font-medium">מזהה תוכנית:</span> {plan.raw.planId}</div>
+                          {plan.meirim_id && (
+                            <div><span className="font-medium">מזהה מרים:</span> {plan.meirim_id}</div>
                           )}
-                          {plan.raw?.status && (
-                            <div><span className="font-medium">סטטוס:</span> {plan.raw.status}</div>
+                          {plan.county_name && (
+                            <div><span className="font-medium">עירייה:</span> {plan.county_name}</div>
                           )}
-                          {plan.raw?.cityText && (
-                            <div><span className="font-medium">עיר:</span> {plan.raw.cityText}</div>
+                          {plan.plan_character_name && (
+                            <div><span className="font-medium">אופי תוכנית:</span> {plan.plan_character_name}</div>
                           )}
-                          {plan.raw?.mahut && (
-                            <div><span className="font-medium">מחו"ת:</span> {plan.raw.mahut}</div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2">
-                        <div className="font-semibold text-primary mb-1 text-xs">תאריכים:</div>
-                        <div className="space-y-1 text-xs">
-                          {plan.raw?.statusDate && (
-                            <div><span className="font-medium">תאריך סטטוס:</span> {plan.raw.statusDate.trim()}</div>
-                          )}
-                          {plan.publication_date && (
-                            <div><span className="font-medium">פרסום:</span> {new Date(plan.publication_date).toLocaleDateString('he-IL')}</div>
-                          )}
-                          {plan.from_date && (
-                            <div><span className="font-medium">מתאריך:</span> {new Date(plan.from_date).toLocaleDateString('he-IL')}</div>
-                          )}
-                          {plan.to_date && (
-                            <div><span className="font-medium">עד תאריך:</span> {new Date(plan.to_date).toLocaleDateString('he-IL')}</div>
+                          {plan.entity_subtype_desc && (
+                            <div><span className="font-medium">תת סוג:</span> {plan.entity_subtype_desc}</div>
                           )}
                         </div>
                       </div>
                       
-                      {plan.raw?.documentsSet && (
+                      {plan.goals_from_mavat && (
                         <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2">
-                          <div className="font-semibold text-primary mb-1 text-xs">מסמכים זמינים:</div>
-                          <div className="space-y-1 text-xs">
-                            {plan.raw.documentsSet.map && (
-                              <div className="flex items-center gap-2">
-                                <ExternalLink className="w-3 h-3 text-green-500" />
-                                <span className="font-medium text-green-600">מפה זמינה</span>
-                              </div>
-                            )}
-                            {plan.raw.documentsSet.mmg && (
-                              <div><span className="font-medium">ממג:</span> {plan.raw.documentsSet.mmg.info}</div>
-                            )}
-                            {plan.raw.documentsSet.takanon && (
-                              <div><span className="font-medium">תקנון:</span> {plan.raw.documentsSet.takanon.info}</div>
-                            )}
-                            {plan.raw.documentsSet.tasritim && plan.raw.documentsSet.tasritim.length > 0 && (
-                              <div><span className="font-medium">תשריטים:</span> {plan.raw.documentsSet.tasritim.length} קבצים</div>
-                            )}
-                            {plan.raw.documentsSet.nispachim && plan.raw.documentsSet.nispachim.length > 0 && (
-                              <div><span className="font-medium">נספחים:</span> {plan.raw.documentsSet.nispachim.length} קבצים</div>
-                            )}
+                          <div className="font-semibold text-primary mb-1 text-xs">יעדים:</div>
+                          <div className="text-xs line-clamp-3">
+                            {plan.goals_from_mavat}
                           </div>
                         </div>
                       )}
@@ -242,11 +270,11 @@ export function PlansListings() {
                 <div className="p-4 space-y-3">
                   <div>
                     <h3 className="font-bold text-lg mb-1 group-hover:text-primary transition-colors duration-300 line-clamp-2">
-                      {plan.raw?.planNumber || plan.plan_name || 'ללא שם'}
+                      {plan.plan_display_name || plan.plan_name || plan.plan_number || 'ללא שם'}
                     </h3>
                     <div className="flex items-center gap-2 text-muted-foreground text-sm">
                       <MapPin className="w-3 h-3" />
-                      <span className="font-medium">{plan.raw?.cityText || plan.area || 'לא צוין'}</span>
+                      <span className="font-medium">{plan.county_name || 'לא צוין'}</span>
                     </div>
                   </div>
 
@@ -258,55 +286,23 @@ export function PlansListings() {
                       {statusInfo.text}
                     </Badge>
                     <Badge variant="outline" className="text-xs font-medium">
-                      {plan.raw?.status || plan.status}
+                      {plan.status || 'ללא סטטוס'}
                     </Badge>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    <div className="text-center p-2 bg-primary/5 rounded-lg">
-                      <div className="font-medium text-muted-foreground mb-1 text-xs">תאריך פרסום</div>
-                      <div className="text-primary font-bold text-sm">
-                        {plan.publication_date ? 
-                          new Date(plan.publication_date).toLocaleDateString('he-IL') : 
-                          'לא צוין'
-                        }
-                      </div>
-                    </div>
-                    <div className="text-center p-2 bg-muted/50 rounded-lg">
-                      <div className="font-medium text-muted-foreground mb-1 text-xs">תאריך סיום</div>
-                      <div className="font-bold text-sm">
-                        {plan.to_date ? 
-                          new Date(plan.to_date).toLocaleDateString('he-IL') : 
-                          'לא צוין'
-                        }
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 p-2 rounded-lg">
-                    <Clock className="w-3 h-3" />
-                    <span className="font-medium">
-                      {plan.daysUntilDeadline === null 
-                        ? (plan.raw?.statusDate ? plan.raw.statusDate.trim() : 'ללא תאריך סיום')
-                        : plan.daysUntilDeadline > 0 
-                          ? `נותרו ${plan.daysUntilDeadline} ימים`
-                          : 'פג תוקף'
-                      }
-                    </span>
                   </div>
 
                   <Button 
                     className="w-full h-10 bg-gradient-primary shadow-glow hover:shadow-large transition-all duration-300 font-semibold text-sm"
                     onClick={() => {
-                      if (plan.raw?.documentsSet?.map?.path) {
-                        window.open(plan.raw.documentsSet.map.path, '_blank');
+                      if (plan.plan_url) {
+                        window.open(plan.plan_url, '_blank');
+                      } else if (plan.plan_new_mavat_url) {
+                        window.open(plan.plan_new_mavat_url, '_blank');
                       } else {
-                        // אם אין קישור למפה, אפשר להוסיף פונקציונליות אחרת
-                        console.log('No map link available for plan:', plan.plan_id);
+                        console.log('No plan link available');
                       }
                     }}
                   >
-                    {plan.raw?.documentsSet?.map?.path ? 'צפה במפה' : 'צפה בפרטים'}
+                    {plan.plan_url || plan.plan_new_mavat_url ? 'צפה בתוכנית' : 'צפה בפרטים'}
                   </Button>
                 </div>
               </Card>
