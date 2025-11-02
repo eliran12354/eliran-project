@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Property, Project, Deal, GovmapPlan, UrbanRenewalLocation, UrbanRenewalProject } from './supabase'
+import type { Property, Project, Deal, GovmapPlan, UrbanRenewalLocation, UrbanRenewalProject, TelegramDocument } from './supabase'
 
 // Properties queries
 export const propertyQueries = {
@@ -298,19 +298,25 @@ export const dealQueries = {
   },
 
   // Get deals with filters
-  async getFiltered(filters: {
-    city_name?: string
-    property_type?: string
-    min_price?: number
-    max_price?: number
-    min_area?: number
-    max_area?: number
-    min_rooms?: number
-    max_rooms?: number
-    date_from?: string
-    date_to?: string
-  }) {
-    let query = supabase.from('deals').select('*')
+  async getFiltered(
+    filters: {
+      city_name?: string
+      property_type?: string
+      min_price?: number
+      max_price?: number
+      min_area?: number
+      max_area?: number
+      min_rooms?: number
+      max_rooms?: number
+      date_from?: string
+      date_to?: string
+    },
+    page: number = 1,
+    pageSize: number = 150,
+    sortBy: string = 'deal_date',
+    sortOrder: 'asc' | 'desc' = 'desc'
+  ) {
+    let query = supabase.from('deals').select('*', { count: 'exact' })
     
     if (filters.city_name) {
       query = query.eq('city_name', filters.city_name)
@@ -343,10 +349,15 @@ export const dealQueries = {
       query = query.lte('deal_date', filters.date_to)
     }
     
-    const { data, error } = await query.order('deal_date', { ascending: false })
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+    
+    const { data, error, count } = await query
+      .order(sortBy, { ascending: sortOrder === 'asc' })
+      .range(from, to)
     
     if (error) throw error
-    return data as Deal[]
+    return { data: data as Deal[], total: count || 0 }
   },
 
   // Get recent deals
@@ -374,15 +385,25 @@ export const dealQueries = {
   },
 
   // Search deals by address or block/parcel
-  async search(searchTerm: string) {
-    const { data, error } = await supabase
+  async search(
+    searchTerm: string,
+    page: number = 1,
+    pageSize: number = 150,
+    sortBy: string = 'deal_date',
+    sortOrder: 'asc' | 'desc' = 'desc'
+  ) {
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+    
+    const { data, error, count } = await supabase
       .from('deals')
-      .select('*')
+      .select('*', { count: 'exact' })
       .or(`address.ilike.%${searchTerm}%,block_parcel_subparcel.ilike.%${searchTerm}%`)
-      .order('deal_date', { ascending: false })
+      .order(sortBy, { ascending: sortOrder === 'asc' })
+      .range(from, to)
     
     if (error) throw error
-    return data as Deal[]
+    return { data: data as Deal[], total: count || 0 }
   }
 }
 
@@ -651,27 +672,43 @@ export const urbanRenewalProjectQueries = {
   },
 
   // Search projects
-  async search(query: string) {
-    const { data, error } = await supabase
+  async search(
+    query: string,
+    page: number = 1,
+    pageSize: number = 50,
+    sortBy: string = 'created_at',
+    sortOrder: 'asc' | 'desc' = 'desc'
+  ) {
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+    
+    const { data, error, count } = await supabase
       .from('urban_renewal_projects')
-      .select('*')
+      .select('*', { count: 'exact' })
       .or(`project_name.ilike.%${query}%,city_name.ilike.%${query}%,plan_name.ilike.%${query}%,project_number.ilike.%${query}%`)
-      .order('created_at', { ascending: false })
+      .order(sortBy, { ascending: sortOrder === 'asc' })
+      .range(from, to)
     
     if (error) throw error
-    return data as UrbanRenewalProject[]
+    return { data: data as UrbanRenewalProject[], total: count || 0 }
   },
 
   // Get projects with filters
-  async getFiltered(filters: {
-    city_name?: string
-    project_type?: string
-    project_subtype?: string
-    status_code?: number
-    min_units?: number
-    max_units?: number
-  }) {
-    let query = supabase.from('urban_renewal_projects').select('*')
+  async getFiltered(
+    filters: {
+      city_name?: string
+      project_type?: string
+      project_subtype?: string
+      status_code?: number
+      min_units?: number
+      max_units?: number
+    },
+    page: number = 1,
+    pageSize: number = 50,
+    sortBy: string = 'created_at',
+    sortOrder: 'asc' | 'desc' = 'desc'
+  ) {
+    let query = supabase.from('urban_renewal_projects').select('*', { count: 'exact' })
     
     if (filters.city_name) {
       query = query.ilike('city_name', `%${filters.city_name}%`)
@@ -692,10 +729,15 @@ export const urbanRenewalProjectQueries = {
       query = query.lte('proposed_units', filters.max_units)
     }
     
-    const { data, error } = await query.order('created_at', { ascending: false })
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+    
+    const { data, error, count } = await query
+      .order(sortBy, { ascending: sortOrder === 'asc' })
+      .range(from, to)
     
     if (error) throw error
-    return data as UrbanRenewalProject[]
+    return { data: data as UrbanRenewalProject[], total: count || 0 }
   },
 
   // Get project by id
@@ -720,6 +762,128 @@ export const urbanRenewalProjectQueries = {
     
     if (error) throw error
     return data as UrbanRenewalProject
+  }
+}
+
+// Telegram Documents queries
+export const telegramDocumentQueries = {
+  // Get all telegram documents
+  async getAll() {
+    const { data, error } = await supabase
+      .from('telegram_documents')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data as TelegramDocument[]
+  },
+
+  // Get telegram documents with pagination
+  async getPaginated(page: number = 1, pageSize: number = 50) {
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+    
+    const { data, error, count } = await supabase
+      .from('telegram_documents')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to)
+    
+    if (error) throw error
+    
+    return {
+      data: data as TelegramDocument[],
+      total: count || 0
+    }
+  },
+
+  // Search documents
+  async search(
+    query: string,
+    page: number = 1,
+    pageSize: number = 50,
+    sortBy: string = 'created_at',
+    sortOrder: 'asc' | 'desc' = 'desc'
+  ) {
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+    
+    const { data, error, count } = await supabase
+      .from('telegram_documents')
+      .select('*', { count: 'exact' })
+      .or(`location_city.ilike.%${query}%,location_address.ilike.%${query}%,document_type.ilike.%${query}%,court_file_number.ilike.%${query}%,parcel_number.ilike.%${query}%,block_number.ilike.%${query}%,contact_name.ilike.%${query}%,contact_phone.ilike.%${query}%`)
+      .order(sortBy, { ascending: sortOrder === 'asc' })
+      .range(from, to)
+    
+    if (error) throw error
+    return { data: data as TelegramDocument[], total: count || 0 }
+  },
+
+  // Get documents with filters
+  async getFiltered(
+    filters: {
+      document_type?: string
+      location_city?: string
+      property_type?: string
+      processing_status?: string
+      min_total_area?: number
+      max_total_area?: number
+      min_deposit?: number
+      max_deposit?: number
+    },
+    page: number = 1,
+    pageSize: number = 50,
+    sortBy: string = 'created_at',
+    sortOrder: 'asc' | 'desc' = 'desc'
+  ) {
+    let query = supabase.from('telegram_documents').select('*', { count: 'exact' })
+    
+    if (filters.document_type) {
+      query = query.eq('document_type', filters.document_type)
+    }
+    if (filters.location_city) {
+      query = query.ilike('location_city', `%${filters.location_city}%`)
+    }
+    if (filters.property_type) {
+      query = query.eq('property_type', filters.property_type)
+    }
+    if (filters.processing_status) {
+      query = query.eq('processing_status', filters.processing_status)
+    }
+    if (filters.min_total_area) {
+      query = query.gte('total_area_sqm', filters.min_total_area)
+    }
+    if (filters.max_total_area) {
+      query = query.lte('total_area_sqm', filters.max_total_area)
+    }
+    if (filters.min_deposit) {
+      query = query.gte('deposit_amount', filters.min_deposit)
+    }
+    if (filters.max_deposit) {
+      query = query.lte('deposit_amount', filters.max_deposit)
+    }
+    
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+    
+    const { data, error, count } = await query
+      .order(sortBy, { ascending: sortOrder === 'asc' })
+      .range(from, to)
+    
+    if (error) throw error
+    return { data: data as TelegramDocument[], total: count || 0 }
+  },
+
+  // Get document by id
+  async getById(id: number) {
+    const { data, error } = await supabase
+      .from('telegram_documents')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    return data as TelegramDocument
   }
 }
 

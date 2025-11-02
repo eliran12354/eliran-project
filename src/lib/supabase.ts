@@ -117,3 +117,41 @@ export interface UrbanRenewalProject {
   created_at?: string
   updated_at?: string
 }
+
+export interface TelegramDocument {
+  id: number
+  telegram_message_id?: number
+  telegram_chat_id?: number
+  telegram_date?: string
+  image_file_id?: string
+  image_url?: string
+  raw_ocr_text?: string
+  document_type?: string
+  location_city?: string
+  location_address?: string
+  property_type?: string
+  property_floors?: number
+  property_units?: number
+  total_area_sqm?: number
+  building_area_sqm?: number
+  apartments?: any
+  sale_conditions?: string
+  submission_deadline?: string
+  deposit_amount?: number
+  deposit_currency?: string
+  contact_name?: string
+  contact_title?: string
+  contact_address?: string
+  contact_phone?: string
+  contact_fax?: string
+  contact_email?: string
+  court_file_number?: string
+  parcel_number?: string
+  block_number?: string
+  extracted_data?: any
+  processed_at?: string
+  processing_status?: string
+  error_message?: string
+  created_at?: string
+  updated_at?: string
+}

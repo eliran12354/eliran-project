@@ -180,13 +180,13 @@ export function TenderListings() {
       {/* Search and Filter Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2" dir="rtl">
             <Filter className="w-5 h-5" />
             חיפוש וסינון
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
+          <div className="flex gap-4 flex-row-reverse">
             <div className="flex-1">
               <Input
                 type="text"
@@ -195,14 +195,15 @@ export function TenderListings() {
                 onChange={handleSearchChange}
                 onKeyPress={handleKeyPress}
                 className="h-10"
+                dir="rtl"
               />
             </div>
             <Button 
               onClick={handleSearch}
               className="h-10"
             >
-              <Search className="w-4 h-4 ml-2" />
               חפש
+              <Search className="w-4 h-4 mr-2" />
             </Button>
             {(searchQuery || activeSearchQuery) && (
               <Button 
@@ -211,8 +212,8 @@ export function TenderListings() {
                 className="h-10"
                 aria-label="נקה חיפוש"
               >
-                <X className="w-4 h-4 mr-2" />
                 נקה
+                <X className="w-4 h-4 mr-2" />
               </Button>
             )}
           </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -6,13 +6,24 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Search, Filter, TrendingUp, TrendingDown, MapPin, Calendar, DollarSign, Home } from 'lucide-react'
+import { Search, Filter, TrendingUp, TrendingDown, MapPin, Calendar, DollarSign, Home, ChevronLeft, ChevronRight } from 'lucide-react'
 import { dealQueries } from '@/lib/supabase-queries'
 import type { Deal } from '@/lib/supabase'
 
 export function DealsListings() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState({
+    city_name: '',
+    property_type: '',
+    min_price: '',
+    max_price: '',
+    min_area: '',
+    max_area: '',
+    min_rooms: '',
+    max_rooms: ''
+  })
+  const [appliedFilters, setAppliedFilters] = useState({
     city_name: '',
     property_type: '',
     min_price: '',
@@ -24,17 +35,19 @@ export function DealsListings() {
   })
   const [sortBy, setSortBy] = useState<'deal_date' | 'price_nis' | 'area_m2'>('deal_date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 150
 
   // Fetch deals with filters
-  const { data: deals, isLoading, error } = useQuery({
-    queryKey: ['deals', filters, searchTerm, sortBy, sortOrder],
+  const { data: dealsData, isLoading, error } = useQuery({
+    queryKey: ['deals', appliedFilters, searchQuery, sortBy, sortOrder, currentPage],
     queryFn: async () => {
-      if (searchTerm) {
-        return await dealQueries.search(searchTerm)
+      if (searchQuery) {
+        return await dealQueries.search(searchQuery, currentPage, itemsPerPage, sortBy, sortOrder)
       }
       
       const filterParams = Object.fromEntries(
-        Object.entries(filters).filter(([_, value]) => value !== '')
+        Object.entries(appliedFilters).filter(([_, value]) => value !== '')
       )
       
       // Convert string values to numbers where needed
@@ -45,9 +58,13 @@ export function DealsListings() {
       if (filterParams.min_rooms) filterParams.min_rooms = Number(filterParams.min_rooms)
       if (filterParams.max_rooms) filterParams.max_rooms = Number(filterParams.max_rooms)
       
-      return await dealQueries.getFiltered(filterParams)
+      return await dealQueries.getFiltered(filterParams, currentPage, itemsPerPage, sortBy, sortOrder)
     }
   })
+
+  const deals = dealsData?.data || []
+  const totalDeals = dealsData?.total || 0
+  const totalPages = Math.ceil(totalDeals / itemsPerPage)
 
   // Get unique cities for filter
   const { data: allDeals, isLoading: isLoadingAllDeals } = useQuery({
@@ -72,8 +89,18 @@ export function DealsListings() {
     return null
   }
 
+  const handleSearch = () => {
+    setSearchQuery(searchTerm)
+    setCurrentPage(1)
+  }
+
+  const applyFilters = () => {
+    setAppliedFilters(filters)
+    setCurrentPage(1)
+  }
+
   const clearFilters = () => {
-    setFilters({
+    const emptyFilters = {
       city_name: '',
       property_type: '',
       min_price: '',
@@ -82,8 +109,27 @@ export function DealsListings() {
       max_area: '',
       min_rooms: '',
       max_rooms: ''
-    })
+    }
+    setFilters(emptyFilters)
+    setAppliedFilters(emptyFilters)
     setSearchTerm('')
+    setSearchQuery('')
+    setCurrentPage(1)
+  }
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  const handlePreviousPage = () => {
+    handlePageChange(currentPage - 1)
+  }
+
+  const handleNextPage = () => {
+    handlePageChange(currentPage + 1)
   }
 
   if (isLoading || isLoadingAllDeals) {
@@ -130,19 +176,32 @@ export function DealsListings() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Search */}
-          <div className="relative">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="חיפוש לפי כתובת או מספר גוש/חלקה..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pr-10"
-            />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="חיפוש לפי כתובת או מספר גוש/חלקה..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch()
+                  }
+                }}
+                className="pr-10"
+              />
+            </div>
+            <Button onClick={handleSearch} className="gap-2">
+              <Search className="w-4 h-4" />
+              חפש
+            </Button>
           </div>
 
           {/* Filters Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Select value={filters.city_name || "all"} onValueChange={(value) => setFilters(prev => ({ ...prev, city_name: value === "all" ? "" : value }))}>
+            <Select value={filters.city_name || "all"} onValueChange={(value) => {
+              setFilters(prev => ({ ...prev, city_name: value === "all" ? "" : value }))
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder="בחר עיר" />
               </SelectTrigger>
@@ -154,7 +213,9 @@ export function DealsListings() {
               </SelectContent>
             </Select>
 
-            <Select value={filters.property_type || "all"} onValueChange={(value) => setFilters(prev => ({ ...prev, property_type: value === "all" ? "" : value }))}>
+            <Select value={filters.property_type || "all"} onValueChange={(value) => {
+              setFilters(prev => ({ ...prev, property_type: value === "all" ? "" : value }))
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder="סוג נכס" />
               </SelectTrigger>
@@ -213,6 +274,10 @@ export function DealsListings() {
             <Button onClick={clearFilters} variant="outline">
               נקה סינונים
             </Button>
+            <Button onClick={applyFilters} className="gap-2">
+              <Filter className="w-4 h-4" />
+              החל סינונים
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -220,14 +285,17 @@ export function DealsListings() {
       {/* Results Summary */}
       <div className="flex items-center justify-between">
         <div className="text-muted-foreground">
-          <p>נמצאו {deals?.length || 0} עסקאות</p>
-          {allDeals && (
-            <p className="text-sm">מתוך {allDeals.length.toLocaleString('he-IL')} עסקאות במאגר</p>
+          <p>נמצאו {totalDeals.toLocaleString('he-IL')} עסקאות</p>
+          {totalPages > 1 && (
+            <p className="text-sm">עמוד {currentPage} מתוך {totalPages} • {deals.length} עסקאות בעמוד זה</p>
           )}
         </div>
         
         <div className="flex gap-2">
-          <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+          <Select value={sortBy} onValueChange={(value: any) => {
+            setSortBy(value)
+            setCurrentPage(1)
+          }}>
             <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
@@ -241,7 +309,10 @@ export function DealsListings() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+            onClick={() => {
+              setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
+              setCurrentPage(1)
+            }}
           >
             {sortOrder === 'asc' ? '↑' : '↓'}
           </Button>
@@ -331,6 +402,57 @@ export function DealsListings() {
             <p className="text-muted-foreground">לא נמצאו עסקאות המתאימות לקריטריונים</p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center space-x-4 pt-8 pb-4">
+          <Button
+            variant="outline"
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+            className="flex items-center gap-2"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            עמוד קודם
+          </Button>
+          
+          <div className="flex items-center space-x-2">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+              
+              return (
+                <Button
+                  key={pageNum}
+                  variant={currentPage === pageNum ? "default" : "outline"}
+                  onClick={() => handlePageChange(pageNum)}
+                  className="w-10 h-10"
+                >
+                  {pageNum}
+                </Button>
+              );
+            })}
+          </div>
+          
+          <Button
+            variant="outline"
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="flex items-center gap-2"
+          >
+            עמוד הבא
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
       )}
     </div>
   )

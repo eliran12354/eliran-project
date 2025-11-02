@@ -5,12 +5,13 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Search, Building2, MapPin, Calendar, Users, ExternalLink, Filter, X } from 'lucide-react'
+import { Search, Building2, MapPin, Calendar, Users, ExternalLink, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { urbanRenewalProjectQueries } from '@/lib/supabase-queries'
 import type { UrbanRenewalProject } from '@/lib/supabase'
 
 export function UrbanRenewalListings() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState({
     city_name: '',
     project_type: '',
@@ -21,13 +22,15 @@ export function UrbanRenewalListings() {
   })
   const [sortBy, setSortBy] = useState('created_at')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 50
 
   // Fetch projects with filters
-  const { data: projects, isLoading, error } = useQuery({
-    queryKey: ['urban-renewal-projects', filters, searchTerm, sortBy, sortOrder],
+  const { data: projectsData, isLoading, error } = useQuery({
+    queryKey: ['urban-renewal-projects', filters, searchQuery, sortBy, sortOrder, currentPage],
     queryFn: async () => {
-      if (searchTerm) {
-        return await urbanRenewalProjectQueries.search(searchTerm)
+      if (searchQuery) {
+        return await urbanRenewalProjectQueries.search(searchQuery, currentPage, itemsPerPage, sortBy, sortOrder)
       }
       
       const filterParams = Object.fromEntries(
@@ -39,9 +42,13 @@ export function UrbanRenewalListings() {
       if (filterParams.max_units) filterParams.max_units = Number(filterParams.max_units)
       if (filterParams.status_code) filterParams.status_code = Number(filterParams.status_code)
       
-      return await urbanRenewalProjectQueries.getFiltered(filterParams)
+      return await urbanRenewalProjectQueries.getFiltered(filterParams, currentPage, itemsPerPage, sortBy, sortOrder)
     }
   })
+
+  const projects = projectsData?.data || []
+  const totalProjects = projectsData?.total || 0
+  const totalPages = Math.ceil(totalProjects / itemsPerPage)
 
   // Get unique values for filters
   const { data: allProjects, isLoading: isLoadingAllProjects } = useQuery({
@@ -72,6 +79,26 @@ export function UrbanRenewalListings() {
     }
   }
 
+  const handleSearch = () => {
+    setSearchQuery(searchTerm)
+    setCurrentPage(1)
+  }
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  const handlePreviousPage = () => {
+    handlePageChange(currentPage - 1)
+  }
+
+  const handleNextPage = () => {
+    handlePageChange(currentPage + 1)
+  }
+
   const clearFilters = () => {
     setFilters({
       city_name: '',
@@ -82,9 +109,11 @@ export function UrbanRenewalListings() {
       max_units: ''
     })
     setSearchTerm('')
+    setSearchQuery('')
+    setCurrentPage(1)
   }
 
-  const hasActiveFilters = Object.values(filters).some(value => value !== '') || searchTerm !== ''
+  const hasActiveFilters = Object.values(filters).some(value => value !== '') || searchQuery !== ''
 
   if (isLoading) {
     return (
@@ -109,7 +138,10 @@ export function UrbanRenewalListings() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">פרויקטי התחדשות עירונית</h1>
           <p className="text-gray-600 mt-2">
-            {projects?.length || 0} פרויקטים נמצאו
+            נמצאו {totalProjects.toLocaleString('he-IL')} פרויקטים
+            {totalPages > 1 && (
+              <span className="text-sm"> • עמוד {currentPage} מתוך {totalPages} • {projects.length} פרויקטים בעמוד זה</span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -127,25 +159,43 @@ export function UrbanRenewalListings() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Search */}
-          <div className="flex gap-4">
-            <div className="flex-1">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="חיפוש לפי שם פרויקט, עיר, מספר פרויקט..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-10"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch()
+                  }
+                }}
+                className="h-10 pr-10"
               />
             </div>
-            <Button onClick={() => setSearchTerm('')} variant="outline" size="sm">
-              <X className="w-4 h-4" />
+            <Button onClick={handleSearch} className="gap-2">
+              <Search className="w-4 h-4" />
+              חפש
             </Button>
+            {searchTerm && (
+              <Button onClick={() => {
+                setSearchTerm('')
+                setSearchQuery('')
+              }} variant="outline" size="sm">
+                <X className="w-4 h-4" />
+              </Button>
+            )}
           </div>
 
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">עיר</label>
-              <Select value={filters.city_name || "all"} onValueChange={(value) => setFilters(prev => ({ ...prev, city_name: value === "all" ? "" : value }))}>
+              <Select value={filters.city_name || "all"} onValueChange={(value) => {
+                setFilters(prev => ({ ...prev, city_name: value === "all" ? "" : value }))
+                setCurrentPage(1)
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="כל הערים" />
                 </SelectTrigger>
@@ -160,7 +210,10 @@ export function UrbanRenewalListings() {
 
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">סוג פרויקט</label>
-              <Select value={filters.project_type || "all"} onValueChange={(value) => setFilters(prev => ({ ...prev, project_type: value === "all" ? "" : value }))}>
+              <Select value={filters.project_type || "all"} onValueChange={(value) => {
+                setFilters(prev => ({ ...prev, project_type: value === "all" ? "" : value }))
+                setCurrentPage(1)
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="כל הסוגים" />
                 </SelectTrigger>
@@ -175,7 +228,10 @@ export function UrbanRenewalListings() {
 
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">תת-סוג</label>
-              <Select value={filters.project_subtype || "all"} onValueChange={(value) => setFilters(prev => ({ ...prev, project_subtype: value === "all" ? "" : value }))}>
+              <Select value={filters.project_subtype || "all"} onValueChange={(value) => {
+                setFilters(prev => ({ ...prev, project_subtype: value === "all" ? "" : value }))
+                setCurrentPage(1)
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="כל התת-סוגים" />
                 </SelectTrigger>
@@ -194,7 +250,10 @@ export function UrbanRenewalListings() {
                 type="number"
                 placeholder="0"
                 value={filters.min_units}
-                onChange={(e) => setFilters(prev => ({ ...prev, min_units: e.target.value }))}
+                onChange={(e) => {
+                  setFilters(prev => ({ ...prev, min_units: e.target.value }))
+                  setCurrentPage(1)
+                }}
               />
             </div>
 
@@ -204,7 +263,10 @@ export function UrbanRenewalListings() {
                 type="number"
                 placeholder="∞"
                 value={filters.max_units}
-                onChange={(e) => setFilters(prev => ({ ...prev, max_units: e.target.value }))}
+                onChange={(e) => {
+                  setFilters(prev => ({ ...prev, max_units: e.target.value }))
+                  setCurrentPage(1)
+                }}
               />
             </div>
 
@@ -331,6 +393,57 @@ export function UrbanRenewalListings() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center space-x-4 pt-8 pb-4">
+          <Button
+            variant="outline"
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+            className="flex items-center gap-2"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            עמוד קודם
+          </Button>
+          
+          <div className="flex items-center space-x-2">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+              
+              return (
+                <Button
+                  key={pageNum}
+                  variant={currentPage === pageNum ? "default" : "outline"}
+                  onClick={() => handlePageChange(pageNum)}
+                  className="w-10 h-10"
+                >
+                  {pageNum}
+                </Button>
+              );
+            })}
+          </div>
+          
+          <Button
+            variant="outline"
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="flex items-center gap-2"
+          >
+            עמוד הבא
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
       )}
     </div>
   )
