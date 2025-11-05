@@ -1,10 +1,29 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { TenderListings } from "@/components/TenderListings";
 import { TelegramDocumentsListings } from "@/components/TelegramDocumentsListings";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const ListingsPage = () => {
-  const [activeTab, setActiveTab] = useState("rami");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = useMemo(() => {
+    const tab = searchParams.get("tab");
+    return tab === "execution" ? "execution" : "rami";
+  }, [searchParams]);
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
+  useEffect(() => {
+    const current = searchParams.get("tab");
+    if (current !== activeTab) {
+      const next = new URLSearchParams(searchParams);
+      next.set("tab", activeTab);
+      setSearchParams(next, { replace: true });
+    }
+  }, [activeTab]);
 
   return (
     <div className="space-y-6">

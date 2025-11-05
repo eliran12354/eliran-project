@@ -5,15 +5,23 @@ import {
   Search, 
   Settings,
   TrendingUp,
-  Building2
+  Building2,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
+import { useMemo, useState } from "react";
 
 export function Sidebar() {
   const location = useLocation();
+  const [openHotTenders, setOpenHotTenders] = useState(false);
   
   const isActive = (path: string) => location.pathname === path;
+  const currentTab = useMemo(() => {
+    const search = new URLSearchParams(location.search);
+    return search.get("tab");
+  }, [location.search]);
 
   return (
     <div className="w-72 bg-gradient-card border-l border-border/50 p-6 space-y-6 shadow-medium animate-slide-up sticky top-0 h-screen overflow-y-auto">
@@ -61,17 +69,47 @@ export function Sidebar() {
           </Link>
         </div>
 
-        {/* מכרזים חמים - כפתור ירוק קבוע */}
-        <div className="mb-4">
-          <Link to="/listings">
-            <Button 
-              variant="default"
-              className="w-full justify-start gap-4 h-14 text-base transition-all duration-300 bg-gradient-primary shadow-glow text-white hover:shadow-large"
-            >
+        {/* מכרזים חמים - תת תפריט */}
+        <div className="mb-2">
+          <Button 
+            variant="default"
+            onClick={() => setOpenHotTenders((v) => !v)}
+            className="w-full justify-between gap-4 h-14 text-base transition-all duration-300 bg-gradient-primary shadow-glow text-white hover:shadow-large"
+          >
+            <span className="flex items-center gap-4">
               <FileText className="w-6 h-6" />
               מכרזים חמים
-            </Button>
-          </Link>
+            </span>
+            {openHotTenders ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </Button>
+          {openHotTenders && (
+            <div className="mt-2 space-y-2 pr-2">
+              <Link to="/listings?tab=rami">
+                <Button 
+                  className={`w-full justify-start gap-3 h-12 text-sm transition-all duration-300 ${
+                    location.pathname === "/listings" && currentTab !== "execution"
+                      ? "bg-primary/10 text-primary"
+                      : "hover:bg-primary/5 hover:text-primary hover-lift"
+                  }`}
+                  variant="ghost"
+                >
+                  מכרזי רמ"י
+                </Button>
+              </Link>
+              <Link to="/listings?tab=execution">
+                <Button 
+                  className={`w-full justify-start gap-3 h-12 text-sm transition-all duration-300 ${
+                    location.pathname === "/listings" && currentTab === "execution"
+                      ? "bg-primary/10 text-primary"
+                      : "hover:bg-primary/5 hover:text-primary hover-lift"
+                  }`}
+                  variant="ghost"
+                >
+                  מכרזי הוצאה לפועל
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* עסקאות נדל״ן - כפתור ירוק קבוע */}
