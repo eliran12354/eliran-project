@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -8,6 +8,23 @@ import { Badge } from '@/components/ui/badge'
 import { Search, Building2, MapPin, Calendar, Users, ExternalLink, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { urbanRenewalProjectQueries } from '@/lib/supabase-queries'
 import type { UrbanRenewalProject } from '@/lib/supabase'
+
+interface MasterplanFeature {
+  properties: {
+    MisparProj?: number
+    ShemMitcha?: string
+    Yeshuv?: string
+    PlanName?: string
+    Kishur?: string
+    statusHars?: string
+    statusTich?: string
+    taarichTok?: string
+    KishurLeAm?: string
+    Source?: string
+    Shape_STAr?: number
+    Shape_STLe?: number
+  }
+}
 
 export function UrbanRenewalListings() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -24,6 +41,9 @@ export function UrbanRenewalListings() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 50
+  const [masterplans, setMasterplans] = useState<MasterplanFeature[]>([])
+  const [masterplansLoading, setMasterplansLoading] = useState(true)
+  const [masterplansError, setMasterplansError] = useState<string | null>(null)
 
   // Fetch projects with filters
   const { data: projectsData, isLoading, error } = useQuery({
@@ -49,6 +69,7 @@ export function UrbanRenewalListings() {
   const projects = projectsData?.data || []
   const totalProjects = projectsData?.total || 0
   const totalPages = Math.ceil(totalProjects / itemsPerPage)
+  const totalMasterplans = masterplans.length
 
   // Get unique values for filters
   const { data: allProjects, isLoading: isLoadingAllProjects } = useQuery({
@@ -59,6 +80,45 @@ export function UrbanRenewalListings() {
   const uniqueCities = Array.from(new Set(allProjects?.map(project => project.city_name).filter(Boolean) || [])).sort()
   const uniqueTypes = Array.from(new Set(allProjects?.map(project => project.project_type).filter(Boolean) || [])).sort()
   const uniqueSubtypes = Array.from(new Set(allProjects?.map(project => project.project_subtype).filter(Boolean) || [])).sort()
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadMasterplans = async () => {
+      try {
+        setMasterplansLoading(true)
+        setMasterplansError(null)
+
+        const response = await fetch('/data/masterplans.geojson')
+        if (!response.ok) {
+          throw new Error(`שגיאה בטעינת שכבת המאסטר פלנים (סטטוס ${response.status})`)
+        }
+
+        const geojson = await response.json()
+        const features = Array.isArray(geojson?.features) ? geojson.features : []
+
+        if (isMounted) {
+          setMasterplans(features)
+        }
+      } catch (err) {
+        if (!isMounted) return
+        setMasterplansError((err as Error).message ?? 'שגיאה לא ידועה בטעינת שכבת המאסטר פלנים')
+        setMasterplans([])
+      } finally {
+        if (isMounted) {
+          setMasterplansLoading(false)
+        }
+      }
+    }
+
+    loadMasterplans()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const masterplanEntries = useMemo(() => masterplans.map((feature) => feature.properties ?? {}), [masterplans])
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('he-IL')
@@ -148,6 +208,105 @@ export function UrbanRenewalListings() {
           <Building2 className="w-8 h-8 text-primary" />
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>תוכניות מתאר להתחדשות עירונית</span>
+            <span className="text-sm text-muted-foreground">
+              {masterplansLoading
+                ? 'טוען שכבת תוכניות...'
+                : `${totalMasterplans.toLocaleString('he-IL')} תוכניות`}
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {masterplansLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+            </div>
+          ) : masterplansError ? (
+            <div className="text-center text-red-500 py-6">
+              {masterplansError}
+            </div>
+          ) : masterplanEntries.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {masterplanEntries.map((plan, index) => {
+                const title = plan.ShemMitcha || plan.PlanName || 'ללא שם תוכנית'
+                const status = plan.statusTich || plan.statusHars || 'לא צוין'
+                const projectNumber = plan.MisparProj ? plan.MisparProj.toLocaleString('he-IL') : null
+                const area = plan.Shape_STAr
+                  ? `${Math.round(plan.Shape_STAr).toLocaleString('he-IL')} מ״ר`
+                  : null
+                const perimeter = plan.Shape_STLe
+                  ? `${Math.round(plan.Shape_STLe).toLocaleString('he-IL')} מ׳`
+                  : null
+                const validDate = plan.taarichTok ? formatDate(plan.taarichTok) : null
+
+                return (
+                  <Card key={`${plan.MisparProj ?? 'plan'}-${index}`} className="h-full hover:shadow-lg transition-shadow">
+                    <CardHeader className="space-y-2">
+                      <CardTitle className="text-lg leading-tight">
+                        {title}
+                      </CardTitle>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                        {plan.Yeshuv && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-4 h-4 text-gray-500" />
+                            {plan.Yeshuv}
+                          </span>
+                        )}
+                        <Badge variant="outline">{status}</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm text-gray-700">
+                      {projectNumber && (
+                        <div>
+                          <span className="font-medium">מספר תוכנית:</span> {projectNumber}
+                        </div>
+                      )}
+                      {validDate && (
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-gray-500" />
+                          <span>תאריך יעד: {validDate}</span>
+                        </div>
+                      )}
+                      {plan.Source && (
+                        <div>
+                          <span className="font-medium">מקור:</span> {plan.Source}
+                        </div>
+                      )}
+                      {(area || perimeter) && (
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          {area && <span>שטח: {area}</span>}
+                          {perimeter && <span>• היקף: {perimeter}</span>}
+                        </div>
+                      )}
+                      {(plan.Kishur || plan.KishurLeAm) && (
+                        <div className="pt-2">
+                          <a
+                            href={plan.KishurLeAm || plan.Kishur}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            צפייה בפרטי התוכנית
+                          </a>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center text-sm text-muted-foreground py-6">
+              אין תוכניות מתאר להצגה כרגע.
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Search and Filters */}
       <Card>

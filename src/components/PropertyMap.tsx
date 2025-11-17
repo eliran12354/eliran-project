@@ -4,13 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Filter } from "lucide-react";
 import { useState } from "react";
-import LeafletMap from "./GoogleMaps";
+import DeclaredProjectsMap from "./DeclaredProjectsMap";
 
 export function PropertyMap() {
   const [selectedCity, setSelectedCity] = useState("הכל");
 
   return (
-    <div className="flex gap-8 h-full animate-fade-in">
+    <div className="flex gap-8 min-h-[calc(100vh-120px)] animate-fade-in">
       {/* Map Area */}
       <div className="flex-1">
         <div className="mb-6 flex gap-6">
@@ -27,8 +27,8 @@ export function PropertyMap() {
           </Button>
         </div>
 
-        <div className="relative h-[600px] w-full">
-          <LeafletMap />
+        <div className="relative w-full h-[75vh] min-h-[620px]">
+          <DeclaredProjectsMap />
         </div>
 
         <div className="mt-6 flex items-center justify-between">
@@ -39,7 +39,7 @@ export function PropertyMap() {
       </div>
 
       {/* Sidebar Filters */}
-      <Card className="w-96 p-6 space-y-8 shadow-large bg-gradient-card border-0 h-fit">
+      <Card className="w-96 p-6 space-y-8 shadow-large bg-gradient-card border-0 h-fit self-start">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
             <Filter className="w-5 h-5 text-white" />

@@ -167,12 +167,11 @@ export function TenderListings() {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <ArrowRight className="w-6 h-6 text-primary" />
-          <h2 className="text-3xl font-bold">מכרזים חמים</h2>
+      <div className="flex items-center justify-between flex-row-reverse">
+        <div className="flex items-center gap-3 justify-end text-right">
+          <h2 className="text-3xl font-bold">מכרזי רמ&quot;י</h2>
         </div>
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-muted-foreground text-left">
           עמוד {currentPage} מתוך {totalPages} • {totalTenders} מכרזים בסך הכל
         </div>
       </div>

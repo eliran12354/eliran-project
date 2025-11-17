@@ -162,7 +162,7 @@ export function TelegramDocumentsListings() {
         </div>
       </div>
 
-      {/* Search and Filters */}
+      {/* Search */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2" dir="rtl">
@@ -170,8 +170,7 @@ export function TelegramDocumentsListings() {
             חיפוש וסינון
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Search */}
+        <CardContent>
           <div className="flex gap-2 flex-row-reverse">
             <div className="relative flex-1">
               <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -191,123 +190,6 @@ export function TelegramDocumentsListings() {
             <Button onClick={handleSearch} className="gap-2">
               חפש
               <Search className="w-4 h-4" />
-            </Button>
-            {searchTerm && (
-              <Button onClick={() => {
-                setSearchTerm('')
-                setSearchQuery('')
-              }} variant="outline" size="sm">
-                <X className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-
-          {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Select value={filters.document_type || "all"} onValueChange={(value) => {
-              setFilters(prev => ({ ...prev, document_type: value === "all" ? "" : value }))
-              setCurrentPage(1)
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="סוג מסמך" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">כל הסוגים</SelectItem>
-                {uniqueDocumentTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filters.location_city || "all"} onValueChange={(value) => {
-              setFilters(prev => ({ ...prev, location_city: value === "all" ? "" : value }))
-              setCurrentPage(1)
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="עיר" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">כל הערים</SelectItem>
-                {uniqueCities.map(city => (
-                  <SelectItem key={city} value={city}>{city}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filters.property_type || "all"} onValueChange={(value) => {
-              setFilters(prev => ({ ...prev, property_type: value === "all" ? "" : value }))
-              setCurrentPage(1)
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="סוג נכס" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">כל הסוגים</SelectItem>
-                {uniquePropertyTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filters.processing_status || "all"} onValueChange={(value) => {
-              setFilters(prev => ({ ...prev, processing_status: value === "all" ? "" : value }))
-              setCurrentPage(1)
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="סטטוס עיבוד" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">כל הסטטוסים</SelectItem>
-                {uniqueStatuses.map(status => (
-                  <SelectItem key={status} value={status}>{status}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Input
-              placeholder="שטח מינימלי (מ״ר)"
-              type="number"
-              value={filters.min_total_area}
-              onChange={(e) => {
-                setFilters(prev => ({ ...prev, min_total_area: e.target.value }))
-                setCurrentPage(1)
-              }}
-            />
-
-            <Input
-              placeholder="שטח מקסימלי (מ״ר)"
-              type="number"
-              value={filters.max_total_area}
-              onChange={(e) => {
-                setFilters(prev => ({ ...prev, max_total_area: e.target.value }))
-                setCurrentPage(1)
-              }}
-            />
-
-            <Input
-              placeholder="פיקדון מינימלי"
-              type="number"
-              value={filters.min_deposit}
-              onChange={(e) => {
-                setFilters(prev => ({ ...prev, min_deposit: e.target.value }))
-                setCurrentPage(1)
-              }}
-            />
-
-            <Input
-              placeholder="פיקדון מקסימלי"
-              type="number"
-              value={filters.max_deposit}
-              onChange={(e) => {
-                setFilters(prev => ({ ...prev, max_deposit: e.target.value }))
-                setCurrentPage(1)
-              }}
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <Button onClick={clearFilters} variant="outline">
-              נקה סינונים
             </Button>
           </div>
         </CardContent>

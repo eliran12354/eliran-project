@@ -155,3 +155,76 @@ export interface TelegramDocument {
   created_at?: string
   updated_at?: string
 }
+
+export interface ConstructionProgressRecord {
+  id: number
+  created_at?: string
+  MAHOZ?: string
+  YESHUV_LAMAS?: string
+  ATAR?: string
+  MISPAR_MITHAM?: string
+  SHEM_MITHAM?: string
+  MIGRASH?: string
+  GUSH?: string
+  HELKA?: string
+  MISPAR_BINYAN?: string
+  KOMOT_BINYAN?: string
+  YEHIDOT_BINYAN?: string
+  SHETAH?: string
+  SHITAT_SHIVUK?: string
+  TAARICH_KOBEA?: string
+  SHNAT_HOZE?: string
+  TAARICH_SHLAV_BNIYA_5?: string
+  TAARICH_SHLAV_BNIYA_7?: string
+  TAARICH_SHLAV_BNIYA_8?: string
+  TAARICH_SHLAV_BNIYA_16?: string
+  TAARICH_SHLAV_BNIYA_18?: string
+  TAARICH_SHLAV_BNIYA_29?: string
+  TAARICH_SHLAV_BNIYA_39?: string
+  TAARICH_SHLAV_BNIYA_42?: string
+}
+
+export interface UrbanRenewalCompound {
+  object_id: number
+  caption?: string
+  heara?: string
+  kishur?: string
+  source?: string
+  project_name?: string
+  city_name?: string
+  city_code?: number
+  neighborhood_name?: string
+  status?: string
+  approval_stage?: string
+  housing_units?: number
+  planned_units?: number
+  executing_body?: string
+  last_update?: string
+  remarks?: string
+  centroid?: any
+  geom?: any
+}
+
+export interface TalarPrep {
+  id: number
+  created_at?: string
+  object_id?: number
+  geom?: string
+  centroid?: any
+  fields?: any
+  raw_entity?: any
+}
+
+export interface GovmapGush {
+  id: number
+  object_id: number
+  gush_num?: number
+  gush_suffix?: string
+  status_text?: string
+  centroid?: any
+  geom?: string
+  raw_entity?: any
+  created_at?: string
+  updated_at?: string
+  scraped_at?: string
+}

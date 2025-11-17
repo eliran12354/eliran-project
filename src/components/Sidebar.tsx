@@ -64,7 +64,7 @@ export function Sidebar() {
               className="w-full justify-start gap-4 h-14 text-base transition-all duration-300 bg-gradient-primary shadow-glow text-white hover:shadow-large"
             >
               <MapPin className="w-6 h-6" />
-              מפת נכסים
+              מפת יעודי קרקע
             </Button>
           </Link>
         </div>
