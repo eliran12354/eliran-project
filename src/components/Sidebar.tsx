@@ -69,6 +69,22 @@ export function Sidebar() {
           </Link>
         </div>
 
+        {/* מפת GovMap - כפתור רגיל */}
+        <div className="mb-4">
+          <Link to="/govmap">
+            <Button 
+              className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
+                isActive("/govmap") 
+                  ? "bg-gradient-primary shadow-glow text-white" 
+                  : "hover:bg-primary/5 hover:text-primary hover-lift"
+              }`}
+            >
+              <MapPin className="w-6 h-6" />
+              מפת GovMap
+            </Button>
+          </Link>
+        </div>
+
         {/* מכרזים חמים - תת תפריט */}
         <div className="mb-2">
           <Button 

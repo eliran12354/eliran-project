@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getGushimChunk, getGushimCount } from '../services/gushimService';
+import { getGushimChunk, getGushimCount } from '../services/gushimService.js';
 
 /**
  * Get gushim chunk (for progressive loading)

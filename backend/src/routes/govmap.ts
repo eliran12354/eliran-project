@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { searchParcelController } from '../controllers/govmapController';
+import { searchParcelController } from '../controllers/govmapController.js';
 
 const router = Router();
 

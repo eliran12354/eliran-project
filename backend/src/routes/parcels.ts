@@ -4,7 +4,7 @@ import {
   getParcelsInViewport,
   getParcelsCountController,
   getParcelsChunkController,
-} from '../controllers/parcelsController';
+} from '../controllers/parcelsController.js';
 
 const router = Router();
 

@@ -1,4 +1,4 @@
-import { supabase } from '../config/database';
+import { supabase } from '../config/database.js';
 
 /**
  * Service for gushim data operations

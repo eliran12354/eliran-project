@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getParcels, getParcelsCount, getParcelsChunk } from '../services/parcelsService';
+import { getParcels, getParcelsCount, getParcelsChunk } from '../services/parcelsService.js';
 
 /**
  * Get all parcels (with optional viewport filter)

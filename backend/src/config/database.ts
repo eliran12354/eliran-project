@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { config } from './env';
+import { config } from './env.js';
 
 // Create Supabase client with service role key (full access)
 export const supabase = createClient(

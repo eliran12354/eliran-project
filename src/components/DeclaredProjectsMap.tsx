@@ -1,11 +1,14 @@
-import { MapContainer, TileLayer, GeoJSON as LeafletGeoJSON, useMap } from "react-leaflet";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { MapContainer, TileLayer, GeoJSON as LeafletGeoJSON, useMap, useMapEvents } from "react-leaflet";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import L, { type Layer, type PathOptions } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Feature, FeatureCollection, GeoJsonProperties, MultiPolygon, Polygon } from "geojson";
-import { urbanRenewalCompoundQueries, talarPrepQueries, govmapGushimQueries } from "@/lib/supabase-queries";
+import { urbanRenewalCompoundQueries, talarPrepQueries } from "@/lib/supabase-queries";
 import { ParcelsLayer } from "./ParcelsLayer";
 import { Tama70Layer } from "./Tama70Layer";
+import { GushimLayer } from "./GushimLayer";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Layers } from "lucide-react";
 
 // Fix for default markers in Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -138,7 +141,8 @@ const talarPrepLayerStyle: PathOptions = {
   opacity: 0.8,
 };
 
-const gushimLayerStyle: PathOptions = {
+// Gushim layer style is now in GushimLayer component
+const gushimLayerStyle_OLD: PathOptions = {
   color: "#0891b2",
   weight: 1.5,
   fillOpacity: 0.2,
@@ -166,6 +170,19 @@ const getLatLngTuplesFromFeature = (feature: AnyFeature): [number, number][] => 
 
   return [];
 };
+
+// Component to get map reference
+function MapRefSetter({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null> }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (map) {
+      mapRef.current = map;
+    }
+  }, [map, mapRef]);
+  
+  return null;
+}
 
 function FitBoundsToFeatures({ features }: { features: AnyFeature[] }) {
   const map = useMap();
@@ -228,14 +245,22 @@ export default function DeclaredProjectsMap() {
   const [selectedTalarPrepId, setSelectedTalarPrepId] = useState<number | null>(null);
 
   const [showGushimLayer, setShowGushimLayer] = useState(true);
-  const [gushimData, setGushimData] = useState<GushimCollection | null>(null);
-  const [gushimLoading, setGushimLoading] = useState(true);
-  const [gushimError, setGushimError] = useState<string | null>(null);
-  const [selectedGushId, setSelectedGushId] = useState<number | null>(null);
 
   const [showParcelsLayer, setShowParcelsLayer] = useState(true);
 
   const [showTama70Layer, setShowTama70Layer] = useState(true);
+
+  // Layers panel state
+  const [showLayersPanel, setShowLayersPanel] = useState(false);
+
+  // Search by gush and helka state
+  const [searchGush, setSearchGush] = useState<string>("");
+  const [searchHelka, setSearchHelka] = useState<string>("");
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchResult, setSearchResult] = useState<any>(null);
+  const [searchResultFeature, setSearchResultFeature] = useState<Feature | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
 
   const center: [number, number] = [32.0749, 34.7668]; // Tel Aviv center
 
@@ -275,7 +300,6 @@ export default function DeclaredProjectsMap() {
     }
     return features;
   }, [talarPrepData]);
-  const gushimFeatures = useMemo(() => gushimData?.features ?? [], [gushimData]);
   const visibleFeatures = useMemo(() => {
     const features: AnyFeature[] = [];
     if (showDeclaredLayer) {
@@ -293,11 +317,9 @@ export default function DeclaredProjectsMap() {
     if (showTalarPrepLayer) {
       features.push(...(talarPrepFeatures as AnyFeature[]));
     }
-    if (showGushimLayer) {
-      features.push(...(gushimFeatures as AnyFeature[]));
-    }
+    // Gushim layer is now handled by GushimLayer component
     return features;
-  }, [declaredFeatures, residentialInventoryFeatures, priceProgramFeatures, urbanRenewalFeatures, talarPrepFeatures, gushimFeatures, showDeclaredLayer, showResidentialInventoryLayer, showPriceProgramLayer, showUrbanRenewalLayer, showTalarPrepLayer, showGushimLayer]);
+  }, [declaredFeatures, residentialInventoryFeatures, priceProgramFeatures, urbanRenewalFeatures, talarPrepFeatures, showDeclaredLayer, showResidentialInventoryLayer, showPriceProgramLayer, showUrbanRenewalLayer, showTalarPrepLayer]);
 
   const selectedDeclaredFeature = useMemo(() => {
     if (!selectedProjectId) return null;
@@ -314,10 +336,129 @@ export default function DeclaredProjectsMap() {
     return talarPrepFeatures.find((feature) => feature.properties?.id === selectedTalarPrepId) ?? null;
   }, [selectedTalarPrepId, talarPrepFeatures]);
 
-  const selectedGushFeature = useMemo(() => {
-    if (!selectedGushId) return null;
-    return gushimFeatures.find((feature) => feature.properties?.id === selectedGushId) ?? null;
-  }, [selectedGushId, gushimFeatures]);
+  // Gushim selection is now handled by GushimLayer component
+
+  // Search for parcel by gush and helka using GovMap API
+  const handleGushHelkaSearch = async () => {
+    if (!searchGush || !searchHelka) {
+      setSearchError("נא להזין גוש וחלקה");
+      return;
+    }
+
+    setSearching(true);
+    setSearchError(null);
+    setSearchResult(null);
+    setSearchResultFeature(null);
+
+    try {
+      const gushNum = parseInt(searchGush, 10);
+      const helkaNum = parseInt(searchHelka, 10);
+
+      if (isNaN(gushNum) || isNaN(helkaNum)) {
+        throw new Error('גוש וחלקה חייבים להיות מספרים');
+      }
+
+      // Use GovMap API entitiesByPoint to search for parcel
+      // According to the user's finding, we need to POST to:
+      // https://www.govmap.gov.il/api/layers-catalog/entitiesByPoint
+      // But first, we need to find the parcel coordinates by gush/helka
+      // Let's try using the backend API first, then fallback to direct GovMap API
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      
+      let result: any = null;
+      
+      let backendResponse: Response | null = null;
+      
+      try {
+        // Try backend API first
+        backendResponse = await fetch(
+          `${API_URL}/api/govmap/search?gush=${gushNum}&helka=${helkaNum}`
+        );
+
+        // Parse JSON once (response body can only be read once)
+        let backendData: any;
+        try {
+          backendData = await backendResponse.json();
+        } catch (parseErr) {
+          // If we can't parse JSON, use status code
+          throw new Error(`שגיאה בחיפוש חלקה (${backendResponse.status})`);
+        }
+        
+        if (backendResponse.ok) {
+          if (backendData.success && backendData.data) {
+            result = backendData.data;
+          } else if (!backendData.success) {
+            // Backend returned success: false
+            throw new Error(backendData.message || backendData.error || 'שגיאה בחיפוש חלקה');
+          }
+        } else {
+          // Backend returned error status - use the error message from response
+          const errorMsg = backendData.message || backendData.error || 'שגיאה בחיפוש חלקה';
+          console.error('Backend search error:', backendData);
+          throw new Error(errorMsg);
+        }
+      } catch (backendErr) {
+        console.error('Backend API error:', backendErr);
+        throw backendErr;
+      }
+
+      // If backend didn't return data, show error
+      if (!result) {
+        throw new Error('לא נמצאו תוצאות לחלקה זו');
+      }
+      
+      // Convert coordinates to WGS84 if needed
+      let lat: number, lng: number;
+      
+      if (result.LAT && result.LNG) {
+        lat = result.LAT;
+        lng = result.LNG;
+      } else if (result.X && result.Y) {
+        // Assume ITM coordinates - convert to WGS84
+        // For now, we'll use a simple conversion
+        // TODO: Use proper ITM to WGS84 conversion
+        lat = result.Y / 111000; // Approximate
+        lng = result.X / 111000; // Approximate
+      } else if (result.centroid && Array.isArray(result.centroid) && result.centroid.length >= 2) {
+        // Handle centroid from entitiesByPoint response
+        const [x, y] = result.centroid;
+        // These are likely ITM coordinates, need proper conversion
+        // For now, approximate
+        lat = y / 111000;
+        lng = x / 111000;
+      } else {
+        throw new Error('לא נמצאו קואורדינטות לחלקה');
+      }
+
+      // Create a feature for the search result
+      const feature: Feature = {
+        type: 'Feature',
+        properties: {
+          gush_num: gushNum,
+          helka: helkaNum,
+          ...result
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: [lng, lat]
+        }
+      };
+
+      setSearchResult({ gush_num: gushNum, helka: helkaNum, ...result });
+      setSearchResultFeature(feature);
+
+      // Zoom to the parcel location
+      if (mapRef.current) {
+        mapRef.current.setView([lat, lng], 15);
+      }
+
+    } catch (err) {
+      console.error('Error searching parcel:', err);
+      setSearchError(err instanceof Error ? err.message : 'שגיאה בחיפוש חלקה');
+    } finally {
+      setSearching(false);
+    }
+  };
 
   const handleDeclaredFeature = useCallback(
     (feature: Feature, layer: Layer) => {
@@ -588,7 +729,8 @@ export default function DeclaredProjectsMap() {
     []
   );
 
-  const handleGushimFeature = useCallback(
+  // Gushim feature handler is now in GushimLayer component
+  const handleGushimFeature_OLD = useCallback(
     (feature: Feature, layer: Layer) => {
       const typedFeature = feature as GushimFeature;
       const props = typedFeature.properties || {};
@@ -883,64 +1025,7 @@ export default function DeclaredProjectsMap() {
     }
   }, [showTalarPrepLayer]);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadGushimLayer = async () => {
-      try {
-        setGushimLoading(true);
-        setGushimError(null);
-
-        const geoJSON = await govmapGushimQueries.getAsGeoJSON();
-
-        console.log('Gushim GeoJSON loaded:', {
-          type: geoJSON?.type,
-          featuresCount: geoJSON?.features?.length || 0,
-          firstFeature: geoJSON?.features?.[0],
-          firstFeatureGeometry: geoJSON?.features?.[0]?.geometry,
-          firstFeatureCoords: geoJSON?.features?.[0]?.geometry?.coordinates,
-          isWGS84: geoJSON?.features?.[0]?.geometry?.coordinates && Array.isArray(geoJSON.features[0].geometry.coordinates) && geoJSON.features[0].geometry.coordinates.length >= 2
-            ? (geoJSON.features[0].geometry.coordinates[1] >= 29 && geoJSON.features[0].geometry.coordinates[1] <= 34 && geoJSON.features[0].geometry.coordinates[0] >= 34 && geoJSON.features[0].geometry.coordinates[0] <= 36)
-            : false
-        });
-
-        if (isMounted) {
-          if (geoJSON && geoJSON.features && geoJSON.features.length > 0) {
-            setGushimData(geoJSON as GushimCollection);
-            console.log('Gushim data set successfully');
-          } else {
-            console.warn('Gushim GeoJSON has no features');
-            setGushimData({
-              type: 'FeatureCollection',
-              features: []
-            } as GushimCollection);
-          }
-        }
-      } catch (err) {
-        if (!isMounted) return;
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        console.error('Error loading gushim layer:', err);
-        setGushimError(errorMessage || "שגיאה לא ידועה בטעינת שכבת גושים");
-        setGushimData(null);
-      } finally {
-        if (isMounted) {
-          setGushimLoading(false);
-        }
-      }
-    };
-
-    loadGushimLayer();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!showGushimLayer) {
-      setSelectedGushId(null);
-    }
-  }, [showGushimLayer]);
+  // Gushim layer is now handled by GushimLayer component (uses backend API with progressive loading)
 
   return (
     <div className="h-full w-full rounded-xl overflow-hidden shadow-large border border-border/20 relative">
@@ -951,6 +1036,7 @@ export default function DeclaredProjectsMap() {
         className="h-full w-full"
         scrollWheelZoom
       >
+        <MapRefSetter mapRef={mapRef} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -1030,161 +1116,158 @@ export default function DeclaredProjectsMap() {
           </>
         )}
 
-        {showGushimLayer && gushimData && gushimFeatures.length > 0 && (
-          <LeafletGeoJSON
-            key={`gushim-${gushimFeatures.length}`}
-            data={gushimData as GushimCollection}
-            style={() => gushimLayerStyle}
-            pointToLayer={(feature, latlng) => {
-              // Create a cyan circle marker for Point features
-              return L.circleMarker(latlng, {
-                radius: 5,
-                fillColor: "#06b6d4",
-                color: "#0891b2",
-                weight: 1.5,
-                opacity: 0.7,
-                fillOpacity: 0.6
-              });
-            }}
-            onEachFeature={handleGushimFeature}
-          />
-        )}
+        {/* Gushim layer - now using GushimLayer component with backend API */}
+        <GushimLayer show={showGushimLayer} />
 
         <ParcelsLayer show={showParcelsLayer} />
         <Tama70Layer show={showTama70Layer} />
+
+        {/* Search result marker */}
+        {searchResultFeature && (
+          <LeafletGeoJSON
+            key="search-result"
+            data={searchResultFeature}
+            pointToLayer={(feature, latlng) => {
+              return L.circleMarker(latlng, {
+                radius: 10,
+                fillColor: "#ef4444",
+                color: "#dc2626",
+                weight: 3,
+                opacity: 1,
+                fillOpacity: 0.8
+              });
+            }}
+            onEachFeature={(feature, layer) => {
+              const props = feature.properties || {};
+              
+              // Extract information from properties
+              const gushNum = props.gush_num || props.GUSH || 'לא ידוע';
+              const gushSuffix = props.gush_suffix || props.gush_suffi || null;
+              const helka = props.helka || props.HELKA || props.parcel || 'לא ידוע';
+              const legalArea = props.legal_area_m2 || props.legalArea || null;
+              
+              // Try to get from raw_entity fields if available
+              let gushFromFields = null;
+              let gushSuffixFromFields = null;
+              let helkaFromFields = null;
+              let legalAreaFromFields = null;
+              
+              if (props.raw_entity?.fields && Array.isArray(props.raw_entity.fields)) {
+                const fields = props.raw_entity.fields;
+                const gushField = fields.find((f: any) => f.fieldName === 'גוש' || f.fieldName === 'מספר גוש');
+                const gushSuffixField = fields.find((f: any) => f.fieldName === 'תת גוש');
+                const helkaField = fields.find((f: any) => f.fieldName === 'חלקה' || f.fieldName === 'מספר חלקה');
+                const legalAreaField = fields.find((f: any) => f.fieldName === 'שטח רשום (מ"ר)' || f.fieldName === 'שטח רשום');
+                
+                if (gushField) gushFromFields = gushField.fieldValue;
+                if (gushSuffixField) gushSuffixFromFields = gushSuffixField.fieldValue;
+                if (helkaField) helkaFromFields = helkaField.fieldValue;
+                if (legalAreaField) legalAreaFromFields = legalAreaField.fieldValue;
+              }
+              
+              // Use field values if available, otherwise use direct properties
+              const finalGush = gushFromFields || gushNum;
+              const finalGushSuffix = gushSuffixFromFields !== null ? gushSuffixFromFields : (gushSuffix !== null ? gushSuffix : null);
+              const finalHelka = helkaFromFields || helka;
+              const finalLegalArea = legalAreaFromFields !== null ? legalAreaFromFields : legalArea;
+              
+              const popupParts: string[] = [
+                '<div dir="rtl" style="text-align:right;">',
+                '<div style="font-weight:700;font-size:14px;margin-bottom:6px;">חלקה שנמצאה</div>',
+                `<div style="font-size:13px;color:#374151;margin-bottom:3px;"><strong>מספר גוש:</strong> ${finalGush}</div>`
+              ];
+              
+              if (finalGushSuffix !== null && finalGushSuffix !== undefined && finalGushSuffix !== 0) {
+                popupParts.push(`<div style="font-size:13px;color:#374151;margin-bottom:3px;"><strong>תת גוש:</strong> ${finalGushSuffix}</div>`);
+              }
+              
+              popupParts.push(`<div style="font-size:13px;color:#374151;margin-bottom:3px;"><strong>מספר חלקה:</strong> ${finalHelka}</div>`);
+              
+              if (finalLegalArea !== null && finalLegalArea !== undefined) {
+                const areaFormatted = typeof finalLegalArea === 'number' 
+                  ? finalLegalArea.toLocaleString('he-IL') 
+                  : finalLegalArea;
+                popupParts.push(`<div style="font-size:13px;color:#374151;margin-bottom:3px;"><strong>שטח רשום:</strong> ${areaFormatted} מ"ר</div>`);
+              }
+              
+              if (props.status_text) {
+                popupParts.push(`<div style="font-size:12px;color:#6b7280;margin-top:4px;"><strong>סטטוס:</strong> ${props.status_text}</div>`);
+              }
+              
+              popupParts.push('</div>');
+              
+              const popupContent = popupParts.join('');
+              layer.bindPopup(popupContent);
+            }}
+          />
+        )}
       </MapContainer>
 
-      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2" dir="rtl">
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => setShowDeclaredLayer((prev) => !prev)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition border shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
-              showDeclaredLayer ? "bg-primary text-white border-primary" : "bg-white text-gray-700 border-gray-200"
-            }`}
-            aria-pressed={showDeclaredLayer}
-          >
-            {showDeclaredLayer ? "הסתר פרויקטים מוכרזים" : "הצג פרויקטים מוכרזים"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowResidentialInventoryLayer((prev) => !prev)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition border shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
-              showResidentialInventoryLayer
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white text-gray-700 border-gray-200"
-            }`}
-            aria-pressed={showResidentialInventoryLayer}
-          >
-            {showResidentialInventoryLayer ? "הסתר מלאי תכנוני" : "הצג מלאי תכנוני"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowPriceProgramLayer((prev) => !prev)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition border shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
-              showPriceProgramLayer
-                ? "bg-green-600 text-white border-green-600"
-                : "bg-white text-gray-700 border-gray-200"
-            }`}
-            aria-pressed={showPriceProgramLayer}
-          >
-            {showPriceProgramLayer ? "הסתר מחיר למשתכן" : "הצג מחיר למשתכן"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowUrbanRenewalLayer((prev) => !prev)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition border shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
-              showUrbanRenewalLayer
-                ? "bg-purple-600 text-white border-purple-600"
-                : "bg-white text-gray-700 border-gray-200"
-            }`}
-            aria-pressed={showUrbanRenewalLayer}
-          >
-            {showUrbanRenewalLayer ? "הסתר התחדשות עירונית" : "הצג התחדשות עירונית"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowTalarPrepLayer((prev) => !prev)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition border shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
-              showTalarPrepLayer
-                ? "bg-red-600 text-white border-red-600"
-                : "bg-white text-gray-700 border-gray-200"
-            }`}
-            aria-pressed={showTalarPrepLayer}
-          >
-            {showTalarPrepLayer ? "הסתר תוכניות בהכנה" : "הצג תוכניות בהכנה"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowGushimLayer((prev) => !prev)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition border shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
-              showGushimLayer
-                ? "bg-cyan-600 text-white border-cyan-600"
-                : "bg-white text-gray-700 border-gray-200"
-            }`}
-            aria-pressed={showGushimLayer}
-          >
-            {showGushimLayer ? "הסתר גושים" : "הצג גושים"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowParcelsLayer((prev) => !prev)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition border shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
-              showParcelsLayer
-                ? "bg-green-600 text-white border-green-600"
-                : "bg-white text-gray-700 border-gray-200"
-            }`}
-            aria-pressed={showParcelsLayer}
-          >
-            {showParcelsLayer ? "הסתר חלקות" : "הצג חלקות"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowTama70Layer((prev) => !prev)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition border shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
-              showTama70Layer
-                ? "bg-red-600 text-white border-red-600"
-                : "bg-white text-gray-700 border-gray-200"
-            }`}
-            aria-pressed={showTama70Layer}
-          >
-            {showTama70Layer ? "הסתר תמא/70" : "הצג תמא/70"}
-          </button>
-        </div>
-
-        {(declaredLoading || residentialInventoryLoading || priceProgramLoading || urbanRenewalLoading || talarPrepLoading || gushimLoading) && (
-          <div className="px-4 py-2 rounded-lg text-xs bg-white/95 border border-gray-200 shadow-sm text-gray-600">
-            {declaredLoading ? "טוען שכבת פרויקטים מוכרזים..." : ""}
-            {declaredLoading && residentialInventoryLoading ? <br /> : null}
-            {residentialInventoryLoading ? "טוען מלאי תכנוני למגורים..." : ""}
-            {(declaredLoading || residentialInventoryLoading) && priceProgramLoading ? <br /> : null}
-            {priceProgramLoading ? "טוען שכבת מחיר למשתכן..." : ""}
-            {(declaredLoading || residentialInventoryLoading || priceProgramLoading) && urbanRenewalLoading ? <br /> : null}
-            {urbanRenewalLoading ? "טוען שכבת התחדשות עירונית..." : ""}
-            {(declaredLoading || residentialInventoryLoading || priceProgramLoading || urbanRenewalLoading) && talarPrepLoading ? <br /> : null}
-            {talarPrepLoading ? "טוען שכבת תוכניות בהכנה..." : ""}
-            {(declaredLoading || residentialInventoryLoading || priceProgramLoading || urbanRenewalLoading || talarPrepLoading) && gushimLoading ? <br /> : null}
-            {gushimLoading ? "טוען שכבת גושים..." : ""}
-          </div>
-        )}
-
-        {(declaredError || residentialInventoryError || priceProgramError || urbanRenewalError || talarPrepError || gushimError) && (
-          <div className="px-4 py-2 rounded-lg text-xs bg-red-50 border border-red-200 text-red-600 shadow-sm space-y-1">
-            {declaredError && <div>{declaredError}</div>}
-            {residentialInventoryError && <div>{residentialInventoryError}</div>}
-            {priceProgramError && <div>{priceProgramError}</div>}
-            {urbanRenewalError && <div>{urbanRenewalError}</div>}
-            {talarPrepError && <div>{talarPrepError}</div>}
-            {gushimError && <div>{gushimError}</div>}
-          </div>
-        )}
+      {/* Layers Dropdown Menu */}
+      <div className="absolute top-4 right-4 z-[1000]" dir="rtl">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-semibold transition border shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary flex items-center gap-2"
+            >
+              <Layers className="w-4 h-4" />
+              שכבות
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64 z-[2000]" dir="rtl">
+            <DropdownMenuLabel>בחר שכבות להצגה</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuCheckboxItem
+              checked={showDeclaredLayer}
+              onCheckedChange={(checked) => setShowDeclaredLayer(checked === true)}
+            >
+              פרויקטים מוכרזים ({declaredFeatures.length.toLocaleString("he-IL")})
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={showResidentialInventoryLayer}
+              onCheckedChange={(checked) => setShowResidentialInventoryLayer(checked === true)}
+            >
+              מלאי תכנוני למגורים ({residentialInventoryFeatures.length.toLocaleString("he-IL")})
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={showPriceProgramLayer}
+              onCheckedChange={(checked) => setShowPriceProgramLayer(checked === true)}
+            >
+              מחיר למשתכן ({priceProgramFeatures.length.toLocaleString("he-IL")})
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={showUrbanRenewalLayer}
+              onCheckedChange={(checked) => setShowUrbanRenewalLayer(checked === true)}
+            >
+              התחדשות עירונית ({urbanRenewalFeatures.length.toLocaleString("he-IL")})
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={showTalarPrepLayer}
+              onCheckedChange={(checked) => setShowTalarPrepLayer(checked === true)}
+            >
+              תוכניות בהכנה ({talarPrepFeatures.length.toLocaleString("he-IL")})
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={showGushimLayer}
+              onCheckedChange={(checked) => setShowGushimLayer(checked === true)}
+            >
+              גושים
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={showParcelsLayer}
+              onCheckedChange={(checked) => setShowParcelsLayer(checked === true)}
+            >
+              חלקות
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={showTama70Layer}
+              onCheckedChange={(checked) => setShowTama70Layer(checked === true)}
+            >
+              תמא/70 - מטרו - גבול תכנית
+            </DropdownMenuCheckboxItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {selectedDeclaredFeature && (
@@ -1403,7 +1486,8 @@ export default function DeclaredProjectsMap() {
         </div>
       )}
 
-      {selectedGushFeature && (
+      {/* Gushim selection is now handled by GushimLayer component */}
+      {false && selectedGushFeature && (
         <div className="absolute z-[1000] bottom-6 right-6 bg-white rounded-xl shadow-lg border p-4 min-w-[320px]" dir="rtl">
           {(() => {
             const props = selectedGushFeature.properties;
@@ -1447,7 +1531,69 @@ export default function DeclaredProjectsMap() {
       )}
 
 
-      <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-3 z-10 space-y-2" dir="rtl">
+      {/* Search by Gush and Helka - moved to bottom left for better visibility */}
+      <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-4 z-[2000] space-y-3 min-w-[320px] max-w-[400px]" dir="rtl">
+        <div className="text-sm font-medium text-gray-900 mb-2">חיפוש לפי גוש וחלקה</div>
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <label htmlFor="search-gush" className="block text-xs text-gray-600 mb-1">
+              גוש
+            </label>
+            <input
+              id="search-gush"
+              type="number"
+              value={searchGush}
+              onChange={(e) => setSearchGush(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleGushHelkaSearch();
+                }
+              }}
+              placeholder="לדוגמה: 30500"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+              dir="ltr"
+            />
+          </div>
+          <div className="flex-1">
+            <label htmlFor="search-helka" className="block text-xs text-gray-600 mb-1">
+              חלקה
+            </label>
+            <input
+              id="search-helka"
+              type="number"
+              value={searchHelka}
+              onChange={(e) => setSearchHelka(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleGushHelkaSearch();
+                }
+              }}
+              placeholder="לדוגמה: 42"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+              dir="ltr"
+            />
+          </div>
+        </div>
+        <button
+          onClick={handleGushHelkaSearch}
+          disabled={searching || !searchGush || !searchHelka}
+          className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+        >
+          {searching ? "מחפש..." : "חפש"}
+        </button>
+        {searchError && (
+          <div className="px-3 py-2 bg-red-50 border border-red-200 text-red-600 rounded text-xs">
+            {searchError}
+          </div>
+        )}
+        {searchResult && (
+          <div className="px-3 py-2 bg-green-50 border border-green-200 text-green-700 rounded text-xs">
+            נמצא: גוש {searchResult.gush_num}, חלקה {searchResult.helka}
+          </div>
+        )}
+      </div>
+
+      <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-3 z-[1500] space-y-2" dir="rtl">
         <div className="text-sm font-medium text-gray-900">שכבות מידע במפה</div>
         <div className="text-xs text-gray-600 space-y-1">
           <div>

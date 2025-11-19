@@ -2,7 +2,9 @@ import { GeoJSON as LeafletGeoJSON } from "react-leaflet";
 import { useState, useEffect, useCallback } from "react";
 import L, { type Layer } from "leaflet";
 import type { Feature, FeatureCollection, GeoJsonProperties, Point } from "geojson";
-import { supabase } from "@/lib/supabase";
+
+// Backend API URL - use environment variable or default to localhost
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Helper function to convert Web Mercator (EPSG:3857) coordinates to WGS84 (lat/lng)
 const convertWebMercatorToWGS84 = (x: number, y: number): [number, number] => {
@@ -106,201 +108,66 @@ export function ParcelsLayer({ show }: ParcelsLayerProps) {
         setLoading(true);
         setError(null);
 
-        // Skip RPC function - ST_Transform from ITM is too slow and times out
-        // Use direct query fallback only - will show parcels with WGS84 coordinates
-        console.log('Skipping RPC function - using direct query fallback');
+        console.log('Loading parcels from backend API with progressive loading...');
 
-        // Fallback: Direct query - use raw_entity->centroid (centroid_geom is PostGIS and requires RPC)
-        // First, check how many parcels exist in the table
-        const { count } = await supabase
-          .from('parcel_ownership_new')
-          .select('*', { count: 'exact', head: true })
-          .not('raw_entity->centroid', 'is', null);
-        
-        console.log(`Total parcels in table with coordinates: ${count || 0}`);
-
-        // Load parcels with pagination - load all of them (12,000+)
-        // Supabase has a default limit of 1000, so we need to use pagination
-        // Use smaller page size to avoid timeout
-        let allParcels: any[] = [];
-        let from = 0;
-        const pageSize = 500; // Reduced from 1000 to avoid timeout
+        // Progressive loading - load chunks and update map immediately
+        let allFeatures: ParcelsFeature[] = [];
+        let page = 1;
+        const pageSize = 500;
         let hasMore = true;
         
-        console.log('Loading parcels with pagination...');
-        
-        while (hasMore) {
-          const { data: parcels, error: queryError } = await supabase
-            .from('parcel_ownership_new')
-            .select('id, govmap_object_id, gush_num, gush_suffi, parcel, legal_area_m2, ownership_type, remark, doc_url, raw_entity')
-            .not('raw_entity->centroid', 'is', null)
-            .order('id', { ascending: true })
-            .range(from, from + pageSize - 1);
-          
-          if (queryError) {
-            throw queryError;
-          }
-          
-          if (parcels && parcels.length > 0) {
-            allParcels = [...allParcels, ...parcels];
-            from += pageSize;
-            hasMore = parcels.length === pageSize;
-            console.log(`Loaded ${allParcels.length} parcels so far...`);
-          } else {
-            hasMore = false;
-          }
-        }
-        
-        const parcels = allParcels;
-        console.log(`Finished loading ${parcels.length} parcels total`);
-
-        if (!parcels || parcels.length === 0) {
-          if (isMounted) {
-            setParcelsData({
-              type: 'FeatureCollection',
-              features: []
-            } as ParcelsCollection);
-            setLoading(false);
-          }
-          return;
-        }
-
-        // Convert to GeoJSON - only use coordinates already in WGS84
-        const features = parcels
-          .map((parcel: any, index: number) => {
-            try {
-              let coords: number[] | null = null;
-              
-              // Try to get coordinates from centroid_geom (geometry column) first
-              // centroid_geom is a PostGIS geometry with SRID 2039 (ITM)
-              // If centroid_geom exists, we need to use RPC to convert it
-              // For now, use centroid jsonb array from raw_entity
-              
-              // Use centroid jsonb array from raw_entity (centroid is stored in raw_entity)
-              let centroidData = parcel.raw_entity?.centroid;
-              
-              if (!centroidData) {
-                // If no centroid in raw_entity, skip this parcel
-                return null;
-              }
-
-              if (Array.isArray(centroidData)) {
-                coords = centroidData.slice(0, 2).map((v: any) => Number(v));
-              } else if (centroidData?.coordinates && Array.isArray(centroidData.coordinates)) {
-                coords = centroidData.coordinates.slice(0, 2).map((v: any) => Number(v));
-              } else if (centroidData?.lng && centroidData?.lat) {
-                coords = [Number(centroidData.lng), Number(centroidData.lat)];
-              }
-
-              if (!coords || coords.length < 2 || isNaN(coords[0]) || isNaN(coords[1])) {
-                return null;
-              }
-
-              let [first, second] = coords;
-              let finalX: number;
-              let finalY: number;
-
-              // Check if coordinates are large numbers (could be ITM or Web Mercator)
-              // ITM: typically 100,000 - 1,100,000
-              // Web Mercator: typically millions (e.g., 3,816,333)
-              if (first > 100000 || second > 100000) {
-                // Try Web Mercator first (coordinates like 3816333, 3659807 are likely Web Mercator)
-                if (first > 1000000 || second > 1000000) {
-                  // These look like Web Mercator coordinates - convert to WGS84
-                  const [convertedLat, convertedLng] = convertWebMercatorToWGS84(first, second);
-                  finalX = convertedLng; // GeoJSON uses [lng, lat]
-                  finalY = convertedLat;
-                  
-                  if (index < 5) {
-                    console.log(`Parcel ${parcel.id} converted from Web Mercator [${first}, ${second}] to WGS84 [${finalX}, ${finalY}]`);
-                  }
-                } else {
-                  // These are likely ITM coordinates - convert to WGS84
-                  const converted = convertITMToWGS84(first, second);
-                  if (!converted) {
-                    if (index < 5) {
-                      console.warn(`Parcel ${parcel.id} ITM conversion failed for [${first}, ${second}]`);
-                    }
-                    return null;
-                  }
-                  const [convertedLat, convertedLng] = converted;
-                  finalX = convertedLng; // GeoJSON uses [lng, lat]
-                  finalY = convertedLat;
-                  
-                  if (index < 5) {
-                    console.log(`Parcel ${parcel.id} converted from ITM [${first}, ${second}] to WGS84 [${finalX}, ${finalY}]`);
-                  }
-                }
-                
-                // Validate converted coordinates are in Israel bounds
-                if (finalY < 29 || finalY > 34 || finalX < 34 || finalX > 36) {
-                  if (index < 5) {
-                    console.warn(`Parcel ${parcel.id} converted coordinates outside Israel: [${finalX}, ${finalY}]`);
-                  }
-                  return null;
-                }
-              } else {
-                // Not ITM - use coordinates as-is, but validate they're in Israel bounds
-                finalX = first;
-                finalY = second;
-                
-                // Validate coordinates are in valid Israel WGS84 bounds
-                if (finalY < 29 || finalY > 34 || finalX < 34 || finalX > 36) {
-                  // Try swapping coordinates - maybe they're stored as [lat, lng]
-                  if (finalX >= 29 && finalX <= 34 && finalY >= 34 && finalY <= 36) {
-                    const tempX = finalX;
-                    finalX = finalY;
-                    finalY = tempX;
-                  } else {
-                    return null;
-                  }
-                }
-              }
-
-              const [lng, lat] = [finalX, finalY];
-
-              // Extract properties from fields array in raw_entity
-              const fields = parcel.raw_entity?.fields || [];
-              const gushNum = fields.find((f: any) => f.fieldName === 'גוש')?.fieldValue || parcel.gush_num;
-              const gushSuffix = fields.find((f: any) => f.fieldName === 'תת גוש')?.fieldValue || parcel.gush_suffi;
-              const parcelNum = fields.find((f: any) => f.fieldName === 'חלקה')?.fieldValue || parcel.parcel;
-              const legalArea = fields.find((f: any) => f.fieldName === 'שטח רשום (מ"ר)')?.fieldValue || parcel.legal_area_m2;
-              const ownershipType = fields.find((f: any) => f.fieldName === 'סוג בעלות')?.fieldValue || parcel.ownership_type;
-              const remark = fields.find((f: any) => f.fieldName === 'הערה')?.fieldValue || parcel.remark;
-
-              return {
-                type: 'Feature' as const,
-                properties: {
-                  id: parcel.id,
-                  object_id: parcel.govmap_object_id || parcel.object_id,
-                  gush_num: gushNum,
-                  gush_suffix: gushSuffix,
-                  parcel: parcelNum,
-                  legal_area: legalArea,
-                  ownership_type: ownershipType,
-                  remark: remark,
-                  doc_url: parcel.doc_url,
-                },
-                geometry: {
-                  type: 'Point' as const,
-                  coordinates: [lng, lat] as [number, number]
-                }
-              };
-            } catch (err) {
-              console.error(`Error processing parcel ${parcel.id}:`, err);
-              return null;
-            }
-          })
-          .filter((f): f is ParcelsFeature => f !== null);
-
-        // Log summary
-        console.log(`Parcels loaded: ${parcels.length} total, ${features.length} successfully converted and displayed`);
-
+        // Initialize with empty FeatureCollection
         if (isMounted) {
           setParcelsData({
             type: 'FeatureCollection',
-            features: features
+            features: []
           } as ParcelsCollection);
+        }
+
+        while (hasMore && isMounted) {
+          try {
+            // Fetch chunk from backend API
+            const response = await fetch(
+              `${API_URL}/api/parcels/chunk?page=${page}&pageSize=${pageSize}`
+            );
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.features && data.features.length > 0) {
+              // Add new features to existing ones
+              allFeatures = [...allFeatures, ...data.features];
+              
+              // Update map immediately with current features
+              if (isMounted) {
+                setParcelsData({
+                  type: 'FeatureCollection',
+                  features: allFeatures
+                } as ParcelsCollection);
+              }
+
+              console.log(`Loaded chunk ${page}: ${data.features.length} parcels, total: ${allFeatures.length}`);
+
+              // Check if there are more chunks
+              hasMore = data.hasMore === true;
+              page++;
+            } else {
+              hasMore = false;
+            }
+          } catch (chunkError) {
+            console.error(`Error loading chunk ${page}:`, chunkError);
+            // Continue to next chunk instead of failing completely
+            hasMore = false;
+          }
+        }
+
+        console.log(`Finished loading ${allFeatures.length} parcels total`);
+
+        if (isMounted) {
+          setLoading(false);
         }
       } catch (err) {
         if (!isMounted) return;

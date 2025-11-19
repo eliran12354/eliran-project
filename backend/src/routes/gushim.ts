@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
   getGushimChunkController,
   getGushimCountController,
-} from '../controllers/gushimController';
+} from '../controllers/gushimController.js';
 
 const router = Router();
 

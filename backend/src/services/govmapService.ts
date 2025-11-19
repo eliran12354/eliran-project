@@ -2,7 +2,7 @@
  * Service for GovMap API integration
  */
 
-import { supabase } from '../config/database';
+import { supabase } from '../config/database.js';
 
 interface ParcelSearchResult {
   LAT?: number;

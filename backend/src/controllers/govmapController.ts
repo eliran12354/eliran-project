@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { searchParcelByGushHelka } from '../services/govmapService';
+import { searchParcelByGushHelka } from '../services/govmapService.js';
 
 /**
  * Search for parcel by GUSH and HELKA

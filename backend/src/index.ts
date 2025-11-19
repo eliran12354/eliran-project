@@ -1,9 +1,9 @@
 import express from 'express';
 import cors from 'cors';
-import { config } from './config/env';
-import parcelsRouter from './routes/parcels';
-import gushimRouter from './routes/gushim';
-import govmapRouter from './routes/govmap';
+import { config } from './config/env.js';
+import parcelsRouter from './routes/parcels.js';
+import gushimRouter from './routes/gushim.js';
+import govmapRouter from './routes/govmap.js';
 
 const app = express();
 
