@@ -79,7 +79,12 @@ export async function getParcelsChunk(
     }
 
     if (!data || data.length === 0) {
-      return [];
+      return {
+        features: [],
+        hasMore: false,
+        page,
+        totalLoaded: 0
+      };
     }
 
     // Convert coordinates and filter by viewport
