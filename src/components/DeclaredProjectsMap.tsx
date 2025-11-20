@@ -1226,31 +1226,31 @@ export default function DeclaredProjectsMap() {
               checked={showDeclaredLayer}
               onCheckedChange={(checked) => setShowDeclaredLayer(checked === true)}
             >
-              פרויקטים מוכרזים ({declaredFeatures.length.toLocaleString("he-IL")})
+              פרויקטים מוכרזים
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={showResidentialInventoryLayer}
               onCheckedChange={(checked) => setShowResidentialInventoryLayer(checked === true)}
             >
-              מלאי תכנוני למגורים ({residentialInventoryFeatures.length.toLocaleString("he-IL")})
+              מלאי תכנוני למגורים
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={showPriceProgramLayer}
               onCheckedChange={(checked) => setShowPriceProgramLayer(checked === true)}
             >
-              מחיר למשתכן ({priceProgramFeatures.length.toLocaleString("he-IL")})
+              מחיר למשתכן
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={showUrbanRenewalLayer}
               onCheckedChange={(checked) => setShowUrbanRenewalLayer(checked === true)}
             >
-              התחדשות עירונית ({urbanRenewalFeatures.length.toLocaleString("he-IL")})
+              התחדשות עירונית
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={showTalarPrepLayer}
               onCheckedChange={(checked) => setShowTalarPrepLayer(checked === true)}
             >
-              תוכניות בהכנה ({talarPrepFeatures.length.toLocaleString("he-IL")})
+              תוכניות בהכנה
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={showGushimLayer}
