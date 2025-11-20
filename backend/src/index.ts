@@ -4,6 +4,7 @@ import { config } from './config/env.js';
 import parcelsRouter from './routes/parcels.js';
 import gushimRouter from './routes/gushim.js';
 import govmapRouter from './routes/govmap.js';
+import landUseMavatRouter from './routes/landUseMavat.js';
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.get('/health', (req: express.Request, res: express.Response) => {
 app.use('/api/parcels', parcelsRouter);
 app.use('/api/gushim', gushimRouter);
 app.use('/api/govmap', govmapRouter);
+app.use('/api/land-use-mavat', landUseMavatRouter);
 
 // Start server
 const PORT = config.server.port;

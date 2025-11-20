@@ -7,6 +7,7 @@ import { urbanRenewalCompoundQueries, talarPrepQueries } from "@/lib/supabase-qu
 import { ParcelsLayer } from "./ParcelsLayer";
 import { Tama70Layer } from "./Tama70Layer";
 import { GushimLayer } from "./GushimLayer";
+import { LandUseMavatLayer } from "./LandUseMavatLayer";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Layers } from "lucide-react";
 
@@ -249,6 +250,8 @@ export default function DeclaredProjectsMap() {
   const [showParcelsLayer, setShowParcelsLayer] = useState(true);
 
   const [showTama70Layer, setShowTama70Layer] = useState(true);
+
+  const [showLandUseMavatLayer, setShowLandUseMavatLayer] = useState(false);
 
   // Layers panel state
   const [showLayersPanel, setShowLayersPanel] = useState(false);
@@ -1121,6 +1124,7 @@ export default function DeclaredProjectsMap() {
 
         <ParcelsLayer show={showParcelsLayer} />
         <Tama70Layer show={showTama70Layer} />
+        <LandUseMavatLayer show={showLandUseMavatLayer} />
 
         {/* Search result marker */}
         {searchResultFeature && (
@@ -1265,6 +1269,12 @@ export default function DeclaredProjectsMap() {
               onCheckedChange={(checked) => setShowTama70Layer(checked === true)}
             >
               תמא/70 - מטרו - גבול תכנית
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={showLandUseMavatLayer}
+              onCheckedChange={(checked) => setShowLandUseMavatLayer(checked === true)}
+            >
+              יעודי קרקע - מבא"ת
             </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -1593,45 +1603,6 @@ export default function DeclaredProjectsMap() {
         )}
       </div>
 
-      <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-3 z-[1500] space-y-2" dir="rtl">
-        <div className="text-sm font-medium text-gray-900">שכבות מידע במפה</div>
-        <div className="text-xs text-gray-600 space-y-1">
-          <div>
-            {declaredLoading
-              ? "פרויקטים מוכרזים: טוען..."
-              : `פרויקטים מוכרזים: ${declaredFeatures.length.toLocaleString("he-IL")}`}
-          </div>
-          <div>
-            {residentialInventoryLoading
-              ? "מלאי תכנוני: טוען..."
-              : `מלאי תכנוני למגורים: ${residentialInventoryFeatures.length.toLocaleString("he-IL")}`}
-          </div>
-          <div>
-            {priceProgramLoading
-              ? "מחיר למשתכן: טוען..."
-              : `מחיר למשתכן: ${priceProgramFeatures.length.toLocaleString("he-IL")}`}
-          </div>
-          <div>
-            {urbanRenewalLoading
-              ? "התחדשות עירונית: טוען..."
-              : `התחדשות עירונית: ${urbanRenewalFeatures.length.toLocaleString("he-IL")}`}
-          </div>
-          <div>
-            {talarPrepLoading
-              ? "תוכניות בהכנה: טוען..."
-              : `תוכניות בהכנה: ${talarPrepFeatures.length.toLocaleString("he-IL")}`}
-          </div>
-        </div>
-        {(declaredError || residentialInventoryError || priceProgramError || urbanRenewalError || talarPrepError) && (
-          <div className="text-xs text-red-600 space-y-1">
-            {declaredError && <div>{declaredError}</div>}
-            {residentialInventoryError && <div>{residentialInventoryError}</div>}
-            {priceProgramError && <div>{priceProgramError}</div>}
-            {urbanRenewalError && <div>{urbanRenewalError}</div>}
-            {talarPrepError && <div>{talarPrepError}</div>}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
