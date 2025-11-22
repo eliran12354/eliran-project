@@ -167,13 +167,8 @@ export function TenderListings() {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between flex-row-reverse">
-        <div className="flex items-center gap-3 justify-end text-right">
-          <h2 className="text-3xl font-bold">מכרזי רמ&quot;י</h2>
-        </div>
-        <div className="text-sm text-muted-foreground text-left">
-          עמוד {currentPage} מתוך {totalPages} • {totalTenders} מכרזים בסך הכל
-        </div>
+      <div className="flex items-center justify-start" dir="rtl">
+        <h2 className="text-3xl font-bold text-right">מכרזי רמ&quot;י</h2>
       </div>
 
       {/* Search and Filter Card */}
@@ -230,7 +225,7 @@ export function TenderListings() {
           <p className="text-muted-foreground">נסה שוב מאוחר יותר</p>
         </div>
       ) : (
-        <div className="grid grid-cols-4 gap-4 animate-slide-up">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-slide-up">
           {tenders.map((tender, index) => {
             const statusInfo = getStatusBadge(tender.status || 'לא ידוע', tender.daysUntilDeadline);
             const priorityScore = getPriorityScore(tender.daysUntilDeadline, tender.status || 'לא ידוע');
