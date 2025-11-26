@@ -100,22 +100,27 @@ export function PlansListings() {
 
   if (loading) {
     return (
-      <div className="space-y-8 animate-fade-in">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Building className="w-6 h-6 text-primary" />
-            <h2 className="text-3xl font-bold">תוכניות בנייה</h2>
+      <div className="space-y-6 md:space-y-8 animate-fade-in">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <Building className="w-6 h-6 text-primary" />
+              <h2 className="text-2xl md:text-3xl font-bold">תוכניות בנייה</h2>
+            </div>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              סקירת כל תוכניות הבנייה הרלוונטיות באזורי העניין שלך
+            </p>
           </div>
-          <div className="text-sm text-muted-foreground">
-            טוען...
+          <div className="text-xs md:text-sm text-muted-foreground">
+            טוען נתונים...
           </div>
         </div>
 
-        <p className="text-xl text-muted-foreground">
+        <p className="text-base md:text-lg text-muted-foreground">
           כל התוכניות הפעילות והרלוונטיות ביותר עבורך
         </p>
 
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
             <Card key={i} className="overflow-hidden bg-gradient-card shadow-soft border-0 animate-pulse">
               <div className="w-full h-40 bg-gray-200/50 flex items-center justify-center">
@@ -139,32 +144,39 @@ export function PlansListings() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Building className="w-6 h-6 text-primary" />
-          <h2 className="text-3xl font-bold">תוכניות בנייה</h2>
+    <div className="space-y-6 md:space-y-8 animate-fade-in">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <Building className="w-6 h-6 text-primary" />
+            <h2 className="text-2xl md:text-3xl font-bold">תוכניות בנייה</h2>
+          </div>
+          <p className="text-xs md:text-sm text-muted-foreground">
+            כלי עבודה למציאת ומעקב אחרי תוכניות בנייה רלוונטיות בנכסים ובאזורים שונים
+          </p>
         </div>
-        <div className="text-sm text-muted-foreground">
-          עמוד {currentPage} מתוך {totalPages} • {totalPlans} תוכניות בסך הכל
+        <div className="text-xs md:text-sm text-muted-foreground">
+          עמוד {currentPage} מתוך {totalPages} 
+          <span className="hidden sm:inline">•</span> {" "}
+          <span className="block sm:inline">{totalPlans} תוכניות בסך הכל</span>
         </div>
       </div>
 
-      <p className="text-xl text-muted-foreground">
+      <p className="text-base md:text-lg text-muted-foreground">
         כל התוכניות הפעילות והרלוונטיות ביותר עבורך • {itemsPerPage} תוכניות בעמוד
       </p>
 
       {/* Search and Filters */}
       <Card className="bg-gradient-card shadow-soft border-0">
         <div className="p-6">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
             <Filter className="w-5 h-5 text-primary" />
             <h3 className="text-lg font-semibold">חיפוש וסינון</h3>
           </div>
           
           <div className="space-y-4">
             {/* Search */}
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <div className="flex-1">
                 <Input
                   placeholder="חיפוש לפי שם תוכנית, מספר תוכנית, עיר, גוש חלקה..."
@@ -174,11 +186,11 @@ export function PlansListings() {
                   className="h-10"
                 />
               </div>
-              <Button onClick={handleSearch} className="h-10 px-6">
+              <Button onClick={handleSearch} className="h-10 px-6 w-full sm:w-auto">
                 <Search className="w-4 h-4 mr-2" />
                 חפש
               </Button>
-              <Button onClick={() => setSearchTerm('')} variant="outline" size="sm">
+              <Button onClick={() => setSearchTerm('')} variant="outline" size="sm" className="w-full sm:w-auto">
                 <X className="w-4 h-4" />
               </Button>
             </div>
@@ -202,13 +214,28 @@ export function PlansListings() {
       </Card>
 
       {plans.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-64 bg-muted/20 rounded-lg border border-dashed border-border">
+        <div className="flex flex-col items-center justify-center h-64 bg-muted/20 rounded-lg border border-dashed border-border p-6 text-center">
           <Building className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">אין תוכניות בנייה</h3>
-          <p className="text-muted-foreground">נסה שוב מאוחר יותר</p>
+          {searchTerm ? (
+            <>
+              <h3 className="text-xl font-semibold mb-2">לא נמצאו תוכניות התואמות לחיפוש</h3>
+              <p className="text-muted-foreground mb-4">נסה לשנות את מילות החיפוש או לנקות סינונים</p>
+              {hasActiveFilters && (
+                <Button onClick={clearFilters} variant="outline" size="sm">
+                  <X className="w-4 h-4 mr-2" />
+                  נקה חיפוש
+                </Button>
+              )}
+            </>
+          ) : (
+            <>
+              <h3 className="text-xl font-semibold mb-2">אין תוכניות בנייה</h3>
+              <p className="text-muted-foreground">נסה שוב מאוחר יותר</p>
+            </>
+          )}
         </div>
       ) : (
-        <div className="grid grid-cols-4 gap-4 animate-slide-up">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 animate-slide-up">
           {plans.map((plan, index) => {
             const statusInfo = getStatusBadge(plan.status || 'לא ידוע', plan.daysUntilDeadline);
             const priorityScore = getPriorityScore(plan.daysUntilDeadline, plan.status || 'לא ידוע');
@@ -302,7 +329,12 @@ export function PlansListings() {
                       }
                     }}
                   >
-                    {plan.plan_url || plan.plan_new_mavat_url ? 'צפה בתוכנית' : 'צפה בפרטים'}
+                    <span className="flex items-center justify-center gap-2">
+                      {plan.plan_url || plan.plan_new_mavat_url ? 'צפה בתוכנית' : 'צפה בפרטים'}
+                      {(plan.plan_url || plan.plan_new_mavat_url) && (
+                        <ExternalLink className="w-4 h-4" />
+                      )}
+                    </span>
                   </Button>
                 </div>
               </Card>
@@ -313,7 +345,7 @@ export function PlansListings() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center space-x-4 pt-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-4 md:gap-0 md:space-x-4 pt-8">
           <Button
             variant="outline"
             onClick={handlePreviousPage}

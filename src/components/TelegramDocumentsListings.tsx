@@ -142,34 +142,34 @@ export function TelegramDocumentsListings() {
 
   if (error) {
     return (
-      <div className="text-center text-red-500 py-8">
-        שגיאה בטעינת המסמכים: {error.message}
+      <div className="text-center py-12" dir="rtl">
+        <p className="text-red-500 mb-2">אירעה שגיאה בטעינת המכרזים</p>
+        <p className="text-muted-foreground">נסה לרענן את העמוד או לנסות שוב מאוחר יותר.</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:space-y-8" dir="rtl">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="text-right ml-auto" dir="rtl">
-          <h1 className="text-3xl font-bold text-gray-900">כונס נכסים</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <FileText className="w-8 h-8 text-primary" />
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-1">
+          <h2 className="text-2xl md:text-3xl font-bold">מכרזי הוצאה לפועל</h2>
         </div>
       </div>
 
       {/* Search */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2" dir="rtl">
-            <Filter className="w-5 h-5" />
-            חיפוש וסינון
+          <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2" dir="rtl">
+            <span className="flex items-center gap-2">
+              <Filter className="w-5 h-5" />
+              חיפוש וסינון
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2 flex-row-reverse">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-row-reverse">
             <div className="relative flex-1">
               <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
@@ -185,7 +185,7 @@ export function TelegramDocumentsListings() {
                 dir="rtl"
               />
             </div>
-            <Button onClick={handleSearch} className="gap-2">
+            <Button onClick={handleSearch} className="gap-2 h-10 px-6 w-full sm:w-auto">
               חפש
               <Search className="w-4 h-4" />
             </Button>
@@ -426,7 +426,7 @@ export function TelegramDocumentsListings() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center space-x-4 pt-8 pb-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-4 md:gap-0 md:space-x-4 pt-8 pb-4">
           <Button
             variant="outline"
             onClick={handlePreviousPage}

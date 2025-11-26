@@ -141,21 +141,27 @@ export function TenderListings() {
 
   if (loading) {
     return (
-      <div className="space-y-8 animate-fade-in">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <ArrowRight className="w-6 h-6 text-primary" />
-            <h2 className="text-3xl font-bold">טוען מכרזים...</h2>
+      <div className="space-y-6 md:space-y-8 animate-fade-in">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <ArrowRight className="w-6 h-6 text-primary" />
+              <h2 className="text-2xl md:text-3xl font-bold">מכרזי רמ&quot;י</h2>
+            </div>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              טוען מכרזים פעילים ממערכת רמ&quot;י
+            </p>
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-8">
-          {[1, 2, 3].map(i => (
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
             <Card key={i} className="overflow-hidden bg-gradient-card shadow-soft border-0 animate-pulse">
-              <div className="h-52 bg-muted"></div>
-              <div className="p-6 space-y-4">
-                <div className="h-4 bg-muted rounded"></div>
-                <div className="h-4 bg-muted rounded w-2/3"></div>
-                <div className="h-8 bg-muted rounded"></div>
+              <div className="h-40 bg-muted" />
+              <div className="p-4 space-y-3">
+                <div className="h-4 bg-muted rounded w-3/4" />
+                <div className="h-4 bg-muted rounded w-1/2" />
+                <div className="h-8 bg-muted rounded w-full" />
               </div>
             </Card>
           ))}
@@ -165,26 +171,33 @@ export function TenderListings() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 md:space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-start" dir="rtl">
-        <h2 className="text-3xl font-bold text-right">מכרזי רמ&quot;י</h2>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between" dir="rtl">
+        <div className="space-y-1 text-right">
+          <h2 className="text-2xl md:text-3xl font-bold">מכרזי רמ&quot;י</h2>
+          <p className="text-xs md:text-sm text-muted-foreground">
+            מכרזי נדל״ן פעילים של רשות מקרקעי ישראל, מרוכזים עבורך במקום אחד
+          </p>
+        </div>
       </div>
 
       {/* Search and Filter Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2" dir="rtl">
-            <Filter className="w-5 h-5" />
-            חיפוש וסינון
+          <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2" dir="rtl">
+            <span className="flex items-center gap-2">
+              <Filter className="w-5 h-5" />
+              חיפוש וסינון
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4 flex-row-reverse">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-row-reverse">
             <div className="flex-1">
               <Input
                 type="text"
-                placeholder="חפש לפי עיר או מספר מכרז..."
+                placeholder="חפש לפי עיר, מספר מכרז או מאפיין אחר..."
                 value={searchQuery}
                 onChange={handleSearchChange}
                 onKeyPress={handleKeyPress}
@@ -194,35 +207,52 @@ export function TenderListings() {
             </div>
             <Button 
               onClick={handleSearch}
-              className="h-10"
+              className="h-10 px-6 w-full sm:w-auto"
             >
+              <Search className="w-4 h-4 ml-2" />
               חפש
-              <Search className="w-4 h-4 mr-2" />
             </Button>
             {(searchQuery || activeSearchQuery) && (
               <Button 
                 onClick={clearSearch} 
                 variant="outline"
-                className="h-10"
+                className="h-10 w-full sm:w-auto"
                 aria-label="נקה חיפוש"
               >
+                <X className="w-4 h-4 ml-2" />
                 נקה
-                <X className="w-4 h-4 mr-2" />
               </Button>
             )}
           </div>
         </CardContent>
       </Card>
 
-      <p className="text-xl text-muted-foreground">
+      <p className="text-base md:text-lg text-muted-foreground">
         מכרזים פעילים שכדאי לעקוב אחריהם • {itemsPerPage} מכרזים בעמוד
       </p>
 
       {tenders.length === 0 ? (
-        <div className="text-center py-12">
+        <div className="flex flex-col items-center justify-center h-64 bg-muted/20 rounded-lg border border-dashed border-border p-6 text-center">
           <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">אין מכרזים פעילים</h3>
-          <p className="text-muted-foreground">נסה שוב מאוחר יותר</p>
+          {(searchQuery || activeSearchQuery) ? (
+            <>
+              <h3 className="text-xl font-semibold mb-2">לא נמצאו מכרזים התואמים לחיפוש</h3>
+              <p className="text-muted-foreground mb-4">נסה לשנות את מילות החיפוש או לנקות סינון</p>
+              <Button 
+                onClick={clearSearch} 
+                variant="outline"
+                size="sm"
+              >
+                <X className="w-4 h-4 ml-2" />
+                נקה חיפוש
+              </Button>
+            </>
+          ) : (
+            <>
+              <h3 className="text-xl font-semibold mb-2">אין מכרזים פעילים</h3>
+              <p className="text-muted-foreground">נסה שוב מאוחר יותר</p>
+            </>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-slide-up">
@@ -324,7 +354,7 @@ export function TenderListings() {
                       {statusInfo.text}
                     </Badge>
                     <Badge variant="outline" className="text-xs font-medium">
-                      {tender.tender_number}
+                      {tender.raw.MichrazID || tender.michraz_id}
                     </Badge>
                   </div>
 
@@ -400,8 +430,10 @@ export function TenderListings() {
                           window.open(sourceUrl, '_blank', 'noopener,noreferrer');
                         }}
                       >
-                        <ExternalLink className="w-4 h-4 ml-2" />
-                        קישור למקור הממשלתי
+                        <span className="flex items-center justify-center gap-2">
+                          קישור למקור הממשלתי
+                          <ExternalLink className="w-4 h-4" />
+                        </span>
                       </Button>
                     ) : (
                       <Button 
@@ -421,7 +453,7 @@ export function TenderListings() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center space-x-4 pt-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-4 md:gap-0 md:space-x-4 pt-8">
           <Button
             variant="outline"
             onClick={handlePreviousPage}
