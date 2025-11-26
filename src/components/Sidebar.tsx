@@ -146,7 +146,7 @@ export function Sidebar() {
           <Link to="/urban-renewal">
             <Button className="w-full justify-start gap-4 h-14 text-base hover:bg-primary/5 hover:text-primary hover-lift transition-all duration-300">
               <Building2 className="w-6 h-6" />
-              פרויקטי התחדשות עירונית
+              מתחמי התחדשות עירונית
             </Button>
           </Link>
         </div>
