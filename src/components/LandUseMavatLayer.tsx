@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { GeoJSON as LeafletGeoJSON } from "react-leaflet";
 import L from "leaflet";
 import type { Feature, FeatureCollection, GeoJsonProperties } from "geojson";
+import * as turf from "@turf/turf";
 
 // Backend API URL
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -29,6 +30,7 @@ type LandUseMavatCollection = FeatureCollection<any, LandUseMavatProperties>;
 
 interface LandUseMavatLayerProps {
   show: boolean;
+  filterByParcel?: Feature | null;
 }
 
 const landUseMavatLayerStyle: L.PathOptions = {
@@ -39,7 +41,7 @@ const landUseMavatLayerStyle: L.PathOptions = {
   opacity: 0.9,
 };
 
-export function LandUseMavatLayer({ show }: LandUseMavatLayerProps) {
+export function LandUseMavatLayer({ show, filterByParcel }: LandUseMavatLayerProps) {
   const [landUseMavatData, setLandUseMavatData] = useState<LandUseMavatCollection | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -310,9 +312,51 @@ export function LandUseMavatLayer({ show }: LandUseMavatLayerProps) {
     return null;
   }
 
+  // Filter features by parcel if parcel is provided
+  const filteredFeatures = useMemo(() => {
+    if (!filterByParcel || !filterByParcel.geometry) {
+      return validFeatures;
+    }
+
+    try {
+      // Create turf polygon from parcel
+      const parcelPolygon = turf.feature(filterByParcel.geometry);
+      
+      // Filter features that intersect with or are within the parcel
+      const filtered = validFeatures.filter((feature: any) => {
+        if (!feature.geometry) return false;
+
+        try {
+          const featureGeo = turf.feature(feature.geometry);
+          
+          // Check if feature intersects with parcel
+          if (turf.booleanIntersects(parcelPolygon, featureGeo)) {
+            return true;
+          }
+          
+          // For Point features, check if point is within parcel
+          if (feature.geometry.type === 'Point') {
+            return turf.booleanPointInPolygon(featureGeo, parcelPolygon);
+          }
+          
+          return false;
+        } catch (err) {
+          console.warn('Error checking feature intersection:', err);
+          return false;
+        }
+      });
+
+      console.log(`Filtered ${filtered.length} land use features within parcel out of ${validFeatures.length} total`);
+      return filtered;
+    } catch (err) {
+      console.error('Error filtering features by parcel:', err);
+      return validFeatures;
+    }
+  }, [validFeatures, filterByParcel]);
+
   const validData: LandUseMavatCollection = {
     type: 'FeatureCollection',
-    features: validFeatures
+    features: filteredFeatures
   };
 
   // Log rendering info
@@ -320,7 +364,7 @@ export function LandUseMavatLayer({ show }: LandUseMavatLayerProps) {
 
   return (
     <LeafletGeoJSON
-      key={`land-use-mavat-${validFeatures.length}`}
+      key={`land-use-mavat-${filteredFeatures.length}-${filterByParcel ? 'filtered' : 'all'}`}
       data={validData}
       style={(feature) => {
         // Return style for each feature

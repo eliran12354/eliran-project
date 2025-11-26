@@ -1,15 +1,17 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Search, FileText, MapPin, Calendar, DollarSign, Building2, Filter, X, ChevronLeft, ChevronRight, Phone, Mail, CreditCard } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Search, FileText, MapPin, Calendar, DollarSign, Building2, Filter, X, ChevronLeft, ChevronRight, Phone, Mail, CreditCard, Maximize2, ExternalLink } from 'lucide-react'
 import { telegramDocumentQueries } from '@/lib/supabase-queries'
 import type { TelegramDocument } from '@/lib/supabase'
 
 export function TelegramDocumentsListings() {
+  const queryClient = useQueryClient()
   const [searchTerm, setSearchTerm] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState({
@@ -26,6 +28,7 @@ export function TelegramDocumentsListings() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 50
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
   // Fetch documents with filters
   const { data: documentsData, isLoading, error } = useQuery({
@@ -128,6 +131,7 @@ export function TelegramDocumentsListings() {
 
   const hasActiveFilters = Object.values(filters).some(value => value !== '') || searchQuery !== ''
 
+
   if (isLoading || isLoadingAllDocuments) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -147,15 +151,9 @@ export function TelegramDocumentsListings() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center gap-4">
+        <div className="text-right ml-auto" dir="rtl">
           <h1 className="text-3xl font-bold text-gray-900">כונס נכסים</h1>
-          <p className="text-gray-600 mt-2">
-            נמצאו {totalDocuments.toLocaleString('he-IL')} מסמכים
-            {totalPages > 1 && (
-              <span className="text-sm"> • עמוד {currentPage} מתוך {totalPages} • {documents.length} מסמכים בעמוד זה</span>
-            )}
-          </p>
         </div>
         <div className="flex items-center gap-2">
           <FileText className="w-8 h-8 text-primary" />
@@ -202,19 +200,48 @@ export function TelegramDocumentsListings() {
             <Card key={doc.id} className="overflow-hidden hover:shadow-lg transition-shadow bg-gradient-card shadow-soft border-0">
               {/* Image */}
               {doc.image_url ? (
-                <div className="relative w-full h-96 bg-gray-100 overflow-hidden flex items-center justify-center">
+                <div className="relative w-full min-h-[600px] max-h-[800px] bg-gray-100 overflow-auto flex items-center justify-center group">
                   <img
                     src={doc.image_url}
                     alt={`מסמך ${doc.id}`}
-                    className="max-w-full max-h-full object-contain cursor-pointer hover:scale-105 transition-transform duration-300"
+                    className="w-full h-auto max-w-full object-contain cursor-pointer transition-transform duration-300"
                     onClick={() => {
-                      window.open(doc.image_url, '_blank', 'noopener,noreferrer')
+                      setSelectedImage(doc.image_url)
                     }}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement
                       target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23e5e7eb" width="400" height="300"/%3E%3Ctext fill="%239ca3af" font-family="Arial" font-size="16" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3Eתמונה לא זמינה%3C/text%3E%3C/svg%3E'
                     }}
                   />
+                  {/* Overlay with buttons */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="bg-white/90 hover:bg-white"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedImage(doc.image_url)
+                        }}
+                      >
+                        <Maximize2 className="w-4 h-4 mr-2" />
+                        תצוגה מלאה
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="bg-white/90 hover:bg-white"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          window.open(doc.image_url, '_blank', 'noopener,noreferrer')
+                        }}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        פתח בחלון חדש
+                      </Button>
+                    </div>
+                  </div>
                   <div className="absolute top-2 right-2">
                     {getStatusBadge(doc.processing_status)}
                   </div>
@@ -228,7 +255,7 @@ export function TelegramDocumentsListings() {
                   )}
                 </div>
               ) : (
-                <div className="w-full h-96 bg-gray-100 flex items-center justify-center">
+                <div className="w-full h-[600px] bg-gray-100 flex items-center justify-center">
                   <FileText className="w-12 h-12 text-gray-300" />
                 </div>
               )}
@@ -331,6 +358,7 @@ export function TelegramDocumentsListings() {
                     {doc.block_number && <div>גוש: {doc.block_number}</div>}
                   </div>
                 )}
+
               </CardContent>
             </Card>
           ))}
@@ -359,6 +387,42 @@ export function TelegramDocumentsListings() {
           </CardContent>
         </Card>
       )}
+
+      {/* Image Modal */}
+      <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto h-auto p-2">
+          <DialogHeader className="sr-only">
+            <DialogTitle>תצוגה מלאה של המסמך</DialogTitle>
+          </DialogHeader>
+          {selectedImage && (
+            <div className="relative w-full h-full flex items-center justify-center bg-gray-100 rounded-lg overflow-auto">
+              <img
+                src={selectedImage}
+                alt="תצוגה מלאה"
+                className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
+                onClick={() => {
+                  window.open(selectedImage, '_blank', 'noopener,noreferrer')
+                }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement
+                  target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23e5e7eb" width="400" height="300"/%3E%3Ctext fill="%239ca3af" font-family="Arial" font-size="16" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3Eתמונה לא זמינה%3C/text%3E%3C/svg%3E'
+                }}
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                className="absolute bottom-4 right-4 bg-white/90 hover:bg-white"
+                onClick={() => {
+                  window.open(selectedImage, '_blank', 'noopener,noreferrer')
+                }}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                פתח בחלון חדש
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Pagination */}
       {totalPages > 1 && (

@@ -884,6 +884,29 @@ export const telegramDocumentQueries = {
     
     if (error) throw error
     return data as TelegramDocument
+  },
+
+  // Update document
+  async update(id: number, updates: Partial<TelegramDocument>) {
+    const { data, error } = await supabase
+      .from('telegram_documents')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data as TelegramDocument
+  },
+
+  // Delete document
+  async delete(id: number) {
+    const { error } = await supabase
+      .from('telegram_documents')
+      .delete()
+      .eq('id', id)
+    
+    if (error) throw error
   }
 }
 

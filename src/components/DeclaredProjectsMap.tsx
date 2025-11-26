@@ -8,6 +8,7 @@ import { ParcelsLayer } from "./ParcelsLayer";
 import { Tama70Layer } from "./Tama70Layer";
 import { GushimLayer } from "./GushimLayer";
 import { LandUseMavatLayer } from "./LandUseMavatLayer";
+import { ParcelSearchLayer } from "./ParcelSearchLayer";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Layers } from "lucide-react";
 
@@ -216,7 +217,12 @@ function FitBoundsToFeatures({ features }: { features: AnyFeature[] }) {
   return null;
 }
 
-export default function DeclaredProjectsMap() {
+interface DeclaredProjectsMapProps {
+  searchGush?: string;
+  searchHelka?: string;
+}
+
+export default function DeclaredProjectsMap({ searchGush, searchHelka }: DeclaredProjectsMapProps) {
   const [showDeclaredLayer, setShowDeclaredLayer] = useState(true);
   const [declaredData, setDeclaredData] = useState<DeclaredCollection | null>(null);
   const [declaredLoading, setDeclaredLoading] = useState(true);
@@ -252,17 +258,12 @@ export default function DeclaredProjectsMap() {
   const [showTama70Layer, setShowTama70Layer] = useState(true);
 
   const [showLandUseMavatLayer, setShowLandUseMavatLayer] = useState(false);
+  
+  // Parcel search state (for filtering land use by parcel)
+  const [foundParcel, setFoundParcel] = useState<Feature | null>(null);
 
   // Layers panel state
   const [showLayersPanel, setShowLayersPanel] = useState(false);
-
-  // Search by gush and helka state
-  const [searchGush, setSearchGush] = useState<string>("");
-  const [searchHelka, setSearchHelka] = useState<string>("");
-  const [searching, setSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-  const [searchResult, setSearchResult] = useState<any>(null);
-  const [searchResultFeature, setSearchResultFeature] = useState<Feature | null>(null);
   const mapRef = useRef<L.Map | null>(null);
 
   const center: [number, number] = [32.0749, 34.7668]; // Tel Aviv center
@@ -340,128 +341,7 @@ export default function DeclaredProjectsMap() {
   }, [selectedTalarPrepId, talarPrepFeatures]);
 
   // Gushim selection is now handled by GushimLayer component
-
-  // Search for parcel by gush and helka using GovMap API
-  const handleGushHelkaSearch = async () => {
-    if (!searchGush || !searchHelka) {
-      setSearchError("נא להזין גוש וחלקה");
-      return;
-    }
-
-    setSearching(true);
-    setSearchError(null);
-    setSearchResult(null);
-    setSearchResultFeature(null);
-
-    try {
-      const gushNum = parseInt(searchGush, 10);
-      const helkaNum = parseInt(searchHelka, 10);
-
-      if (isNaN(gushNum) || isNaN(helkaNum)) {
-        throw new Error('גוש וחלקה חייבים להיות מספרים');
-      }
-
-      // Use GovMap API entitiesByPoint to search for parcel
-      // According to the user's finding, we need to POST to:
-      // https://www.govmap.gov.il/api/layers-catalog/entitiesByPoint
-      // But first, we need to find the parcel coordinates by gush/helka
-      // Let's try using the backend API first, then fallback to direct GovMap API
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-      
-      let result: any = null;
-      
-      let backendResponse: Response | null = null;
-      
-      try {
-        // Try backend API first
-        backendResponse = await fetch(
-          `${API_URL}/api/govmap/search?gush=${gushNum}&helka=${helkaNum}`
-        );
-
-        // Parse JSON once (response body can only be read once)
-        let backendData: any;
-        try {
-          backendData = await backendResponse.json();
-        } catch (parseErr) {
-          // If we can't parse JSON, use status code
-          throw new Error(`שגיאה בחיפוש חלקה (${backendResponse.status})`);
-        }
-        
-        if (backendResponse.ok) {
-          if (backendData.success && backendData.data) {
-            result = backendData.data;
-          } else if (!backendData.success) {
-            // Backend returned success: false
-            throw new Error(backendData.message || backendData.error || 'שגיאה בחיפוש חלקה');
-          }
-        } else {
-          // Backend returned error status - use the error message from response
-          const errorMsg = backendData.message || backendData.error || 'שגיאה בחיפוש חלקה';
-          console.error('Backend search error:', backendData);
-          throw new Error(errorMsg);
-        }
-      } catch (backendErr) {
-        console.error('Backend API error:', backendErr);
-        throw backendErr;
-      }
-
-      // If backend didn't return data, show error
-      if (!result) {
-        throw new Error('לא נמצאו תוצאות לחלקה זו');
-      }
-      
-      // Convert coordinates to WGS84 if needed
-      let lat: number, lng: number;
-      
-      if (result.LAT && result.LNG) {
-        lat = result.LAT;
-        lng = result.LNG;
-      } else if (result.X && result.Y) {
-        // Assume ITM coordinates - convert to WGS84
-        // For now, we'll use a simple conversion
-        // TODO: Use proper ITM to WGS84 conversion
-        lat = result.Y / 111000; // Approximate
-        lng = result.X / 111000; // Approximate
-      } else if (result.centroid && Array.isArray(result.centroid) && result.centroid.length >= 2) {
-        // Handle centroid from entitiesByPoint response
-        const [x, y] = result.centroid;
-        // These are likely ITM coordinates, need proper conversion
-        // For now, approximate
-        lat = y / 111000;
-        lng = x / 111000;
-      } else {
-        throw new Error('לא נמצאו קואורדינטות לחלקה');
-      }
-
-      // Create a feature for the search result
-      const feature: Feature = {
-        type: 'Feature',
-        properties: {
-          gush_num: gushNum,
-          helka: helkaNum,
-          ...result
-        },
-        geometry: {
-          type: 'Point',
-          coordinates: [lng, lat]
-        }
-      };
-
-      setSearchResult({ gush_num: gushNum, helka: helkaNum, ...result });
-      setSearchResultFeature(feature);
-
-      // Zoom to the parcel location
-      if (mapRef.current) {
-        mapRef.current.setView([lat, lng], 15);
-      }
-
-    } catch (err) {
-      console.error('Error searching parcel:', err);
-      setSearchError(err instanceof Error ? err.message : 'שגיאה בחיפוש חלקה');
-    } finally {
-      setSearching(false);
-    }
-  };
+  // Parcel search is now handled by ParcelSearchLayer component using WFS
 
   const handleDeclaredFeature = useCallback(
     (feature: Feature, layer: Layer) => {
@@ -1124,87 +1004,25 @@ export default function DeclaredProjectsMap() {
 
         <ParcelsLayer show={showParcelsLayer} />
         <Tama70Layer show={showTama70Layer} />
-        <LandUseMavatLayer show={showLandUseMavatLayer} />
-
-        {/* Search result marker */}
-        {searchResultFeature && (
-          <LeafletGeoJSON
-            key="search-result"
-            data={searchResultFeature}
-            pointToLayer={(feature, latlng) => {
-              return L.circleMarker(latlng, {
-                radius: 10,
-                fillColor: "#ef4444",
-                color: "#dc2626",
-                weight: 3,
-                opacity: 1,
-                fillOpacity: 0.8
-              });
-            }}
-            onEachFeature={(feature, layer) => {
-              const props = feature.properties || {};
-              
-              // Extract information from properties
-              const gushNum = props.gush_num || props.GUSH || 'לא ידוע';
-              const gushSuffix = props.gush_suffix || props.gush_suffi || null;
-              const helka = props.helka || props.HELKA || props.parcel || 'לא ידוע';
-              const legalArea = props.legal_area_m2 || props.legalArea || null;
-              
-              // Try to get from raw_entity fields if available
-              let gushFromFields = null;
-              let gushSuffixFromFields = null;
-              let helkaFromFields = null;
-              let legalAreaFromFields = null;
-              
-              if (props.raw_entity?.fields && Array.isArray(props.raw_entity.fields)) {
-                const fields = props.raw_entity.fields;
-                const gushField = fields.find((f: any) => f.fieldName === 'גוש' || f.fieldName === 'מספר גוש');
-                const gushSuffixField = fields.find((f: any) => f.fieldName === 'תת גוש');
-                const helkaField = fields.find((f: any) => f.fieldName === 'חלקה' || f.fieldName === 'מספר חלקה');
-                const legalAreaField = fields.find((f: any) => f.fieldName === 'שטח רשום (מ"ר)' || f.fieldName === 'שטח רשום');
-                
-                if (gushField) gushFromFields = gushField.fieldValue;
-                if (gushSuffixField) gushSuffixFromFields = gushSuffixField.fieldValue;
-                if (helkaField) helkaFromFields = helkaField.fieldValue;
-                if (legalAreaField) legalAreaFromFields = legalAreaField.fieldValue;
-              }
-              
-              // Use field values if available, otherwise use direct properties
-              const finalGush = gushFromFields || gushNum;
-              const finalGushSuffix = gushSuffixFromFields !== null ? gushSuffixFromFields : (gushSuffix !== null ? gushSuffix : null);
-              const finalHelka = helkaFromFields || helka;
-              const finalLegalArea = legalAreaFromFields !== null ? legalAreaFromFields : legalArea;
-              
-              const popupParts: string[] = [
-                '<div dir="rtl" style="text-align:right;">',
-                '<div style="font-weight:700;font-size:14px;margin-bottom:6px;">חלקה שנמצאה</div>',
-                `<div style="font-size:13px;color:#374151;margin-bottom:3px;"><strong>מספר גוש:</strong> ${finalGush}</div>`
-              ];
-              
-              if (finalGushSuffix !== null && finalGushSuffix !== undefined && finalGushSuffix !== 0) {
-                popupParts.push(`<div style="font-size:13px;color:#374151;margin-bottom:3px;"><strong>תת גוש:</strong> ${finalGushSuffix}</div>`);
-              }
-              
-              popupParts.push(`<div style="font-size:13px;color:#374151;margin-bottom:3px;"><strong>מספר חלקה:</strong> ${finalHelka}</div>`);
-              
-              if (finalLegalArea !== null && finalLegalArea !== undefined) {
-                const areaFormatted = typeof finalLegalArea === 'number' 
-                  ? finalLegalArea.toLocaleString('he-IL') 
-                  : finalLegalArea;
-                popupParts.push(`<div style="font-size:13px;color:#374151;margin-bottom:3px;"><strong>שטח רשום:</strong> ${areaFormatted} מ"ר</div>`);
-              }
-              
-              if (props.status_text) {
-                popupParts.push(`<div style="font-size:12px;color:#6b7280;margin-top:4px;"><strong>סטטוס:</strong> ${props.status_text}</div>`);
-              }
-              
-              popupParts.push('</div>');
-              
-              const popupContent = popupParts.join('');
-              layer.bindPopup(popupContent);
+        
+        {/* Parcel search layer using WFS */}
+        {searchGush && searchHelka && (
+          <ParcelSearchLayer
+            gush={searchGush}
+            helka={searchHelka}
+            onParcelFound={(parcel) => {
+              setFoundParcel(parcel);
+              // Auto-enable land use layer when parcel is found
+              setShowLandUseMavatLayer(true);
             }}
           />
         )}
+        
+        <LandUseMavatLayer 
+          show={showLandUseMavatLayer} 
+          filterByParcel={foundParcel}
+        />
+
       </MapContainer>
 
       {/* Layers Dropdown Menu */}
@@ -1541,67 +1359,6 @@ export default function DeclaredProjectsMap() {
       )}
 
 
-      {/* Search by Gush and Helka - moved to bottom left for better visibility */}
-      <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-4 z-[2000] space-y-3 min-w-[320px] max-w-[400px]" dir="rtl">
-        <div className="text-sm font-medium text-gray-900 mb-2">חיפוש לפי גוש וחלקה</div>
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <label htmlFor="search-gush" className="block text-xs text-gray-600 mb-1">
-              גוש
-            </label>
-            <input
-              id="search-gush"
-              type="number"
-              value={searchGush}
-              onChange={(e) => setSearchGush(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleGushHelkaSearch();
-                }
-              }}
-              placeholder="לדוגמה: 30500"
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
-              dir="ltr"
-            />
-          </div>
-          <div className="flex-1">
-            <label htmlFor="search-helka" className="block text-xs text-gray-600 mb-1">
-              חלקה
-            </label>
-            <input
-              id="search-helka"
-              type="number"
-              value={searchHelka}
-              onChange={(e) => setSearchHelka(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleGushHelkaSearch();
-                }
-              }}
-              placeholder="לדוגמה: 42"
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
-              dir="ltr"
-            />
-          </div>
-        </div>
-        <button
-          onClick={handleGushHelkaSearch}
-          disabled={searching || !searchGush || !searchHelka}
-          className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-        >
-          {searching ? "מחפש..." : "חפש"}
-        </button>
-        {searchError && (
-          <div className="px-3 py-2 bg-red-50 border border-red-200 text-red-600 rounded text-xs">
-            {searchError}
-          </div>
-        )}
-        {searchResult && (
-          <div className="px-3 py-2 bg-green-50 border border-green-200 text-green-700 rounded text-xs">
-            נמצא: גוש {searchResult.gush_num}, חלקה {searchResult.helka}
-          </div>
-        )}
-      </div>
 
     </div>
   );
