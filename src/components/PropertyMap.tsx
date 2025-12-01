@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Filter } from "lucide-react";
 import DeclaredProjectsMap from "./DeclaredProjectsMap";
+import { GoogleMapsMap } from "./GoogleMapsMap";
 
 export function PropertyMap() {
   const [gush, setGush] = useState<string>("");
   const [helka, setHelka] = useState<string>("");
+  const [useGoogleMaps, setUseGoogleMaps] = useState(true);
 
   return (
     <div className="min-h-[calc(100vh-120px)] animate-fade-in">
@@ -45,11 +47,16 @@ export function PropertyMap() {
             </div>
             <Button
               onClick={() => {
-                // Pass search params to DeclaredProjectsMap
-                const event = new CustomEvent('parcelSearch', {
-                  detail: { gush, helka }
-                });
-                window.dispatchEvent(event);
+                if (useGoogleMaps) {
+                  // TODO: Implement search for Google Maps
+                  alert("פונקציית חיפוש תתווסף בקרוב");
+                } else {
+                  // Pass search params to DeclaredProjectsMap
+                  const event = new CustomEvent('parcelSearch', {
+                    detail: { gush, helka }
+                  });
+                  window.dispatchEvent(event);
+                }
               }}
               disabled={!gush || !helka}
               className="h-12 px-8 bg-gradient-primary shadow-glow hover:shadow-large transition-all duration-300"
@@ -59,7 +66,7 @@ export function PropertyMap() {
             </Button>
           </div>
 
-          {/* Address search (existing) */}
+          {/* Address search */}
           <div className="flex gap-6">
             <div className="relative flex-1">
               <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
@@ -75,8 +82,23 @@ export function PropertyMap() {
           </div>
         </div>
 
+        {/* Map Toggle Button */}
+        <div className="mb-4 flex justify-end" dir="rtl">
+          <Button
+            variant="outline"
+            onClick={() => setUseGoogleMaps(!useGoogleMaps)}
+            className="gap-2"
+          >
+            {useGoogleMaps ? "מעבר למפת Leaflet" : "מעבר למפת Google"}
+          </Button>
+        </div>
+
         <div className="relative w-full h-[75vh] min-h-[620px]">
-          <DeclaredProjectsMap searchGush={gush} searchHelka={helka} />
+          {useGoogleMaps ? (
+            <GoogleMapsMap searchGush={gush} searchHelka={helka} />
+          ) : (
+            <DeclaredProjectsMap searchGush={gush} searchHelka={helka} />
+          )}
         </div>
       </div>
     </div>

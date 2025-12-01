@@ -57,21 +57,52 @@ npm run dev
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
 
-## Google Maps on /map
+## Environment Variables
 
-The map at `/map` uses `@vis.gl/react-google-maps`.
+Create a `.env.local` file in the project root with the following variables:
 
-Setup:
+```env
+# Google Maps API Key (Required for /map page)
+# Get your API key from: https://console.cloud.google.com/google/maps-apis
+# Make sure to enable "Maps JavaScript API" for your project
+VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 
-1. Enable the Google Maps JavaScript API and create an API key.
-2. Add the key to a Vite env var named `VITE_GOOGLE_MAPS_API_KEY`.
-   - Create `.env.local` in the project root:
+# Backend API URL (Optional, default: http://localhost:3000)
+VITE_API_URL=http://localhost:3000
 
+# GovMap API Token (Optional)
+VITE_GOVMAP_TOKEN=your_govmap_token_here
+
+# Supabase Configuration (Optional, has defaults)
+VITE_SUPABASE_URL=your_supabase_url_here
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 ```
-VITE_GOOGLE_MAPS_API_KEY=YOUR_API_KEY
-```
 
-3. Restart the dev server (`npm run dev`). If the key is missing, the map box will show a short message.
+### Google Maps Setup
+
+The map at `/map` (מפת יעודי קרקע) uses Google Maps via `@vis.gl/react-google-maps`.
+
+1. **Get a Google Maps API Key:**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/google/maps-apis)
+   - Create a new project or select an existing one
+   - Enable the following APIs:
+     - **Maps JavaScript API** (required)
+     - **Places API** (required for address search)
+     - **Geocoding API** (required for address search)
+   - Create credentials (API Key)
+   - (Optional) Restrict the API key to your domain for security
+
+2. **Add the key to `.env.local`:**
+   - Create a file named `.env.local` in the project root
+   - Add: `VITE_GOOGLE_MAPS_API_KEY=your_api_key_here`
+   - Replace `your_api_key_here` with your actual API key
+
+3. **Restart the dev server:**
+   ```bash
+   npm run dev
+   ```
+
+4. **Note:** If the API key is missing, the map will display a helpful error message with instructions.
 
 ## Project Structure
 

@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Search, FileText, MapPin, Calendar, DollarSign, Building2, Filter, X, ChevronLeft, ChevronRight, Phone, Mail, CreditCard, Maximize2, ExternalLink } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Search, FileText, MapPin, Calendar, DollarSign, Building2, Filter, X, ChevronLeft, ChevronRight, Phone, Mail, CreditCard, Maximize2, ExternalLink, Plus, Upload } from 'lucide-react'
 import { telegramDocumentQueries } from '@/lib/supabase-queries'
 import type { TelegramDocument } from '@/lib/supabase'
 
@@ -29,6 +30,29 @@ export function TelegramDocumentsListings() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 50
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [newDocument, setNewDocument] = useState<Partial<TelegramDocument>>({
+    image_url: '',
+    location_city: '',
+    location_address: '',
+    property_type: '',
+    document_type: '',
+    contact_name: '',
+    contact_phone: '',
+    contact_email: '',
+    court_file_number: '',
+    parcel_number: '',
+    block_number: '',
+    total_area_sqm: undefined,
+    building_area_sqm: undefined,
+    deposit_amount: undefined,
+    deposit_currency: '',
+    submission_deadline: '',
+    processing_status: 'processed',
+  })
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   // Fetch documents with filters
   const { data: documentsData, isLoading, error } = useQuery({
@@ -131,6 +155,118 @@ export function TelegramDocumentsListings() {
 
   const hasActiveFilters = Object.values(filters).some(value => value !== '') || searchQuery !== ''
 
+  // Handle image file upload
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        setImageFile(file)
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string)
+          setNewDocument({ ...newDocument, image_url: reader.result as string })
+        }
+        reader.readAsDataURL(file)
+      } else {
+        alert('אנא בחר קובץ תמונה בלבד')
+      }
+    }
+  }
+
+  // Handle image URL input
+  const handleImageUrlChange = (url: string) => {
+    setNewDocument({ ...newDocument, image_url: url })
+    setImagePreview(url)
+    setImageFile(null)
+  }
+
+  // Handle save new document
+  const handleSaveNewDocument = async () => {
+    try {
+      setIsSaving(true)
+      
+      // Prepare document data - convert empty strings to null
+      const documentData: Partial<TelegramDocument> = {
+        image_url: newDocument.image_url || null,
+        location_city: newDocument.location_city || null,
+        location_address: newDocument.location_address || null,
+        property_type: newDocument.property_type || null,
+        document_type: newDocument.document_type || null,
+        contact_name: newDocument.contact_name || null,
+        contact_phone: newDocument.contact_phone || null,
+        contact_email: newDocument.contact_email || null,
+        court_file_number: newDocument.court_file_number || null,
+        parcel_number: newDocument.parcel_number || null,
+        block_number: newDocument.block_number || null,
+        total_area_sqm: newDocument.total_area_sqm || null,
+        building_area_sqm: newDocument.building_area_sqm || null,
+        deposit_amount: newDocument.deposit_amount || null,
+        deposit_currency: newDocument.deposit_currency || null,
+        submission_deadline: newDocument.submission_deadline || null,
+        processing_status: newDocument.processing_status || 'processed',
+      }
+
+      await telegramDocumentQueries.create(documentData as Omit<TelegramDocument, 'id' | 'created_at' | 'updated_at'>)
+      
+      // Reset form
+      setNewDocument({
+        image_url: '',
+        location_city: '',
+        location_address: '',
+        property_type: '',
+        document_type: '',
+        contact_name: '',
+        contact_phone: '',
+        contact_email: '',
+        court_file_number: '',
+        parcel_number: '',
+        block_number: '',
+        total_area_sqm: undefined,
+        building_area_sqm: undefined,
+        deposit_amount: undefined,
+        deposit_currency: '',
+        submission_deadline: '',
+        processing_status: 'processed',
+      })
+      setImageFile(null)
+      setImagePreview(null)
+      setIsAddDialogOpen(false)
+      
+      // Refresh the list
+      queryClient.invalidateQueries({ queryKey: ['telegram-documents'] })
+      queryClient.invalidateQueries({ queryKey: ['all-telegram-documents'] })
+    } catch (error) {
+      console.error('Error creating document:', error)
+      alert('שגיאה בהוספת הכרטיסייה. אנא נסה שוב.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleResetAddForm = () => {
+    setNewDocument({
+      image_url: '',
+      location_city: '',
+      location_address: '',
+      property_type: '',
+      document_type: '',
+      contact_name: '',
+      contact_phone: '',
+      contact_email: '',
+      court_file_number: '',
+      parcel_number: '',
+      block_number: '',
+      total_area_sqm: undefined,
+      building_area_sqm: undefined,
+      deposit_amount: undefined,
+      deposit_currency: '',
+      submission_deadline: '',
+      processing_status: 'processed',
+    })
+    setImageFile(null)
+    setImagePreview(null)
+  }
+
 
   if (isLoading || isLoadingAllDocuments) {
     return (
@@ -156,6 +292,10 @@ export function TelegramDocumentsListings() {
         <div className="space-y-1">
           <h2 className="text-2xl md:text-3xl font-bold">מכרזי הוצאה לפועל</h2>
         </div>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          הוסף כרטיסייה
+        </Button>
       </div>
 
       {/* Search */}
@@ -387,6 +527,247 @@ export function TelegramDocumentsListings() {
           </CardContent>
         </Card>
       )}
+
+      {/* Add Document Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+        setIsAddDialogOpen(open)
+        if (!open) {
+          handleResetAddForm()
+        }
+      }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>הוסף כרטיסייה חדשה</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6" dir="rtl">
+            {/* Image Upload Section */}
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">תמונה</Label>
+              
+              {/* Image Preview */}
+              {imagePreview && (
+                <div className="relative w-full h-64 bg-gray-100 rounded-lg overflow-hidden border-2 border-dashed border-gray-300">
+                  <img
+                    src={imagePreview}
+                    alt="תצוגה מקדימה"
+                    className="w-full h-full object-contain"
+                  />
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 left-2"
+                    onClick={() => {
+                      setImagePreview(null)
+                      setImageFile(null)
+                      setNewDocument({ ...newDocument, image_url: '' })
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+              
+              {/* Upload Options */}
+              {!imagePreview && (
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="image-url">קישור לתמונה (URL)</Label>
+                    <Input
+                      id="image-url"
+                      type="url"
+                      placeholder="הזן קישור לתמונה..."
+                      value={newDocument.image_url || ''}
+                      onChange={(e) => handleImageUrlChange(e.target.value)}
+                      dir="ltr"
+                    />
+                  </div>
+                  
+                  <div className="relative">
+                    <Label htmlFor="image-upload">או העלה תמונה מהמחשב</Label>
+                    <Input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFileChange}
+                      className="cursor-pointer"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Document Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="location_city">עיר *</Label>
+                <Input
+                  id="location_city"
+                  value={newDocument.location_city || ''}
+                  onChange={(e) => setNewDocument({ ...newDocument, location_city: e.target.value })}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="location_address">כתובת</Label>
+                <Input
+                  id="location_address"
+                  value={newDocument.location_address || ''}
+                  onChange={(e) => setNewDocument({ ...newDocument, location_address: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="property_type">סוג נכס</Label>
+                <Input
+                  id="property_type"
+                  value={newDocument.property_type || ''}
+                  onChange={(e) => setNewDocument({ ...newDocument, property_type: e.target.value })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="document_type">סוג מסמך</Label>
+                <Input
+                  id="document_type"
+                  value={newDocument.document_type || ''}
+                  onChange={(e) => setNewDocument({ ...newDocument, document_type: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="total_area_sqm">שטח כולל (מ״ר)</Label>
+                <Input
+                  id="total_area_sqm"
+                  type="number"
+                  value={newDocument.total_area_sqm || ''}
+                  onChange={(e) => setNewDocument({ ...newDocument, total_area_sqm: e.target.value ? Number(e.target.value) : undefined })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="building_area_sqm">שטח בנייה (מ״ר)</Label>
+                <Input
+                  id="building_area_sqm"
+                  type="number"
+                  value={newDocument.building_area_sqm || ''}
+                  onChange={(e) => setNewDocument({ ...newDocument, building_area_sqm: e.target.value ? Number(e.target.value) : undefined })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="deposit_amount">סכום פיקדון</Label>
+                <Input
+                  id="deposit_amount"
+                  type="number"
+                  value={newDocument.deposit_amount || ''}
+                  onChange={(e) => setNewDocument({ ...newDocument, deposit_amount: e.target.value ? Number(e.target.value) : undefined })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="deposit_currency">מטבע פיקדון</Label>
+                <Input
+                  id="deposit_currency"
+                  value={newDocument.deposit_currency || ''}
+                  onChange={(e) => setNewDocument({ ...newDocument, deposit_currency: e.target.value })}
+                  placeholder="₪ או $"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="court_file_number">מספר תיק</Label>
+                <Input
+                  id="court_file_number"
+                  value={newDocument.court_file_number || ''}
+                  onChange={(e) => setNewDocument({ ...newDocument, court_file_number: e.target.value })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="parcel_number">מספר חלקה</Label>
+                <Input
+                  id="parcel_number"
+                  value={newDocument.parcel_number || ''}
+                  onChange={(e) => setNewDocument({ ...newDocument, parcel_number: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="block_number">מספר גוש</Label>
+                <Input
+                  id="block_number"
+                  value={newDocument.block_number || ''}
+                  onChange={(e) => setNewDocument({ ...newDocument, block_number: e.target.value })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="submission_deadline">תאריך הגשה</Label>
+                <Input
+                  id="submission_deadline"
+                  type="date"
+                  value={newDocument.submission_deadline || ''}
+                  onChange={(e) => setNewDocument({ ...newDocument, submission_deadline: e.target.value || null })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contact_name">שם איש קשר</Label>
+              <Input
+                id="contact_name"
+                value={newDocument.contact_name || ''}
+                onChange={(e) => setNewDocument({ ...newDocument, contact_name: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="contact_phone">טלפון</Label>
+                <Input
+                  id="contact_phone"
+                  value={newDocument.contact_phone || ''}
+                  onChange={(e) => setNewDocument({ ...newDocument, contact_phone: e.target.value })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="contact_email">אימייל</Label>
+                <Input
+                  id="contact_email"
+                  type="email"
+                  value={newDocument.contact_email || ''}
+                  onChange={(e) => setNewDocument({ ...newDocument, contact_email: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsAddDialogOpen(false)
+              handleResetAddForm()
+            }}>
+              ביטול
+            </Button>
+            <Button onClick={handleSaveNewDocument} disabled={isSaving || !newDocument.location_city}>
+              {isSaving ? 'שומר...' : 'שמור כרטיסייה'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Image Modal */}
       <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>

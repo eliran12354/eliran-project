@@ -907,6 +907,18 @@ export const telegramDocumentQueries = {
       .eq('id', id)
     
     if (error) throw error
+  },
+
+  // Create new document
+  async create(document: Omit<TelegramDocument, 'id' | 'created_at' | 'updated_at'>) {
+    const { data, error } = await supabase
+      .from('telegram_documents')
+      .insert(document)
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data as TelegramDocument
   }
 }
 
