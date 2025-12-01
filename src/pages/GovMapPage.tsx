@@ -33,9 +33,7 @@ export default function GovMapPage() {
     <div className="h-full w-full flex flex-col">
       <div className="p-6 border-b border-border/20">
         <h1 className="text-3xl font-bold text-primary mb-2">מפת GovMap</h1>
-        <p className="text-muted-foreground mb-4">
-          מפה מבוססת GovMap מוטמעת (iframe)
-        </p>
+
         
         {/* Search form - מעל התיבה */}
         <div className="mb-4" dir="rtl">
@@ -113,10 +111,6 @@ export default function GovMapPage() {
       {/* GovMap embed iframe - תופס את כל העמוד */}
       <div className="flex-1 flex flex-col p-6" dir="rtl">
         <div className="mb-3">
-          <h2 className="text-lg font-semibold mb-2">
-            תצוגת GovMap מוטמעת (iframe)
-          </h2>
-
           <div className="flex gap-2">
             <button
               onClick={() => {
