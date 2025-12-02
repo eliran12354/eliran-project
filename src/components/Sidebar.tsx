@@ -80,7 +80,7 @@ export function Sidebar() {
               }`}
             >
               <MapPin className="w-6 h-6" />
-              מפת GovMap
+              מפת מידע נדל"ן GovMap
             </Button>
           </Link>
         </div>

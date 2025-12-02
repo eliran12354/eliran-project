@@ -1,70 +1,82 @@
 import { useState } from "react";
 
 export default function GovMapPage() {
-  // Search state
+  // Search state - גוש וחלקה
   const [gush, setGush] = useState<string>("");
   const [helka, setHelka] = useState<string>("");
+  // Search state - כתובת ועיר
+  const [address, setAddress] = useState<string>("");
+  const [city, setCity] = useState<string>("");
   const [searchError, setSearchError] = useState<string | null>(null);
 
   // בחירה בין תצוגת גושים, חלקות, יעודי קרקע - מבא"ת, התחדשות עירונית, תוכניות בהכנה,
   // סוג בעלות בחלקות רשומות, מגרשים - משרד הבינוי, תוכניות לשיווק - רמ"י, מגרשי תעשייה באזורי פיתוח
   // ומלאי תכנוני למגורים ב־iframe המוטמעת
-  const [embedLayer, setEmbedLayer] = useState<
-    | 'gushim'
-    | 'parcels'
-    | 'landUseMavat'
-    | 'urbanRenewal'
-    | 'preparingPlans'
-    | 'ownershipType'
-    | 'migrazimHousing'
-    | 'marketingPlans'
-    | 'industrialPlots'
-    | 'residentialInventory'
-  >('gushim');
+  // עכשיו תומך בבחירת כמה שכבות בו-זמנית
+  const [selectedLayers, setSelectedLayers] = useState<Set<string>>(new Set(['gushim']));
   // URL מותאם אישית (למשל לפי גוש/חלקה) עבור ה־iframe
   const [embedCustomUrl, setEmbedCustomUrl] = useState<string | null>(null);
 
-  const defaultGushimUrl =
-    'https://www.govmap.gov.il?c=219143.61%2C618345.06&lay=21&bb=1&zb=1&in=1';
-  const defaultParcelsUrl =
-    'https://www.govmap.gov.il?c=219143.61%2C618345.06&lay=15&bb=1&zb=1&in=1';
-  const defaultLandUseMavatUrl =
-    'https://www.govmap.gov.il?c=180310.43%2C637030.67&lay=14&bb=1&zb=1&in=1';
-  const defaultUrbanRenewalUrl =
-    'https://www.govmap.gov.il?c=202726.24%2C629786.47&lay=200720&bb=1&zb=1&in=1';
-  const defaultPreparingPlansUrl =
-    'https://www.govmap.gov.il?c=219143.61%2C618345.06&lay=50&bb=1&zb=1&in=1';
-  const defaultOwnershipTypeUrl =
-    'https://www.govmap.gov.il?c=219143.61%2C618345.06&lay=6&bb=1&zb=1&in=1';
-  const defaultMigrazimHousingUrl =
-    'https://www.govmap.gov.il?c=219143.61%2C618345.06&lay=335&bb=1&zb=1&in=1';
-  const defaultMarketingPlansUrl =
-    'https://www.govmap.gov.il?c=219143.61%2C618345.06&lay=359&bb=1&zb=1&in=1';
-  const defaultIndustrialPlotsUrl =
-    'https://www.govmap.gov.il?c=219143.61%2C618345.06&lay=143&bb=1&zb=1&in=1';
-  const defaultResidentialInventoryUrl =
-    'https://www.govmap.gov.il?c=219143.61%2C618345.06&lay=340&bb=1&zb=1&in=1';
+  // מיפוי של שכבות ל-layer IDs ב-GovMap
+  const layerIds: Record<string, number> = {
+    gushim: 21,
+    parcels: 15,
+    landUseMavat: 14,
+    urbanRenewal: 200720,
+    preparingPlans: 50,
+    ownershipType: 6,
+    migrazimHousing: 335,
+    marketingPlans: 359,
+    industrialPlots: 143,
+    residentialInventory: 340,
+    realEstateDeals: 16,
+  };
 
-  const embedSrc =
-    embedLayer === 'gushim'
-      ? defaultGushimUrl
-      : embedLayer === 'parcels'
-      ? embedCustomUrl || defaultParcelsUrl
-      : embedLayer === 'landUseMavat'
-      ? embedCustomUrl || defaultLandUseMavatUrl
-      : embedLayer === 'urbanRenewal'
-      ? embedCustomUrl || defaultUrbanRenewalUrl
-      : embedLayer === 'preparingPlans'
-      ? embedCustomUrl || defaultPreparingPlansUrl
-      : embedLayer === 'ownershipType'
-      ? embedCustomUrl || defaultOwnershipTypeUrl
-      : embedLayer === 'migrazimHousing'
-      ? embedCustomUrl || defaultMigrazimHousingUrl
-      : embedLayer === 'marketingPlans'
-      ? embedCustomUrl || defaultMarketingPlansUrl
-      : embedLayer === 'industrialPlots'
-      ? embedCustomUrl || defaultIndustrialPlotsUrl
-      : embedCustomUrl || defaultResidentialInventoryUrl;
+  // Center coordinates (משתמשים ב-default center)
+  const defaultCenter = '219143.61%2C618345.06';
+
+  // בונים URL עם כל השכבות הנבחרות
+  const buildEmbedUrl = (): string => {
+    // אם יש URL מותאם אישית (למשל מחיפוש), משתמשים בו
+    if (embedCustomUrl) {
+      return embedCustomUrl;
+    }
+
+    // בונים URL עם כל השכבות הנבחרות
+    const selectedLayerIds = Array.from(selectedLayers)
+      .map((layer) => layerIds[layer])
+      .filter((id) => id !== undefined);
+
+    if (selectedLayerIds.length === 0) {
+      // אם אין שכבות נבחרות, מציגים את גושים כברירת מחדל
+      return `https://www.govmap.gov.il?c=${defaultCenter}&lay=21&bb=1&zb=1&in=1`;
+    }
+
+    // בונים URL עם כל השכבות - GovMap תומך בכמה lay parameters
+    const layParams = selectedLayerIds.map((id) => `lay=${id}`).join('&');
+    return `https://www.govmap.gov.il?c=${defaultCenter}&${layParams}&bb=1&zb=1&in=1`;
+  };
+
+  const embedSrc = buildEmbedUrl();
+
+  // פונקציה לטוגל שכבה (הוספה/הסרה)
+  const toggleLayer = (layer: string) => {
+    setSelectedLayers((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(layer)) {
+        newSet.delete(layer);
+        // אם אין שכבות נבחרות, משאירים לפחות אחת (גושים)
+        if (newSet.size === 0) {
+          newSet.add('gushim');
+        }
+      } else {
+        newSet.add(layer);
+      }
+      return newSet;
+    });
+    // איפוס URL מותאם אישית כשמחליפים שכבות
+    setEmbedCustomUrl(null);
+  };
 
   return (
     <div className="h-full w-full flex flex-col">
@@ -127,7 +139,8 @@ export default function GovMapPage() {
                   `https://www.govmap.gov.il?c=218695%2C628648.75&lay=15&z=12` +
                   `&q=${encodeURIComponent(queryText)}&bb=1&zb=1&in=1`;
 
-                setEmbedLayer('parcels');
+                // כשעושים חיפוש, בוחרים רק שכבות
+                setSelectedLayers(new Set(['parcels']));
                 setEmbedCustomUrl(parcelsUrlWithQuery);
                 setSearchError(null);
               }}
@@ -135,6 +148,72 @@ export default function GovMapPage() {
             >
               חיפוש
             </button>
+          </div>
+
+          {/* חיפוש לפי כתובת ועיר */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="flex gap-3 items-end">
+              <div className="flex-1">
+                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                  עיר
+                </label>
+                <input
+                  id="city"
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && address && city) {
+                      // אפשר להוסיף כאן לוגיקה אם צריך
+                    }
+                  }}
+                  placeholder="לדוגמה: תל אביב"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  dir="rtl"
+                />
+              </div>
+              <div className="flex-1">
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                  כתובת
+                </label>
+                <input
+                  id="address"
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && address && city) {
+                      // אפשר להוסיף כאן לוגיקה אם צריך
+                    }
+                  }}
+                  placeholder="לדוגמה: רחוב הרצל 1"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  dir="rtl"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!address || !city) {
+                    setSearchError("נא להזין כתובת ועיר להצגה ב-GovMap");
+                    return;
+                  }
+
+                  // בונים URL עם חיפוש לפי כתובת ועיר
+                  const queryText = `${address}, ${city}`;
+                  const addressUrlWithQuery =
+                    `https://www.govmap.gov.il?c=219143.61%2C618345.06&z=15` +
+                    `&q=${encodeURIComponent(queryText)}&bb=1&zb=1&in=1`;
+
+                  // משאירים את השכבות הנבחרות
+                  setEmbedCustomUrl(addressUrlWithQuery);
+                  setSearchError(null);
+                }}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                חיפוש כתובת
+              </button>
+            </div>
           </div>
           
           {searchError && (
@@ -150,12 +229,9 @@ export default function GovMapPage() {
         <div className="mb-3">
           <div className="flex gap-2">
             <button
-              onClick={() => {
-                setEmbedLayer('gushim');
-                setEmbedCustomUrl(null); // איפוס ל-URL ברירת מחדל
-              }}
+              onClick={() => toggleLayer('gushim')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                embedLayer === 'gushim'
+                selectedLayers.has('gushim')
                   ? 'bg-primary text-white border-primary'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
@@ -163,12 +239,9 @@ export default function GovMapPage() {
               גושים
             </button>
             <button
-              onClick={() => {
-                setEmbedLayer('parcels');
-                setEmbedCustomUrl(null); // איפוס ל-URL ברירת מחדל
-              }}
+              onClick={() => toggleLayer('parcels')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                embedLayer === 'parcels'
+                selectedLayers.has('parcels')
                   ? 'bg-primary text-white border-primary'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
@@ -176,12 +249,9 @@ export default function GovMapPage() {
               חלקות
             </button>
             <button
-              onClick={() => {
-                setEmbedLayer('landUseMavat');
-                setEmbedCustomUrl(null); // איפוס ל-URL ברירת מחדל
-              }}
+              onClick={() => toggleLayer('landUseMavat')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                embedLayer === 'landUseMavat'
+                selectedLayers.has('landUseMavat')
                   ? 'bg-green-600 text-white border-green-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
@@ -189,12 +259,9 @@ export default function GovMapPage() {
               יעודי קרקע - מבא"ת
             </button>
             <button
-              onClick={() => {
-                setEmbedLayer('urbanRenewal');
-                setEmbedCustomUrl(null); // איפוס ל-URL ברירת מחדל
-              }}
+              onClick={() => toggleLayer('urbanRenewal')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                embedLayer === 'urbanRenewal'
+                selectedLayers.has('urbanRenewal')
                   ? 'bg-purple-600 text-white border-purple-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
@@ -202,12 +269,9 @@ export default function GovMapPage() {
               התחדשות עירונית
             </button>
             <button
-              onClick={() => {
-                setEmbedLayer('preparingPlans');
-                setEmbedCustomUrl(null); // איפוס ל-URL ברירת מחדל
-              }}
+              onClick={() => toggleLayer('preparingPlans')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                embedLayer === 'preparingPlans'
+                selectedLayers.has('preparingPlans')
                   ? 'bg-orange-500 text-white border-orange-500'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
@@ -215,12 +279,9 @@ export default function GovMapPage() {
               תוכניות בהכנה
             </button>
             <button
-              onClick={() => {
-                setEmbedLayer('ownershipType');
-                setEmbedCustomUrl(null); // איפוס ל-URL ברירת מחדל
-              }}
+              onClick={() => toggleLayer('ownershipType')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                embedLayer === 'ownershipType'
+                selectedLayers.has('ownershipType')
                   ? 'bg-sky-600 text-white border-sky-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
@@ -228,12 +289,9 @@ export default function GovMapPage() {
               סוג בעלות בחלקות רשומות
             </button>
             <button
-              onClick={() => {
-                setEmbedLayer('migrazimHousing');
-                setEmbedCustomUrl(null); // איפוס ל-URL ברירת מחדל
-              }}
+              onClick={() => toggleLayer('migrazimHousing')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                embedLayer === 'migrazimHousing'
+                selectedLayers.has('migrazimHousing')
                   ? 'bg-red-600 text-white border-red-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
@@ -241,12 +299,9 @@ export default function GovMapPage() {
               מגרשים - משרד הבינוי 
             </button>
             <button
-              onClick={() => {
-                setEmbedLayer('marketingPlans');
-                setEmbedCustomUrl(null); // איפוס ל-URL ברירת מחדל
-              }}
+              onClick={() => toggleLayer('marketingPlans')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                embedLayer === 'marketingPlans'
+                selectedLayers.has('marketingPlans')
                   ? 'bg-amber-600 text-white border-amber-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
@@ -254,12 +309,9 @@ export default function GovMapPage() {
               תוכניות לשיווק - רמ"י
             </button>
             <button
-              onClick={() => {
-                setEmbedLayer('industrialPlots');
-                setEmbedCustomUrl(null); // איפוס ל-URL ברירת מחדל
-              }}
+              onClick={() => toggleLayer('industrialPlots')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                embedLayer === 'industrialPlots'
+                selectedLayers.has('industrialPlots')
                   ? 'bg-teal-600 text-white border-teal-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
@@ -267,24 +319,31 @@ export default function GovMapPage() {
               מגרשי תעשייה באזורי פיתוח
             </button>
             <button
-              onClick={() => {
-                setEmbedLayer('residentialInventory');
-                setEmbedCustomUrl(null); // איפוס ל-URL ברירת מחדל
-              }}
+              onClick={() => toggleLayer('residentialInventory')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                embedLayer === 'residentialInventory'
+                selectedLayers.has('residentialInventory')
                   ? 'bg-indigo-600 text-white border-indigo-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
               מלאי תכנוני למגורים
             </button>
+            <button
+              onClick={() => toggleLayer('realEstateDeals')}
+              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                selectedLayers.has('realEstateDeals')
+                  ? 'bg-pink-600 text-white border-pink-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              עסקאות נדל"ן
+            </button>
           </div>
         </div>
 
         <div className="flex-1 rounded-lg overflow-hidden border border-border/40 shadow-sm">
           <iframe
-            key={embedLayer + (embedCustomUrl || '')} // מכריח רענון מלא כשמחליפים שכבה או URL
+            key={Array.from(selectedLayers).sort().join(',') + (embedCustomUrl || '')} // מכריח רענון מלא כשמחליפים שכבות או URL
             src={embedSrc}
             width="100%"
             height="100%"
