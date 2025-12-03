@@ -118,6 +118,27 @@ export interface UrbanRenewalProject {
   updated_at?: string
 }
 
+export interface UrbanRenewalMitchamim {
+  id: number
+  mispar_mitham: number
+  yeshuv?: string
+  semel_yeshuv?: number
+  shem_mitcham?: string
+  yachad_kayam?: number
+  yachad_tosafti?: number
+  yachad_mutza?: number
+  taarich_hachraza?: string
+  mispar_tochnit?: string
+  kishur_latar?: string
+  kishur_la_mapa?: string
+  sach_heterim?: number
+  maslul?: string
+  shnat_matan_tokef?: number
+  bebitzua?: string
+  status?: string
+  imported_at?: string
+}
+
 export interface TelegramDocument {
   id: number
   telegram_message_id?: number

@@ -765,6 +765,151 @@ export const urbanRenewalProjectQueries = {
   }
 }
 
+// Urban Renewal Mitchamim Rashut queries
+export const urbanRenewalMitchamimQueries = {
+  // Get all mitchamim
+  async getAll() {
+    const { data, error } = await supabase
+      .from('urban_renewal_mitchamim_rashut')
+      .select('*')
+      .order('imported_at', { ascending: false })
+    
+    if (error) throw error
+    return data as any[]
+  },
+
+  // Get mitchamim with pagination
+  async getPaginated(page: number = 1, limit: number = 100) {
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+    
+    const { data, error, count } = await supabase
+      .from('urban_renewal_mitchamim_rashut')
+      .select('*', { count: 'exact' })
+      .order('imported_at', { ascending: false })
+      .range(from, to)
+    
+    if (error) throw error
+    
+    return {
+      data: data || [],
+      total: count || 0,
+      page,
+      limit,
+      totalPages: Math.ceil((count || 0) / limit)
+    }
+  },
+
+  // Get mitchamim by city (yeshuv)
+  async getByCity(cityName: string) {
+    const { data, error } = await supabase
+      .from('urban_renewal_mitchamim_rashut')
+      .select('*')
+      .ilike('yeshuv', `%${cityName}%`)
+      .order('imported_at', { ascending: false })
+    
+    if (error) throw error
+    return data as any[]
+  },
+
+  // Get mitchamim by status
+  async getByStatus(status: string) {
+    const { data, error } = await supabase
+      .from('urban_renewal_mitchamim_rashut')
+      .select('*')
+      .eq('status', status)
+      .order('imported_at', { ascending: false })
+    
+    if (error) throw error
+    return data as any[]
+  },
+
+  // Search mitchamim
+  async search(
+    query: string,
+    page: number = 1,
+    pageSize: number = 50,
+    sortBy: string = 'imported_at',
+    sortOrder: 'asc' | 'desc' = 'desc'
+  ) {
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+    
+    const { data, error, count } = await supabase
+      .from('urban_renewal_mitchamim_rashut')
+      .select('*', { count: 'exact' })
+      .or(`shem_mitcham.ilike.%${query}%,yeshuv.ilike.%${query}%,mispar_tochnit.ilike.%${query}%`)
+      .order(sortBy, { ascending: sortOrder === 'asc' })
+      .range(from, to)
+    
+    if (error) throw error
+    return { data: data as any[], total: count || 0 }
+  },
+
+  // Get mitchamim with filters
+  async getFiltered(
+    filters: {
+      yeshuv?: string
+      status?: string
+      min_units?: number
+      max_units?: number
+    },
+    page: number = 1,
+    pageSize: number = 50,
+    sortBy: string = 'imported_at',
+    sortOrder: 'asc' | 'desc' = 'desc'
+  ) {
+    let query = supabase.from('urban_renewal_mitchamim_rashut').select('*', { count: 'exact' })
+    
+    if (filters.yeshuv) {
+      query = query.ilike('yeshuv', `%${filters.yeshuv}%`)
+    }
+    if (filters.status) {
+      query = query.eq('status', filters.status)
+    }
+    if (filters.min_units !== undefined) {
+      query = query.gte('yachad_tosafti', filters.min_units)
+    }
+    if (filters.max_units !== undefined) {
+      query = query.lte('yachad_tosafti', filters.max_units)
+    }
+    
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+    
+    const { data, error, count } = await query
+      .order(sortBy, { ascending: sortOrder === 'asc' })
+      .range(from, to)
+    
+    if (error) throw error
+    return { data: data as any[], total: count || 0 }
+  },
+
+  // Get mitcham by id
+  async getById(id: number) {
+    const { data, error } = await supabase
+      .from('urban_renewal_mitchamim_rashut')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    return data as any
+  },
+
+  // Get mitcham by mispar_mitham
+  async getByMisparMitham(misparMitham: number) {
+    const { data, error } = await supabase
+      .from('urban_renewal_mitchamim_rashut')
+      .select('*')
+      .eq('mispar_mitham', misparMitham)
+      .single()
+    
+    if (error) throw error
+    return data as any
+  }
+}
+
 // Telegram Documents queries
 export const telegramDocumentQueries = {
   // Get all telegram documents

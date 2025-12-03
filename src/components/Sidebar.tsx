@@ -7,7 +7,8 @@ import {
   TrendingUp,
   Building2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Hammer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
@@ -56,19 +57,6 @@ export function Sidebar() {
           </Link>
         </div>
         
-        {/* מפת נכסים - כפתור ירוק קבוע */}
-        <div className="mb-4">
-          <Link to="/map">
-            <Button 
-              variant="default"
-              className="w-full justify-start gap-4 h-14 text-base transition-all duration-300 bg-gradient-primary shadow-glow text-white hover:shadow-large"
-            >
-              <MapPin className="w-6 h-6" />
-              מפת יעודי קרקע
-            </Button>
-          </Link>
-        </div>
-
         {/* מפת GovMap - כפתור רגיל */}
         <div className="mb-4">
           <Link to="/govmap">
@@ -102,25 +90,27 @@ export function Sidebar() {
             <div className="mt-2 space-y-2 pr-2">
               <Link to="/listings?tab=rami">
                 <Button 
-                  className={`w-full justify-start gap-3 h-12 text-sm transition-all duration-300 ${
+                  className={`w-full justify-start gap-3 h-16 text-base transition-all duration-300 text-green-600 ${
                     location.pathname === "/listings" && currentTab !== "execution"
-                      ? "bg-primary/10 text-primary"
-                      : "hover:bg-primary/5 hover:text-primary hover-lift"
+                      ? "bg-green-500/10"
+                      : "hover:bg-green-500/5 hover-lift"
                   }`}
                   variant="ghost"
                 >
+                  <Hammer className="w-5 h-5" />
                   מכרזי רמ"י
                 </Button>
               </Link>
               <Link to="/listings?tab=execution">
                 <Button 
-                  className={`w-full justify-start gap-3 h-12 text-sm transition-all duration-300 ${
+                  className={`w-full justify-start gap-3 h-16 text-base transition-all duration-300 text-green-600 ${
                     location.pathname === "/listings" && currentTab === "execution"
-                      ? "bg-primary/10 text-primary"
-                      : "hover:bg-primary/5 hover:text-primary hover-lift"
+                      ? "bg-green-500/10"
+                      : "hover:bg-green-500/5 hover-lift"
                   }`}
                   variant="ghost"
                 >
+                  <Hammer className="w-5 h-5" />
                   מכרזי הוצאה לפועל
                 </Button>
               </Link>
