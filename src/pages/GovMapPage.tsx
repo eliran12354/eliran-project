@@ -30,6 +30,7 @@ export default function GovMapPage() {
     industrialPlots: 143,
     residentialInventory: 340,
     realEstateDeals: 16,
+    tma70Metro: 201,
   };
 
   // Center coordinates (משתמשים ב-default center)
@@ -337,6 +338,16 @@ export default function GovMapPage() {
               }`}
             >
               עסקאות נדל"ן
+            </button>
+            <button
+              onClick={() => toggleLayer('tma70Metro')}
+              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                selectedLayers.has('tma70Metro')
+                  ? 'bg-cyan-600 text-white border-cyan-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              תמא 70 - מטרו - גבול תכנית
             </button>
           </div>
         </div>
