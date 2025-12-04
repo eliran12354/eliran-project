@@ -4,7 +4,6 @@ import {
   FileText, 
   Search, 
   Settings,
-  TrendingUp,
   Building2,
   ChevronDown,
   ChevronUp,
@@ -116,19 +115,6 @@ export function Sidebar() {
               </Link>
             </div>
           )}
-        </div>
-
-        {/* עסקאות נדל״ן - כפתור ירוק קבוע */}
-        <div className="mb-4">
-          <Link to="/deals">
-            <Button 
-              variant="default"
-              className="w-full justify-start gap-4 h-14 text-base transition-all duration-300 bg-gradient-primary shadow-glow text-white hover:shadow-large"
-            >
-              <TrendingUp className="w-6 h-6" />
-              עסקאות נדל"ן - רשות המיסים
-            </Button>
-          </Link>
         </div>
 
         {/* פרויקטי התחדשות עירונית - כפתור רגיל */}

@@ -155,11 +155,6 @@ export function PlansListings() {
             כלי עבודה למציאת ומעקב אחרי תוכניות בנייה רלוונטיות בנכסים ובאזורים שונים
           </p>
         </div>
-        <div className="text-xs md:text-sm text-muted-foreground">
-          עמוד {currentPage} מתוך {totalPages} 
-          <span className="hidden sm:inline">•</span> {" "}
-          <span className="block sm:inline">{totalPlans} תוכניות בסך הכל</span>
-        </div>
       </div>
 
       <p className="text-base md:text-lg text-muted-foreground">

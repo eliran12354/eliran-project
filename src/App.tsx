@@ -7,7 +7,6 @@ import { Layout } from "./components/Layout";
 import Index from "./pages/Index";
 import MapPage from "./pages/MapPage"; 
 import ListingsPage from "./pages/ListingsPage";
-import DealsPage from "./pages/DealsPage";
 import PlansPage from "./pages/PlansPage";
 import UrbanRenewalPage from "./pages/UrbanRenewalPage";
 import GovMapPage from "./pages/GovMapPage";
@@ -27,7 +26,6 @@ const App = () => (
             <Route path="/map" element={<MapPage />} />
             <Route path="/govmap" element={<GovMapPage />} />
             <Route path="/listings" element={<ListingsPage />} />
-            <Route path="/deals" element={<DealsPage />} />
             <Route path="/plans" element={<PlansPage />} />
             <Route path="/urban-renewal" element={<UrbanRenewalPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
