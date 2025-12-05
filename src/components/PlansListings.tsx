@@ -208,6 +208,18 @@ export function PlansListings() {
         </div>
       </Card>
 
+      {/* Advanced Search Button */}
+      <div className="flex justify-end">
+        <Button
+          onClick={() => window.open('https://mavat.iplan.gov.il/SV3?searchEntity=0&searchType=0&entityType=0&searchMethod=2', '_blank')}
+          variant="outline"
+          className="gap-2"
+        >
+          חיפוש מתקדם - מידע תכנוני
+          <ExternalLink className="w-4 h-4" />
+        </Button>
+      </div>
+
       {plans.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 bg-muted/20 rounded-lg border border-dashed border-border p-6 text-center">
           <Building className="w-16 h-16 text-muted-foreground mx-auto mb-4" />

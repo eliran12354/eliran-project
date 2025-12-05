@@ -22,6 +22,8 @@ export default function GovMapPage() {
     gushim: 21,
     parcels: 15,
     landUseMavat: 14,
+    blueLinesMavat: 203,
+    goodStreets: 159206,
     urbanRenewal: 200720,
     preparingPlans: 50,
     ownershipType: 6,
@@ -54,8 +56,14 @@ export default function GovMapPage() {
     }
 
     // בונים URL עם כל השכבות - GovMap תומך בכמה lay parameters
-    const layParams = selectedLayerIds.map((id) => `lay=${id}`).join('&');
-    return `https://www.govmap.gov.il?c=${defaultCenter}&${layParams}&bb=1&zb=1&in=1`;
+    // ננסה עם מספר פרמטרים lay= נפרדים (פורמט מקורי)
+    if (selectedLayerIds.length === 1) {
+      return `https://www.govmap.gov.il?c=${defaultCenter}&lay=${selectedLayerIds[0]}&bb=1&zb=1&in=1`;
+    }
+    
+    // עבור מספר שכבות, ננסה פורמט עם פסיקים
+    const layersParam = selectedLayerIds.join(',');
+    return `https://www.govmap.gov.il?c=${defaultCenter}&lay=${layersParam}&bb=1&zb=1&in=1`;
   };
 
   const embedSrc = buildEmbedUrl();
@@ -233,7 +241,7 @@ export default function GovMapPage() {
               onClick={() => toggleLayer('gushim')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 selectedLayers.has('gushim')
-                  ? 'bg-primary text-white border-primary'
+                  ? 'bg-black text-white border-black'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -243,7 +251,7 @@ export default function GovMapPage() {
               onClick={() => toggleLayer('parcels')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 selectedLayers.has('parcels')
-                  ? 'bg-primary text-white border-primary'
+                  ? 'bg-blue-600 text-white border-blue-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -253,17 +261,37 @@ export default function GovMapPage() {
               onClick={() => toggleLayer('landUseMavat')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 selectedLayers.has('landUseMavat')
-                  ? 'bg-green-600 text-white border-green-600'
+                  ? 'bg-blue-600 text-white border-blue-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
               יעודי קרקע - מבא"ת
             </button>
             <button
+              onClick={() => toggleLayer('blueLinesMavat')}
+              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                selectedLayers.has('blueLinesMavat')
+                  ? 'bg-blue-200 text-gray-800 border-green-400'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              קווים כחולים - מבא"ת
+            </button>
+            <button
+              onClick={() => toggleLayer('goodStreets')}
+              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                selectedLayers.has('goodStreets')
+                  ? 'bg-blue-300 text-white border-blue-300'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              רחובות טובים
+            </button>
+            <button
               onClick={() => toggleLayer('urbanRenewal')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 selectedLayers.has('urbanRenewal')
-                  ? 'bg-purple-600 text-white border-purple-600'
+                  ? 'bg-amber-800 text-white border-amber-800'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -273,7 +301,7 @@ export default function GovMapPage() {
               onClick={() => toggleLayer('preparingPlans')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 selectedLayers.has('preparingPlans')
-                  ? 'bg-orange-500 text-white border-orange-500'
+                  ? 'bg-black text-white border-black'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -283,7 +311,7 @@ export default function GovMapPage() {
               onClick={() => toggleLayer('ownershipType')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 selectedLayers.has('ownershipType')
-                  ? 'bg-sky-600 text-white border-sky-600'
+                  ? 'bg-yellow-500 text-black border-yellow-500'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -293,7 +321,7 @@ export default function GovMapPage() {
               onClick={() => toggleLayer('migrazimHousing')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 selectedLayers.has('migrazimHousing')
-                  ? 'bg-red-600 text-white border-red-600'
+                  ? 'bg-cyan-400 text-white border-cyan-400'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -303,7 +331,7 @@ export default function GovMapPage() {
               onClick={() => toggleLayer('marketingPlans')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 selectedLayers.has('marketingPlans')
-                  ? 'bg-amber-600 text-white border-amber-600'
+                  ? 'bg-green-400 text-white border-green-400'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -313,7 +341,7 @@ export default function GovMapPage() {
               onClick={() => toggleLayer('industrialPlots')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 selectedLayers.has('industrialPlots')
-                  ? 'bg-teal-600 text-white border-teal-600'
+                  ? 'bg-gray-600 text-white border-gray-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -323,7 +351,7 @@ export default function GovMapPage() {
               onClick={() => toggleLayer('residentialInventory')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 selectedLayers.has('residentialInventory')
-                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  ? 'bg-cyan-400 text-white border-cyan-400'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -333,7 +361,7 @@ export default function GovMapPage() {
               onClick={() => toggleLayer('realEstateDeals')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 selectedLayers.has('realEstateDeals')
-                  ? 'bg-pink-600 text-white border-pink-600'
+                  ? 'bg-violet-600 text-white border-violet-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -343,7 +371,7 @@ export default function GovMapPage() {
               onClick={() => toggleLayer('tma70Metro')}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 selectedLayers.has('tma70Metro')
-                  ? 'bg-cyan-600 text-white border-cyan-600'
+                  ? 'bg-blue-600 text-white border-blue-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
