@@ -183,7 +183,7 @@ export default function GovMapPage() {
               </div>
               <div className="flex-1">
                 <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                  כתובת
+                  כתובת <span className="text-gray-500 text-xs">(אופציונלי)</span>
                 </label>
                 <input
                   id="address"
@@ -191,11 +191,11 @@ export default function GovMapPage() {
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && address && city) {
+                    if (e.key === 'Enter' && city) {
                       // אפשר להוסיף כאן לוגיקה אם צריך
                     }
                   }}
-                  placeholder="לדוגמה: רחוב הרצל 1"
+                  placeholder="לדוגמה: רחוב הרצל 1 (לא חובה)"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   dir="rtl"
                 />
@@ -203,13 +203,13 @@ export default function GovMapPage() {
               <button
                 type="button"
                 onClick={() => {
-                  if (!address || !city) {
-                    setSearchError("נא להזין כתובת ועיר להצגה ב-GovMap");
+                  if (!city) {
+                    setSearchError("נא להזין לפחות שם עיר להצגה ב-GovMap");
                     return;
                   }
 
-                  // בונים URL עם חיפוש לפי כתובת ועיר
-                  const queryText = `${address}, ${city}`;
+                  // בונים URL עם חיפוש - אם יש כתובת, משתמשים בכתובת ועיר, אחרת רק עיר
+                  const queryText = address ? `${address}, ${city}` : city;
                   const addressUrlWithQuery =
                     `https://www.govmap.gov.il?c=219143.61%2C618345.06&z=15` +
                     `&q=${encodeURIComponent(queryText)}&bb=1&zb=1&in=1`;
@@ -220,7 +220,7 @@ export default function GovMapPage() {
                 }}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                חיפוש כתובת
+                חיפוש
               </button>
             </div>
           </div>
