@@ -33,6 +33,9 @@ export default function GovMapPage() {
     residentialInventory: 340,
     realEstateDeals: 16,
     tma70Metro: 201,
+    controlledPriceComplexes: 200557,
+    controlledPricePlots: 200558,
+    ramiSequentialPlots: 11,
   };
 
   // Center coordinates (משתמשים ב-default center)
@@ -376,6 +379,36 @@ export default function GovMapPage() {
               }`}
             >
               תמא 70 - מטרו - גבול תכנית
+            </button>
+            <button
+              onClick={() => toggleLayer('controlledPriceComplexes')}
+              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                selectedLayers.has('controlledPriceComplexes')
+                  ? 'bg-yellow-300 text-black border-yellow-300'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              מתחמי מחיר מפוקח
+            </button>
+            <button
+              onClick={() => toggleLayer('controlledPricePlots')}
+              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                selectedLayers.has('controlledPricePlots')
+                  ? 'bg-red-600 text-white border-red-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              מגרשי מחיר מפוקח
+            </button>
+            <button
+              onClick={() => toggleLayer('ramiSequentialPlots')}
+              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                selectedLayers.has('ramiSequentialPlots')
+                  ? 'bg-purple-300 text-white border-purple-300'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              רצף מגרשי תבע רמ"י
             </button>
           </div>
         </div>
