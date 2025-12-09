@@ -36,6 +36,8 @@ export default function GovMapPage() {
     controlledPriceComplexes: 200557,
     controlledPricePlots: 200558,
     ramiSequentialPlots: 11,
+    ramiRealEstateTenders: 363,
+    ramiPlansInWork: 361,
   };
 
   // Center coordinates (משתמשים ב-default center)
@@ -91,13 +93,13 @@ export default function GovMapPage() {
   };
 
   return (
-    <div className="h-full w-full flex flex-col">
-      <div className="p-6 border-b border-border/20">
-        <h1 className="text-3xl font-bold text-primary mb-2">מפת GovMap</h1>
+    <div className="h-full w-[calc(100%+3rem)] flex flex-col -mx-6 -mb-6">
+      <div className="px-6 py-2 border-b border-border/20">
+          <h1 className="text-2xl font-bold text-primary mb-1">מפת GovMap</h1>
 
-        
-        {/* Search form - מעל התיבה */}
-        <div className="mb-4" dir="rtl">
+          
+          {/* Search form - מעל התיבה */}
+          <div className="mb-1" dir="rtl">
           <div className="flex gap-3 items-end">
             <div className="flex-1">
               <label htmlFor="gush" className="block text-sm font-medium text-gray-700 mb-1">
@@ -237,8 +239,8 @@ export default function GovMapPage() {
       </div>
 
       {/* GovMap embed iframe - תופס את כל העמוד */}
-      <div className="flex-1 flex flex-col p-6" dir="rtl">
-        <div className="mb-3">
+      <div className="flex-1 flex flex-col py-0 px-0" dir="rtl">
+        <div className="mb-1 px-6">
           <div className="flex gap-2">
             <button
               onClick={() => toggleLayer('gushim')}
@@ -410,10 +412,30 @@ export default function GovMapPage() {
             >
               רצף מגרשי תבע רמ"י
             </button>
+            <button
+              onClick={() => toggleLayer('ramiRealEstateTenders')}
+              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                selectedLayers.has('ramiRealEstateTenders')
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              מכרזי מקרקעין-רמ"י
+            </button>
+            <button
+              onClick={() => toggleLayer('ramiPlansInWork')}
+              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                selectedLayers.has('ramiPlansInWork')
+                  ? 'bg-orange-500 text-white border-orange-500'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              תוכניות בעבודה והכנה-רמ"י
+            </button>
           </div>
         </div>
 
-        <div className="flex-1 rounded-lg overflow-hidden border border-border/40 shadow-sm">
+        <div className="flex-1 overflow-hidden">
           <iframe
             key={Array.from(selectedLayers).sort().join(',') + (embedCustomUrl || '')} // מכריח רענון מלא כשמחליפים שכבות או URL
             src={embedSrc}
