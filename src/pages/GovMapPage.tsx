@@ -14,8 +14,12 @@ export default function GovMapPage() {
   // ומלאי תכנוני למגורים ב־iframe המוטמעת
   // עכשיו תומך בבחירת כמה שכבות בו-זמנית
   const [selectedLayers, setSelectedLayers] = useState<Set<string>>(new Set(['gushim']));
-  // URL מותאם אישית (למשל לפי גוש/חלקה) עבור ה־iframe
-  const [embedCustomUrl, setEmbedCustomUrl] = useState<string | null>(null);
+  // פרמטרי חיפוש (query, coordinates, zoom) - נשמרים בנפרד כדי לאפשר שילוב עם שכבות
+  const [searchParams, setSearchParams] = useState<{
+    query?: string;
+    coordinates?: string;
+    zoom?: number;
+  } | null>(null);
 
   // מיפוי של שכבות ל-layer IDs ב-GovMap
   const layerIds: Record<string, number> = {
@@ -43,32 +47,45 @@ export default function GovMapPage() {
   // Center coordinates (משתמשים ב-default center)
   const defaultCenter = '219143.61%2C618345.06';
 
-  // בונים URL עם כל השכבות הנבחרות
+  // בונים URL עם כל השכבות הנבחרות ופרמטרי החיפוש (אם יש)
   const buildEmbedUrl = (): string => {
-    // אם יש URL מותאם אישית (למשל מחיפוש), משתמשים בו
-    if (embedCustomUrl) {
-      return embedCustomUrl;
-    }
-
     // בונים URL עם כל השכבות הנבחרות
     const selectedLayerIds = Array.from(selectedLayers)
       .map((layer) => layerIds[layer])
       .filter((id) => id !== undefined);
 
-    if (selectedLayerIds.length === 0) {
-      // אם אין שכבות נבחרות, מציגים את גושים כברירת מחדל
-      return `https://www.govmap.gov.il?c=${defaultCenter}&lay=21&bb=1&zb=1&in=1`;
+    // משתמשים בקואורדינטות וגם מה-padding (אם יש חיפוש)
+    let coordinates = defaultCenter;
+    let zoom = '';
+    
+    if (searchParams) {
+      if (searchParams.coordinates) {
+        coordinates = searchParams.coordinates;
+      }
+      if (searchParams.zoom) {
+        zoom = `&z=${searchParams.zoom}`;
+      }
     }
 
-    // בונים URL עם כל השכבות - GovMap תומך בכמה lay parameters
-    // ננסה עם מספר פרמטרים lay= נפרדים (פורמט מקורי)
-    if (selectedLayerIds.length === 1) {
-      return `https://www.govmap.gov.il?c=${defaultCenter}&lay=${selectedLayerIds[0]}&bb=1&zb=1&in=1`;
+    // בונים פרמטר שכבות
+    let layersParam = '';
+    if (selectedLayerIds.length === 0) {
+      layersParam = 'lay=21'; // ברירת מחדל - גושים
+    } else if (selectedLayerIds.length === 1) {
+      layersParam = `lay=${selectedLayerIds[0]}`;
+    } else {
+      layersParam = `lay=${selectedLayerIds.join(',')}`;
     }
-    
-    // עבור מספר שכבות, ננסה פורמט עם פסיקים
-    const layersParam = selectedLayerIds.join(',');
-    return `https://www.govmap.gov.il?c=${defaultCenter}&lay=${layersParam}&bb=1&zb=1&in=1`;
+
+    // בונים את ה-URL הבסיסי
+    let url = `https://www.govmap.gov.il?c=${coordinates}&${layersParam}${zoom}&bb=1&zb=1&in=1`;
+
+    // אם יש חיפוש (query), מוסיפים אותו
+    if (searchParams?.query) {
+      url += `&q=${encodeURIComponent(searchParams.query)}`;
+    }
+
+    return url;
   };
 
   const embedSrc = buildEmbedUrl();
@@ -88,8 +105,7 @@ export default function GovMapPage() {
       }
       return newSet;
     });
-    // איפוס URL מותאם אישית כשמחליפים שכבות
-    setEmbedCustomUrl(null);
+    // לא מאפסים את פרמטרי החיפוש - הם נשארים עם השכבות החדשות
   };
 
   return (
@@ -147,15 +163,17 @@ export default function GovMapPage() {
                   return;
                 }
 
-                // בונים URL לפי הדוגמה עם פרמטר q של גוש/חלקה לחלקות
+                // שמירת פרמטרי החיפוש (שמירת שכבות נבחרות - לא משנים אותן)
                 const queryText = `גוש ${gush} חלקה ${helka}`;
-                const parcelsUrlWithQuery =
-                  `https://www.govmap.gov.il?c=218695%2C628648.75&lay=15&z=12` +
-                  `&q=${encodeURIComponent(queryText)}&bb=1&zb=1&in=1`;
-
-                // כשעושים חיפוש, בוחרים רק שכבות
-                setSelectedLayers(new Set(['parcels']));
-                setEmbedCustomUrl(parcelsUrlWithQuery);
+                setSearchParams({
+                  query: queryText,
+                  coordinates: '218695%2C628648.75',
+                  zoom: 12
+                });
+                // בוחרים חלקות אם לא נבחרו שכבות אחרות
+                if (selectedLayers.size === 0 || (selectedLayers.size === 1 && selectedLayers.has('gushim'))) {
+                  setSelectedLayers(new Set(['parcels']));
+                }
                 setSearchError(null);
               }}
               className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
@@ -213,14 +231,13 @@ export default function GovMapPage() {
                     return;
                   }
 
-                  // בונים URL עם חיפוש - אם יש כתובת, משתמשים בכתובת ועיר, אחרת רק עיר
+                  // שמירת פרמטרי החיפוש (שמירת שכבות נבחרות)
                   const queryText = address ? `${address}, ${city}` : city;
-                  const addressUrlWithQuery =
-                    `https://www.govmap.gov.il?c=219143.61%2C618345.06&z=15` +
-                    `&q=${encodeURIComponent(queryText)}&bb=1&zb=1&in=1`;
-
-                  // משאירים את השכבות הנבחרות
-                  setEmbedCustomUrl(addressUrlWithQuery);
+                  setSearchParams({
+                    query: queryText,
+                    coordinates: '219143.61%2C618345.06',
+                    zoom: 15
+                  });
                   setSearchError(null);
                 }}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -437,7 +454,7 @@ export default function GovMapPage() {
 
         <div className="flex-1 overflow-hidden">
           <iframe
-            key={Array.from(selectedLayers).sort().join(',') + (embedCustomUrl || '')} // מכריח רענון מלא כשמחליפים שכבות או URL
+            key={Array.from(selectedLayers).sort().join(',') + (searchParams?.query || '') + (searchParams?.coordinates || '')} // מכריח רענון מלא כשמחליפים שכבות או חיפוש
             src={embedSrc}
             width="100%"
             height="100%"
