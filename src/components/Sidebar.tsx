@@ -7,7 +7,8 @@ import {
   Building2,
   ChevronDown,
   ChevronUp,
-  Hammer
+  Hammer,
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
@@ -133,6 +134,34 @@ export function Sidebar() {
                   <Button className="w-full justify-start gap-4 h-14 text-base hover:bg-primary/5 hover:text-primary hover-lift transition-all duration-300">
                     <Search className="w-6 h-6" />
                     תוכניות בנייה
+                  </Button>
+                </Link>
+              </div>
+
+              {/* איתור מבנים מסוכנים - כפתור רגיל */}
+              <div className="mb-4">
+                <Link to="/dangerous-buildings">
+                  <Button className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
+                    isActive("/dangerous-buildings")
+                      ? "bg-gradient-primary shadow-glow text-white"
+                      : "hover:bg-primary/5 hover:text-primary hover-lift"
+                  }`}>
+                    <AlertTriangle className="w-6 h-6" />
+                    איתור מבנים מסוכנים
+                  </Button>
+                </Link>
+              </div>
+
+              {/* הפקת נסח טאבו - כפתור רגיל */}
+              <div className="mb-4">
+                <Link to="/tabu-request">
+                  <Button className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
+                    isActive("/tabu-request")
+                      ? "bg-gradient-primary shadow-glow text-white"
+                      : "hover:bg-primary/5 hover:text-primary hover-lift"
+                  }`}>
+                    <FileText className="w-6 h-6" />
+                    הפקת נסח טאבו
                   </Button>
                 </Link>
               </div>

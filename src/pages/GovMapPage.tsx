@@ -118,7 +118,7 @@ export default function GovMapPage() {
           <div className="mb-0" dir="rtl">
           <div className="flex gap-2 items-end">
             <div className="flex-1">
-              <label htmlFor="gush" className="block text-xs font-medium text-gray-700 mb-0.5">
+              <label htmlFor="gush" className="block text-sm font-medium text-gray-700 mb-0.5">
                 גוש
               </label>
               <input
@@ -137,7 +137,7 @@ export default function GovMapPage() {
               />
             </div>
             <div className="flex-1">
-              <label htmlFor="helka" className="block text-xs font-medium text-gray-700 mb-0.5">
+              <label htmlFor="helka" className="block text-sm font-medium text-gray-700 mb-0.5">
                 חלקה
               </label>
               <input
@@ -186,7 +186,7 @@ export default function GovMapPage() {
           <div className="mt-2 pt-2 border-t border-gray-200">
             <div className="flex gap-2 items-end">
               <div className="flex-1">
-                <label htmlFor="city" className="block text-xs font-medium text-gray-700 mb-0.5">
+                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-0.5">
                   עיר
                 </label>
                 <input
@@ -205,7 +205,7 @@ export default function GovMapPage() {
                 />
               </div>
               <div className="flex-1">
-                <label htmlFor="address" className="block text-xs font-medium text-gray-700 mb-0.5">
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-0.5">
                   כתובת <span className="text-gray-500 text-xs">(אופציונלי)</span>
                 </label>
                 <input
@@ -261,7 +261,7 @@ export default function GovMapPage() {
           <div className="flex gap-1.5 flex-wrap">
             <button
               onClick={() => toggleLayer('gushim')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('gushim')
                   ? 'bg-black text-white border-black'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -271,7 +271,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('parcels')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('parcels')
                   ? 'bg-blue-600 text-white border-blue-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -281,7 +281,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('landUseMavat')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('landUseMavat')
                   ? 'bg-blue-600 text-white border-blue-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -291,7 +291,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('blueLinesMavat')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('blueLinesMavat')
                   ? 'bg-blue-200 text-gray-800 border-green-400'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -301,7 +301,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('goodStreets')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('goodStreets')
                   ? 'bg-blue-300 text-white border-blue-300'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -311,7 +311,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('urbanRenewal')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('urbanRenewal')
                   ? 'bg-amber-800 text-white border-amber-800'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -321,7 +321,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('preparingPlans')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('preparingPlans')
                   ? 'bg-black text-white border-black'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -331,7 +331,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('ownershipType')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('ownershipType')
                   ? 'bg-yellow-500 text-black border-yellow-500'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -341,7 +341,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('migrazimHousing')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('migrazimHousing')
                   ? 'bg-cyan-400 text-white border-cyan-400'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -351,7 +351,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('marketingPlans')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('marketingPlans')
                   ? 'bg-green-400 text-white border-green-400'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -361,7 +361,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('industrialPlots')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('industrialPlots')
                   ? 'bg-gray-600 text-white border-gray-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -371,7 +371,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('residentialInventory')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('residentialInventory')
                   ? 'bg-cyan-400 text-white border-cyan-400'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -381,7 +381,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('realEstateDeals')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('realEstateDeals')
                   ? 'bg-violet-600 text-white border-violet-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -391,7 +391,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('tma70Metro')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('tma70Metro')
                   ? 'bg-blue-600 text-white border-blue-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -401,7 +401,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('controlledPriceComplexes')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('controlledPriceComplexes')
                   ? 'bg-yellow-300 text-black border-yellow-300'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -411,7 +411,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('controlledPricePlots')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('controlledPricePlots')
                   ? 'bg-red-600 text-white border-red-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -421,7 +421,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('ramiSequentialPlots')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('ramiSequentialPlots')
                   ? 'bg-purple-300 text-white border-purple-300'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -431,7 +431,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('ramiRealEstateTenders')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('ramiRealEstateTenders')
                   ? 'bg-blue-600 text-white border-blue-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -441,7 +441,7 @@ export default function GovMapPage() {
             </button>
             <button
               onClick={() => toggleLayer('ramiPlansInWork')}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs border transition-colors ${
                 selectedLayers.has('ramiPlansInWork')
                   ? 'bg-orange-500 text-white border-orange-500'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
