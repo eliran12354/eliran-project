@@ -4,7 +4,7 @@
  */
 
 import { Request, Response } from 'express';
-import { getTabaPlans } from '../services/tabaService';
+import { getTabaPlans } from '../services/tabaService.js';
 
 /**
  * Get Taba plans by gush and helka
