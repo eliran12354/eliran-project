@@ -12,6 +12,8 @@ import UrbanRenewalPage from "./pages/UrbanRenewalPage";
 import GovMapPage from "./pages/GovMapPage";
 import DangerousBuildingsPage from "./pages/DangerousBuildingsPage";
 import TabuRequestPage from "./pages/TabuRequestPage";
+import LandCheckPage from "./pages/LandCheckPage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +34,8 @@ const App = () => (
             <Route path="/urban-renewal" element={<UrbanRenewalPage />} />
             <Route path="/dangerous-buildings" element={<DangerousBuildingsPage />} />
             <Route path="/tabu-request" element={<TabuRequestPage />} />
+            <Route path="/land-check" element={<LandCheckPage />} />
+            <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

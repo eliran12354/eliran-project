@@ -8,7 +8,9 @@ import {
   ChevronDown,
   ChevronUp,
   Hammer,
-  AlertTriangle
+  AlertTriangle,
+  FileSearch,
+  LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
@@ -162,6 +164,34 @@ export function Sidebar() {
                   }`}>
                     <FileText className="w-6 h-6" />
                     הפקת נסח טאבו
+                  </Button>
+                </Link>
+              </div>
+
+              {/* בדיקת קרקע מתקדמת - כפתור רגיל */}
+              <div className="mb-4">
+                <Link to="/land-check">
+                  <Button className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
+                    isActive("/land-check")
+                      ? "bg-gradient-primary shadow-glow text-white"
+                      : "hover:bg-primary/5 hover:text-primary hover-lift"
+                  }`}>
+                    <FileSearch className="w-6 h-6" />
+                    בדיקת קרקע מתקדמת
+                  </Button>
+                </Link>
+              </div>
+
+              {/* דשבורד ניהול - כפתור רגיל */}
+              <div className="mb-4">
+                <Link to="/admin-dashboard">
+                  <Button className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
+                    isActive("/admin-dashboard")
+                      ? "bg-gradient-primary shadow-glow text-white"
+                      : "hover:bg-primary/5 hover:text-primary hover-lift"
+                  }`}>
+                    <LayoutDashboard className="w-6 h-6" />
+                    דשבורד ניהול
                   </Button>
                 </Link>
               </div>

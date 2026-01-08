@@ -5,6 +5,9 @@ import parcelsRouter from './routes/parcels.js';
 import gushimRouter from './routes/gushim.js';
 import govmapRouter from './routes/govmap.js';
 import landUseMavatRouter from './routes/landUseMavat.js';
+import nadlanRouter from './routes/nadlan.js';
+import datagovRouter from './routes/datagov.js';
+import tabaRouter from './routes/taba.js';
 
 const app = express();
 
@@ -46,6 +49,9 @@ app.use('/api/parcels', parcelsRouter);
 app.use('/api/gushim', gushimRouter);
 app.use('/api/govmap', govmapRouter);
 app.use('/api/land-use-mavat', landUseMavatRouter);
+app.use('/api/nadlan', nadlanRouter);
+app.use('/api/datagov', datagovRouter);
+app.use('/api/taba', tabaRouter);
 
 // Start server
 const PORT = config.server.port;
