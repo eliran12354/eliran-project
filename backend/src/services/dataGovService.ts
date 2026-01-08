@@ -31,7 +31,7 @@ export async function fetchProjectsByCitySql(city: string, limit = 2000): Promis
       return [];
     }
     
-    const json = await res.json();
+    const json: any = await res.json();
     const records = json?.result?.records ?? [];
     
     if (records.length > 0) {
@@ -90,7 +90,7 @@ export async function getDistinctCities(needle: string): Promise<string[]> {
     });
     
     if (res.ok) {
-      const json = await res.json();
+      const json: any = await res.json();
       const distinctCities = json?.result?.records?.map((r: any) => r.YESHUV_LAMAS) ?? [];
       console.log(`🔎 DISTINCT cities matching "${needle}":`, distinctCities);
       return distinctCities;
@@ -127,7 +127,7 @@ export async function fetchAllProjectsPaged(pageSize = 5000, maxPages = 20): Pro
         break;
       }
       
-      const json = await res.json();
+      const json: any = await res.json();
       const records = json?.result?.records ?? [];
       
       if (records.length === 0) {

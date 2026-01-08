@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+// @ts-ignore - JavaScript file without type definitions
 import { scrapeNadlanDeals } from '../services/nadlanScrapingService.js';
 
 /**

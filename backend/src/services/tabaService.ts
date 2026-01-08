@@ -53,7 +53,7 @@ async function getSessionCookies(): Promise<string | null> {
  * Build headers with cookies
  */
 function buildHeaders(): Record<string, string> {
-  const headers = { ...HEADERS };
+  const headers: Record<string, string> = { ...HEADERS };
   if (sessionCookie) {
     headers['Cookie'] = sessionCookie;
   }
@@ -152,7 +152,7 @@ export async function getTabaPlans(
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const responseData = await response.json();
+      const responseData: any = await response.json();
       const plans = extractPlansArray(responseData);
       const totalRecords = responseData?.totalRecords || plans.length;
 

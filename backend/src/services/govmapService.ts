@@ -120,17 +120,18 @@ export async function getEntitiesByPoint(
 
     // Maybe it's an object with a data/result property?
     if (typeof data === 'object') {
-      if (data.data && Array.isArray(data.data)) {
-        console.log(`✅ Got ${data.data.length} layer(s) from GovMap API (in data property)`);
-        return data.data as GovMapLayerResponse[];
+      const obj = data as any;
+      if (obj.data && Array.isArray(obj.data)) {
+        console.log(`✅ Got ${obj.data.length} layer(s) from GovMap API (in data property)`);
+        return obj.data as GovMapLayerResponse[];
       }
-      if (data.result && Array.isArray(data.result)) {
-        console.log(`✅ Got ${data.result.length} layer(s) from GovMap API (in result property)`);
-        return data.result as GovMapLayerResponse[];
+      if (obj.result && Array.isArray(obj.result)) {
+        console.log(`✅ Got ${obj.result.length} layer(s) from GovMap API (in result property)`);
+        return obj.result as GovMapLayerResponse[];
       }
-      if (data.layers && Array.isArray(data.layers)) {
-        console.log(`✅ Got ${data.layers.length} layer(s) from GovMap API (in layers property)`);
-        return data.layers as GovMapLayerResponse[];
+      if (obj.layers && Array.isArray(obj.layers)) {
+        console.log(`✅ Got ${obj.layers.length} layer(s) from GovMap API (in layers property)`);
+        return obj.layers as GovMapLayerResponse[];
       }
     }
 
@@ -417,7 +418,7 @@ export async function geocodeAddress(searchTerm: string): Promise<Array<{
       throw new Error(`GovMap geocoding API returned ${response.status}: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data: any = await response.json();
 
     if (!data || !data.suggestions || !Array.isArray(data.suggestions)) {
       console.log('⚠️ No suggestions found in GovMap geocoding response');

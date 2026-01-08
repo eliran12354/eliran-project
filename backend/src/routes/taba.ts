@@ -3,7 +3,7 @@
  */
 
 import { Router } from 'express';
-import { getTabaPlansController } from '../controllers/tabaController';
+import { getTabaPlansController } from '../controllers/tabaController.js';
 
 const router = Router();
 
