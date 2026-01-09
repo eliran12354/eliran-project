@@ -8,6 +8,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "start:with-playwright": "(npx playwright install chromium --with-deps || npx playwright install chromium || echo 'Chromium installation skipped') && node dist/index.js",
     "type-check": "tsc --noEmit",
     "postinstall": "npx playwright install chromium"
   },
