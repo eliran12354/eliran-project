@@ -517,34 +517,60 @@ async function scrapeAddressDeals(cityName, street, houseNumber, addressId, maxP
 }
 
 export async function scrapeNadlanDeals(request) {
-  try {
-    const { cityName, street, houseNumber, maxPages = 50 } = request;
+  const SCRAPER_TIMEOUT = 180000; // 3 דקות (180,000ms)
+  
+  const scraperPromise = (async () => {
+    try {
+      const { cityName, street, houseNumber, maxPages = 50 } = request;
 
-    console.log(`🔍 מחפש כתובת: ${cityName}, ${street} ${houseNumber}...`);
+      console.log(`🔍 מחפש כתובת: ${cityName}, ${street} ${houseNumber}...`);
 
-    const addressId = await searchAddressAndGetId(cityName, street, houseNumber);
+      const addressId = await searchAddressAndGetId(cityName, street, houseNumber);
 
-    if (!addressId) {
+      if (!addressId) {
+        return {
+          success: false,
+          dealsScraped: 0,
+          message: `לא נמצא מזהה לכתובת: ${cityName}, ${street} ${houseNumber}`,
+        };
+      }
+
+      console.log(`✅ נמצא מזהה כתובת: ${addressId}`);
+      console.log(`📊 מתחיל לגרד עסקאות...`);
+
+      const result = await scrapeAddressDeals(cityName, street, houseNumber, addressId, maxPages);
+
+      return {
+        success: true,
+        addressId,
+        dealsScraped: result.count,
+        deals: result.deals || [],
+        trendsData: result.trendsData || null, // Include trends data in response
+        message: `סה"כ הוכנסו ${result.count} עסקאות`,
+      };
+    } catch (error) {
+      console.error('❌ שגיאה ב-scraping:', error);
       return {
         success: false,
         dealsScraped: 0,
-        message: `לא נמצא מזהה לכתובת: ${cityName}, ${street} ${houseNumber}`,
+        message: error.message || 'שגיאה לא ידועה',
       };
     }
+  })();
 
-    console.log(`✅ נמצא מזהה כתובת: ${addressId}`);
-    console.log(`📊 מתחיל לגרד עסקאות...`);
+  const timeoutPromise = new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        success: false,
+        dealsScraped: 0,
+        message: `הסקרייפר חרג מזמן - timeout לאחר ${SCRAPER_TIMEOUT / 1000} שניות (3 דקות)`,
+      });
+    }, SCRAPER_TIMEOUT);
+  });
 
-    const result = await scrapeAddressDeals(cityName, street, houseNumber, addressId, maxPages);
-
-    return {
-      success: true,
-      addressId,
-      dealsScraped: result.count,
-      deals: result.deals || [],
-      trendsData: result.trendsData || null, // Include trends data in response
-      message: `סה"כ הוכנסו ${result.count} עסקאות`,
-    };
+  try {
+    const result = await Promise.race([scraperPromise, timeoutPromise]);
+    return result;
   } catch (error) {
     console.error('❌ שגיאה ב-scraping:', error);
     return {
