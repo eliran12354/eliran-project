@@ -11,10 +11,6 @@ import tabaRouter from './routes/taba.js';
 
 const app = express();
 
-// Set server timeout to 4 minutes (240 seconds) to allow scraper to complete (max 3 minutes)
-// Render free tier has 60-90 second timeout, so this might still timeout on free tier
-app.timeout = 240000; // 4 minutes in milliseconds
-
 // Middleware
 app.use(cors({
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
@@ -59,9 +55,15 @@ app.use('/api/taba', tabaRouter);
 
 // Start server
 const PORT = config.server.port;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📦 Environment: ${config.server.nodeEnv}`);
   console.log(`📍 API available at http://localhost:${PORT}/api`);
 });
+
+// הגדלת timeouts ל-5 דקות
+// זה timeout של שרת Node (ברמת http server), לא של Express
+server.headersTimeout = 6 * 60 * 1000; // חייב להיות > requestTimeout
+server.requestTimeout = 5 * 60 * 1000; // 5 דקות
+server.keepAliveTimeout = 65 * 1000; // 65 שניות
 

@@ -95,8 +95,12 @@ async function searchAddressAndGetId(cityName, street, houseNumber) {
   const context = await browser.newContext({ locale: 'he-IL' });
   const page = await context.newPage();
 
+  // הגדלת timeout ל-Playwright
+  page.setDefaultTimeout(180000); // 3 דקות
+  page.setDefaultNavigationTimeout(180000); // 3 דקות
+
   try {
-    await page.goto('https://www.nadlan.gov.il/', { waitUntil: 'domcontentloaded', timeout: 90000 });
+    await page.goto('https://www.nadlan.gov.il/', { waitUntil: 'domcontentloaded', timeout: 180000 });
     await page.waitForTimeout(2000);
 
     const openSearch = async () => {
@@ -273,6 +277,10 @@ async function scrapeAddressDeals(cityName, street, houseNumber, addressId, maxP
   });
   const page = await context.newPage();
 
+  // הגדלת timeout ל-Playwright
+  page.setDefaultTimeout(180000); // 3 דקות
+  page.setDefaultNavigationTimeout(180000); // 3 דקות
+
   let latestApiItems = [];
   page.on('response', async (resp) => {
     try {
@@ -288,7 +296,7 @@ async function scrapeAddressDeals(cityName, street, houseNumber, addressId, maxP
     } catch {}
   });
 
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 });
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 180000 });
 
   try {
     await page.waitForSelector('table tbody tr', { timeout: 10000 }).catch(() => {});
