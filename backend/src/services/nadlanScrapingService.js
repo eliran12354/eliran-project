@@ -88,12 +88,15 @@ async function saveTrendsData(addressId, cityName, street, houseNumber, trendsDa
 }
 
 async function searchAddressAndGetId(cityName, street, houseNumber) {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-dev-shm-usage'],
+  });
   const context = await browser.newContext({ locale: 'he-IL' });
   const page = await context.newPage();
 
   try {
-    await page.goto('https://www.nadlan.gov.il/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.goto('https://www.nadlan.gov.il/', { waitUntil: 'domcontentloaded', timeout: 90000 });
     await page.waitForTimeout(2000);
 
     const openSearch = async () => {
@@ -257,8 +260,17 @@ async function searchAddressAndGetId(cityName, street, houseNumber) {
 
 async function scrapeAddressDeals(cityName, street, houseNumber, addressId, maxPages = 50) {
   const url = `https://www.nadlan.gov.il/?view=address&id=${addressId}&page=deals`;
-  const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({ locale: 'he-IL' });
+  const browser = await chromium.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-dev-shm-usage'],
+  });
+  const context = await browser.newContext({
+    locale: 'he-IL',
+    // Block images and videos to speed up scraping
+    ...(process.env.NODE_ENV === 'production' && {
+      blockedResources: ['image', 'media', 'font', 'stylesheet'],
+    }),
+  });
   const page = await context.newPage();
 
   let latestApiItems = [];
@@ -276,7 +288,7 @@ async function scrapeAddressDeals(cityName, street, houseNumber, addressId, maxP
     } catch {}
   });
 
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 });
 
   try {
     await page.waitForSelector('table tbody tr', { timeout: 10000 }).catch(() => {});
