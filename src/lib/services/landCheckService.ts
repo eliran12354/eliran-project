@@ -1165,6 +1165,7 @@ async function scrapeDealsFromNadlan(
   try {
     console.log(`🕷️ Starting Nadlan scraping for ${street} ${houseNumber}, ${city}...`);
     
+    // Start scraping job
     const response = await fetch(`${BACKEND_API_URL}/api/nadlan/scrape`, {
       method: 'POST',
       headers: {
@@ -1182,21 +1183,69 @@ async function scrapeDealsFromNadlan(
       throw new Error(`Backend returned ${response.status}: ${response.statusText}`);
     }
 
-    const result = await response.json();
-
-    if (result.success && result.data) {
-      const deals = result.data.deals || [];
-      const trendsData = result.data.trendsData || null;
+    const startResult = await response.json();
+    
+    // Check if we got jobId (new job tracking system) or direct results (backward compatibility)
+    if (startResult.jobId) {
+      // New job tracking system - poll for results
+      const jobId = startResult.jobId;
+      console.log(`📋 Scraping job started with ID: ${jobId}, polling for results...`);
+      
+      // Poll for job completion (max 5 minutes = 60 checks with 5 second intervals)
+      const maxAttempts = 60;
+      const pollInterval = 5000; // 5 seconds
+      
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+        
+        // Check job status
+        const statusResponse = await fetch(`${BACKEND_API_URL}/api/nadlan/status/${jobId}`);
+        if (!statusResponse.ok) {
+          console.warn(`⚠️ Failed to check job status: ${statusResponse.statusText}`);
+          continue;
+        }
+        
+        const status = await statusResponse.json();
+        
+        if (status.status === 'done') {
+          // Get results
+          const resultResponse = await fetch(`${BACKEND_API_URL}/api/nadlan/result/${jobId}`);
+          if (!resultResponse.ok) {
+            throw new Error(`Failed to get results: ${resultResponse.statusText}`);
+          }
+          
+          const result = await resultResponse.json();
+          const deals = result.result?.deals || [];
+          const trendsData = result.result?.trendsData || null;
+          
+          console.log(`✅ Scraped ${deals.length} deals from Nadlan.gov.il`);
+          if (trendsData) {
+            console.log('✅ Got price trends data directly from scraping');
+          }
+          
+          return { deals, trendsData };
+        } else if (status.status === 'error') {
+          throw new Error(`Scraping failed: ${status.error || 'Unknown error'}`);
+        } else if (status.status === 'running' || status.status === 'queued') {
+          console.log(`⏳ Scraping in progress... (attempt ${attempt + 1}/${maxAttempts})`);
+          continue;
+        }
+      }
+      
+      // Timeout - return empty results
+      console.warn('⚠️ Scraping timed out after 5 minutes');
+      return { deals: [] };
+    } else if (startResult.success && startResult.data) {
+      // Backward compatibility - direct results (for development or old backend)
+      const deals = startResult.data.deals || [];
+      const trendsData = startResult.data.trendsData || null;
       
       console.log(`✅ Scraped ${deals.length} deals from Nadlan.gov.il`);
       if (trendsData) {
         console.log('✅ Got price trends data directly from scraping');
       }
       
-      return { 
-        deals,
-        trendsData 
-      };
+      return { deals, trendsData };
     }
 
     return { deals: [] };
