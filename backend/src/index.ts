@@ -11,6 +11,10 @@ import tabaRouter from './routes/taba.js';
 
 const app = express();
 
+// Set server timeout to 4 minutes (240 seconds) to allow scraper to complete (max 3 minutes)
+// Render free tier has 60-90 second timeout, so this might still timeout on free tier
+app.timeout = 240000; // 4 minutes in milliseconds
+
 // Middleware
 app.use(cors({
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {

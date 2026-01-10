@@ -19,35 +19,8 @@ export async function scrapeDealsController(req: Request, res: Response) {
       });
     }
 
-    // In production on Render free tier, run scraping in background to avoid timeout
-    // Results are saved to database, client can check DB for results
-    if (process.env.NODE_ENV === 'production') {
-      // Return immediately and run scraping in background
-      res.json({
-        success: true,
-        message: 'Scraping started in background. Results will be saved to database.',
-        data: {
-          cityName,
-          street,
-          houseNumber,
-          status: 'processing',
-        },
-      });
-
-      // Run scraping in background (don't await)
-      scrapeNadlanDeals({
-        cityName,
-        street,
-        houseNumber,
-        maxPages: typeof maxPages === 'number' ? maxPages : 50,
-      }).catch((error) => {
-        console.error('Background scraping error:', error);
-      });
-
-      return;
-    }
-
-    // In development, wait for results (for easier debugging)
+    // Wait for scraping results (works in both development and production)
+    // Note: Render free tier has 60-90 second timeout, scraper has 3 minute timeout
     const result = await scrapeNadlanDeals({
       cityName,
       street,
