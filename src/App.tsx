@@ -9,6 +9,7 @@ import MapPage from "./pages/MapPage";
 import ListingsPage from "./pages/ListingsPage";
 import PlansPage from "./pages/PlansPage";
 import UrbanRenewalPage from "./pages/UrbanRenewalPage";
+import HotAreasPage from "./pages/HotAreasPage";
 import GovMapPage from "./pages/GovMapPage";
 import DangerousBuildingsPage from "./pages/DangerousBuildingsPage";
 import TabuRequestPage from "./pages/TabuRequestPage";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/govmap" element={<GovMapPage />} />
             <Route path="/listings" element={<ListingsPage />} />
             <Route path="/plans" element={<PlansPage />} />
+            <Route path="/hot-areas" element={<HotAreasPage />} />
             <Route path="/urban-renewal" element={<UrbanRenewalPage />} />
             <Route path="/dangerous-buildings" element={<DangerousBuildingsPage />} />
             <Route path="/tabu-request" element={<TabuRequestPage />} />

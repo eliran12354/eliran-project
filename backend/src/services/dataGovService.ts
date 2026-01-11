@@ -4,6 +4,7 @@
  */
 
 const RESOURCE_ID = '1ec45809-5927-430a-9b30-77f77f528ce3';
+const URBAN_RENEWAL_RESOURCE_ID = 'f65a0daf-f737-49c5-9424-d378d52104f5'; // Urban renewal mitchamim
 const BASE_URL = 'https://data.gov.il/api/3/action';
 const SQL_URL = `${BASE_URL}/datastore_search_sql`; // SQL endpoint
 const SEARCH_URL = `${BASE_URL}/datastore_search`; // Regular search endpoint
@@ -282,5 +283,164 @@ export async function getConstructionProgressProjects(
   
   // Limit to top 20
   return filteredProjects.slice(0, 20);
+}
+
+/**
+ * Fetch urban renewal mitchamim from data.gov.il
+ * Uses resource_id: f65a0daf-f737-49c5-9424-d378d52104f5
+ */
+export async function fetchUrbanRenewalMitchamim(options: {
+  limit?: number;
+  offset?: number;
+  filters?: {
+    yeshuv?: string;
+    status?: string;
+    min_units?: number;
+    max_units?: number;
+  };
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+} = {}): Promise<{ data: any[]; total: number }> {
+  try {
+    const { limit = 50, offset = 0, filters = {}, search, sortBy = 'IMPORTED_AT', sortOrder = 'desc' } = options;
+    
+    // Use regular search endpoint instead of SQL (SQL endpoint returns 403)
+    let url = `${SEARCH_URL}?resource_id=${URBAN_RENEWAL_RESOURCE_ID}&limit=${limit}&offset=${offset}`;
+    
+    // Add q parameter for search
+    if (search) {
+      url += `&q=${encodeURIComponent(search)}`;
+    }
+    
+    // Add filters using q parameter (data.gov.il uses q for text search)
+    const filterParts: string[] = [];
+    if (filters.yeshuv) {
+      filterParts.push(filters.yeshuv);
+    }
+    if (filters.status) {
+      filterParts.push(filters.status);
+    }
+    if (filterParts.length > 0 && !search) {
+      url += `&q=${encodeURIComponent(filterParts.join(' '))}`;
+    }
+    
+    console.log(`🔍 Fetching urban renewal mitchamim from data.gov.il...`);
+    console.log(`📍 URL: ${url.substring(0, 150)}...`);
+    
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Accept': 'application/json',
+      },
+    });
+    
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => '');
+      console.warn(`⚠️ Failed to fetch urban renewal mitchamim: ${res.status} ${res.statusText}`);
+      console.warn(`Error details: ${errorText.substring(0, 200)}`);
+      
+      // Try without filters as fallback
+      if (filters.yeshuv || filters.status || search) {
+        console.log('🔄 Retrying without filters...');
+        const fallbackUrl = `${SEARCH_URL}?resource_id=${URBAN_RENEWAL_RESOURCE_ID}&limit=${limit}&offset=${offset}`;
+        const fallbackRes = await fetch(fallbackUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+            'Accept': 'application/json',
+          },
+        });
+        
+        if (fallbackRes.ok) {
+          const fallbackJson: any = await fallbackRes.json();
+          const records = fallbackJson?.result?.records ?? [];
+          
+          // Apply client-side filtering
+          let filteredRecords = records;
+          if (filters.yeshuv) {
+            filteredRecords = filteredRecords.filter((r: any) => 
+              r.YESHUV && r.YESHUV.includes(filters.yeshuv!)
+            );
+          }
+          if (filters.status) {
+            filteredRecords = filteredRecords.filter((r: any) => 
+              r.STATUS && r.STATUS.includes(filters.status!)
+            );
+          }
+          if (filters.min_units) {
+            filteredRecords = filteredRecords.filter((r: any) => 
+              r.MISPAR_YAHIDOT && Number(r.MISPAR_YAHIDOT) >= filters.min_units!
+            );
+          }
+          if (filters.max_units) {
+            filteredRecords = filteredRecords.filter((r: any) => 
+              r.MISPAR_YAHIDOT && Number(r.MISPAR_YAHIDOT) <= filters.max_units!
+            );
+          }
+          if (search) {
+            const searchLower = search.toLowerCase();
+            filteredRecords = filteredRecords.filter((r: any) => 
+              (r.YESHUV && r.YESHUV.toLowerCase().includes(searchLower)) ||
+              (r.STATUS && r.STATUS.toLowerCase().includes(searchLower)) ||
+              (r.SHEM_MITCHAM && r.SHEM_MITCHAM.toLowerCase().includes(searchLower))
+            );
+          }
+          
+          console.log(`✅ Fetched ${filteredRecords.length} filtered records (from ${records.length} total)`);
+          return { data: filteredRecords, total: filteredRecords.length };
+        }
+      }
+      
+      return { data: [], total: 0 };
+    }
+    
+    const json: any = await res.json();
+    
+    if (json.error) {
+      console.error('❌ API error:', json.error);
+      return { data: [], total: 0 };
+    }
+    
+    const records = json?.result?.records ?? [];
+    const total = json?.result?.total || records.length;
+    
+    // Log first record to see structure
+    if (records.length > 0) {
+      console.log('📋 Sample record structure:', Object.keys(records[0]));
+      console.log('📋 Sample record:', JSON.stringify(records[0]).substring(0, 300));
+    }
+    
+    // Apply client-side filtering for numeric filters
+    let filteredRecords = records;
+    if (filters.min_units) {
+      filteredRecords = filteredRecords.filter((r: any) => {
+        const units = r.MISPAR_YAHIDOT || r.mispar_yahidot || r.YACHAD_TOSAFTI || r.yachad_tosafti;
+        return units && Number(units) >= filters.min_units!;
+      });
+    }
+    if (filters.max_units) {
+      filteredRecords = filteredRecords.filter((r: any) => {
+        const units = r.MISPAR_YAHIDOT || r.mispar_yahidot || r.YACHAD_TOSAFTI || r.yachad_tosafti;
+        return units && Number(units) <= filters.max_units!;
+      });
+    }
+    
+    // Sort client-side if needed
+    if (sortBy && sortBy !== 'IMPORTED_AT') {
+      filteredRecords.sort((a: any, b: any) => {
+        const aVal = a[sortBy] || a[sortBy.toLowerCase()] || '';
+        const bVal = b[sortBy] || b[sortBy.toLowerCase()] || '';
+        const comparison = String(aVal).localeCompare(String(bVal));
+        return sortOrder === 'asc' ? comparison : -comparison;
+      });
+    }
+    
+    console.log(`✅ Fetched ${filteredRecords.length} urban renewal mitchamim records (total: ${total})`);
+    
+    return { data: filteredRecords, total };
+  } catch (error: any) {
+    console.error('❌ Error fetching urban renewal mitchamim:', error);
+    return { data: [], total: 0 };
+  }
 }
 

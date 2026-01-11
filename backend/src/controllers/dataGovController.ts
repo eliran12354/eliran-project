@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getConstructionProgressProjects, getDistinctCities, executeSqlQuery } from '../services/dataGovService.js';
+import { getConstructionProgressProjects, getDistinctCities, executeSqlQuery, fetchUrbanRenewalMitchamim } from '../services/dataGovService.js';
 
 /**
  * Get construction progress projects
@@ -25,6 +25,42 @@ export async function getConstructionProjectsController(req: Request, res: Respo
     res.status(500).json({
       success: false,
       error: 'Failed to fetch construction projects',
+      message: error.message || 'Unknown error',
+    });
+  }
+}
+
+/**
+ * Get urban renewal mitchamim from data.gov.il
+ * POST /api/datagov/urban-renewal-mitchamim
+ * Body: { limit?: number, offset?: number, filters?: {...}, search?: string, sortBy?: string, sortOrder?: 'asc'|'desc' }
+ */
+export async function getUrbanRenewalMitchamimController(req: Request, res: Response) {
+  try {
+    const { limit, offset, filters, search, sortBy, sortOrder } = req.body;
+    
+    console.log('🏗️ Urban renewal mitchamim request:', { limit, offset, filters, search, sortBy, sortOrder });
+    
+    const result = await fetchUrbanRenewalMitchamim({
+      limit,
+      offset,
+      filters,
+      search,
+      sortBy,
+      sortOrder,
+    });
+    
+    res.json({
+      success: true,
+      data: result.data,
+      total: result.total,
+    });
+  } catch (error: any) {
+    console.error('Error getting urban renewal mitchamim:', error);
+    
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch urban renewal mitchamim',
       message: error.message || 'Unknown error',
     });
   }

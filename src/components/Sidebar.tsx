@@ -10,7 +10,8 @@ import {
   Hammer,
   AlertTriangle,
   FileSearch,
-  LayoutDashboard
+  LayoutDashboard,
+  Flame
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
@@ -118,6 +119,20 @@ export function Sidebar() {
               </Link>
             </div>
           )}
+        </div>
+
+        {/* אזורים חמים למעקב - כפתור רגיל */}
+        <div className="mb-4">
+          <Link to="/hot-areas">
+            <Button className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
+              isActive("/hot-areas")
+                ? "bg-gradient-to-r from-orange-500 to-red-500 shadow-glow text-white"
+                : "hover:bg-orange-500/5 hover:text-orange-600 hover-lift"
+            }`}>
+              <Flame className="w-6 h-6" />
+              אזורים חמים למעקב
+            </Button>
+          </Link>
         </div>
 
         {/* פרויקטי התחדשות עירונית - כפתור רגיל */}

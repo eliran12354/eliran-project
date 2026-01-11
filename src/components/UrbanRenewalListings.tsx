@@ -6,8 +6,88 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Search, Building2, MapPin, Calendar, Users, ExternalLink, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react'
-import { urbanRenewalMitchamimQueries } from '@/lib/supabase-queries'
-import type { UrbanRenewalMitchamim } from '@/lib/supabase'
+
+// Backend API URL
+const BACKEND_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:10000';
+
+// Fetch urban renewal mitchamim from backend (which uses data.gov.il API)
+async function fetchUrbanRenewalMitchamim(options: {
+  limit?: number;
+  offset?: number;
+  filters?: {
+    yeshuv?: string;
+    status?: string;
+    min_units?: number;
+    max_units?: number;
+  };
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+} = {}) {
+  const response = await fetch(`${BACKEND_API_URL}/api/datagov/urban-renewal-mitchamim`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(options),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend returned ${response.status}: ${response.statusText}`);
+  }
+
+  const result = await response.json();
+  
+  if (!result.success) {
+    throw new Error(result.message || 'Failed to fetch urban renewal mitchamim');
+  }
+
+  // Transform data.gov.il format to match expected format
+  // data.gov.il uses PascalCase field names (MisparMitham, Yeshuv, etc.)
+  const transformedData = result.data.map((item: any, index: number) => {
+    // Helper function to trim whitespace
+    const trim = (str: any) => (typeof str === 'string' ? str.trim() : str);
+    
+    // Helper function to parse number
+    const parseNum = (val: any) => {
+      if (val === null || val === undefined || val === '') return null;
+      const num = typeof val === 'string' ? Number(val.trim()) : Number(val);
+      return isNaN(num) ? null : num;
+    };
+    
+    const transformed = {
+      id: item._id || item.id || `mitcham-${index}-${Date.now()}`,
+      mispar_mitham: parseNum(item.MisparMitham),
+      shem_mitcham: trim(item.ShemMitcham),
+      yeshuv: trim(item.Yeshuv),
+      semel_yeshuv: parseNum(item.SemelYeshuv),
+      status: trim(item.Status),
+      mispar_yahidot: parseNum(item.YachadTosafti), // Total units = additional units
+      mispar_tochnit: trim(item.MisparTochnit),
+      yachad_kayam: parseNum(item.YachadKayam),
+      yachad_tosafti: parseNum(item.YachadTosafti),
+      yachad_mutza: parseNum(item.YachadMutza),
+      taarich_hachraza: trim(item.TaarichHachraza),
+      kishur_latar: trim(item.KishurLatar),
+      kishur_la_mapa: trim(item.KishurLaMapa),
+      sach_heterim: parseNum(item.SachHeterim),
+      maslul: trim(item.Maslul),
+      shnat_matan_tokef: parseNum(item.ShnatMatanTokef),
+      bebitzua: trim(item.Bebitzua),
+      imported_at: new Date().toISOString(), // data.gov.il doesn't have imported_at
+    };
+    
+    return {
+      ...transformed,
+      ...item, // Keep all original fields for fallback
+    };
+  });
+
+  return {
+    data: transformedData,
+    total: result.total || transformedData.length,
+  };
+}
 
 export function UrbanRenewalListings() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -23,23 +103,33 @@ export function UrbanRenewalListings() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 50
 
-  // Fetch mitchamim with filters
+  // Fetch mitchamim with filters from backend
   const { data: mitchamimData, isLoading, error } = useQuery({
     queryKey: ['urban-renewal-mitchamim', filters, searchQuery, sortBy, sortOrder, currentPage],
     queryFn: async () => {
-      if (searchQuery) {
-        return await urbanRenewalMitchamimQueries.search(searchQuery, currentPage, itemsPerPage, sortBy, sortOrder)
-      }
+      const offset = (currentPage - 1) * itemsPerPage;
       
-      const filterParams = Object.fromEntries(
-        Object.entries(filters).filter(([_, value]) => value !== '')
-      )
+      const filterParams: any = {};
+      if (filters.yeshuv) filterParams.yeshuv = filters.yeshuv;
+      if (filters.status) filterParams.status = filters.status;
+      if (filters.min_units) filterParams.min_units = Number(filters.min_units);
+      if (filters.max_units) filterParams.max_units = Number(filters.max_units);
       
-      // Convert string values to numbers where needed
-      if (filterParams.min_units) filterParams.min_units = Number(filterParams.min_units)
-      if (filterParams.max_units) filterParams.max_units = Number(filterParams.max_units)
+      // Map sortBy to data.gov.il field names
+      const sortByField = sortBy === 'imported_at' ? 'IMPORTED_AT' : 
+                         sortBy === 'yeshuv' ? 'YESHUV' :
+                         sortBy === 'status' ? 'STATUS' :
+                         sortBy === 'mispar_yahidot' ? 'MISPAR_YAHIDOT' :
+                         'IMPORTED_AT'; // default
       
-      return await urbanRenewalMitchamimQueries.getFiltered(filterParams, currentPage, itemsPerPage, sortBy, sortOrder)
+      return await fetchUrbanRenewalMitchamim({
+        limit: itemsPerPage,
+        offset,
+        filters: Object.keys(filterParams).length > 0 ? filterParams : undefined,
+        search: searchQuery || undefined,
+        sortBy: sortByField,
+        sortOrder,
+      });
     }
   })
 
@@ -47,14 +137,17 @@ export function UrbanRenewalListings() {
   const totalMitchamim = mitchamimData?.total || 0
   const totalPages = Math.ceil(totalMitchamim / itemsPerPage)
 
-  // Get unique values for filters
+  // Get unique values for filters - fetch a sample to get unique values
   const { data: allMitchamim, isLoading: isLoadingAllMitchamim } = useQuery({
-    queryKey: ['all-urban-renewal-mitchamim'],
-    queryFn: () => urbanRenewalMitchamimQueries.getAll()
+    queryKey: ['all-urban-renewal-mitchamim-sample'],
+    queryFn: async () => {
+      const result = await fetchUrbanRenewalMitchamim({ limit: 1000 });
+      return result.data;
+    }
   })
 
-  const uniqueCities = Array.from(new Set(allMitchamim?.map(m => m.yeshuv).filter(Boolean) || [])).sort()
-  const uniqueStatuses = Array.from(new Set(allMitchamim?.map(m => m.status).filter(Boolean) || [])).sort()
+  const uniqueCities = Array.from(new Set(allMitchamim?.map((m: any) => m.yeshuv).filter(Boolean) || [])).sort()
+  const uniqueStatuses = Array.from(new Set(allMitchamim?.map((m: any) => m.status).filter(Boolean) || [])).sort()
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('he-IL')

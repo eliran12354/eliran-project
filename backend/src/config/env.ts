@@ -10,7 +10,7 @@ export const config = {
     anonKey: process.env.SUPABASE_ANON_KEY || '',
   },
   server: {
-    port: parseInt(process.env.PORT || '3000', 10),
+    port: parseInt(process.env.PORT || '10000', 10),
     nodeEnv: process.env.NODE_ENV || 'development',
   },
   cors: {
