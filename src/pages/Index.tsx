@@ -19,8 +19,6 @@ const Index = () => {
             backgroundImage: 'url("/nathan-waters-j7q-Z9DV3zw-unsplash.jpg")',
             backgroundSize: 'cover',
             backgroundAttachment: 'fixed',
-            imageRendering: 'crisp-edges',
-            imageRendering: '-webkit-optimize-contrast',
             imageRendering: 'high-quality',
             WebkitImageRendering: '-webkit-optimize-contrast',
             transform: 'translateZ(0)',
