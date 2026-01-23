@@ -1,16 +1,7 @@
 import { useState, useEffect } from "react";
-import { AlertTriangle, Search, Filter, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -225,11 +216,8 @@ export default function DangerousBuildingsPage() {
     setCurrentPage(1);
   };
 
-
-  const clearFilters = () => {
-    setSearchTerm("");
-    setCityFilter("all");
-    setTreatmentFilter("all");
+  const handleSearch = () => {
+    filterBuildings();
   };
 
   // קבלת ערכים ייחודיים לסינון
@@ -251,22 +239,13 @@ export default function DangerousBuildingsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 md:space-y-8 animate-fade-in">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl md:text-3xl font-bold">איתור מבנים מסוכנים</h2>
+      <div className="w-full" dir="rtl">
+        <div className="max-w-[1280px] mx-auto px-6 py-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-slate-500">טוען נתונים...</p>
             </div>
-            <p className="text-xs md:text-sm text-muted-foreground">
-              מידע על מבנים מסוכנים ודרכי איתורם
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">טוען נתונים...</p>
           </div>
         </div>
       </div>
@@ -275,190 +254,221 @@ export default function DangerousBuildingsPage() {
 
   if (error) {
     return (
-      <div className="space-y-6 md:space-y-8 animate-fade-in">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl md:text-3xl font-bold">איתור מבנים מסוכנים</h2>
+      <div className="w-full" dir="rtl">
+        <div className="max-w-[1280px] mx-auto px-6 py-6">
+          <div className="bg-white dark:bg-slate-900 border border-[#dbdfe6] dark:border-gray-800 rounded-xl p-6">
+            <div className="flex flex-col items-center justify-center h-64 text-center">
+              <span className="material-symbols-outlined text-6xl text-red-500 mb-4">error</span>
+              <h3 className="text-xl font-semibold mb-2 text-red-600">שגיאה בטעינת הנתונים</h3>
+              <p className="text-slate-500 mb-4">{error}</p>
+              <Button onClick={loadBuildings}>נסה שוב</Button>
             </div>
           </div>
         </div>
-        <Card className="p-6">
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <AlertTriangle className="w-16 h-16 text-red-500 mb-4" />
-            <h3 className="text-xl font-semibold mb-2 text-red-600">שגיאה בטעינת הנתונים</h3>
-            <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={loadBuildings}>נסה שוב</Button>
-          </div>
-        </Card>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 md:space-y-8 animate-fade-in" dir="rtl">
-      {/* Header */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="w-6 h-6 text-primary" />
-            <h2 className="text-2xl md:text-3xl font-bold">איתור מבנים מסוכנים</h2>
-          </div>
-        </div>
-      </div>
+    <div className="w-full" dir="rtl">
+      <div className="max-w-[1280px] mx-auto px-6 py-6">
+        {/* Breadcrumbs */}
+        <nav className="flex items-center gap-2 mb-4 text-[#616f89] dark:text-gray-400 text-sm">
+          <Link className="hover:text-primary transition-colors" to="/">
+            דף הבית
+          </Link>
+          <span className="material-symbols-outlined text-xs">chevron_left</span>
+          <span className="text-[#111318] dark:text-white font-medium">איתור מבנים מסוכנים</span>
+        </nav>
 
-      {/* Search and Filters */}
-      <Card className="bg-gradient-card shadow-soft border-0">
-        <div className="p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-primary" />
-            <h3 className="text-lg font-semibold">חיפוש וסינון</h3>
-          </div>
-          
-          <div className="space-y-4">
-            {/* Search */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <div className="flex-1">
+        {/* Page Heading */}
+        <div className="mb-8">
+          <h2 className="text-[#111318] dark:text-white text-3xl font-black leading-tight mb-2 font-display">
+            מיקומי מבנים מסוכנים
+          </h2>
+          <p className="text-[#616f89] dark:text-gray-400 text-base">
+            ניהול ומעקב אחר הצהרות על מבנים מסוכנים וסטטוסי טיפול ברמה ארצית.
+          </p>
+        </div>
+
+        {/* Search & Filter Grid */}
+        <section className="bg-white dark:bg-background-dark border border-[#dbdfe6] dark:border-gray-800 rounded-xl p-6 mb-8 shadow-sm">
+          <h3 className="text-[#111318] dark:text-white text-base font-bold mb-4">חיפוש וסינון</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div className="flex flex-col gap-2">
+              <label className="text-[#111318] dark:text-gray-200 text-sm font-medium">חיפוש חופשי (כתובת/חלקה)</label>
+              <div className="relative">
                 <Input
-                  placeholder="חיפוש לפי כתובת, עיר, גוש או חלקה..."
+                  className="w-full h-11 px-4 pr-10 rounded-lg border border-[#dbdfe6] dark:border-gray-700 bg-white dark:bg-gray-900 text-[#111318] dark:text-white focus:ring-primary focus:border-primary"
+                  placeholder="הזן כתובת או מספר גוש/חלקה"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-10"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearch();
+                    }
+                  }}
                 />
+                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[#616f89] pointer-events-none">
+                  search
+                </span>
               </div>
-              {hasActiveFilters && (
-                <Button onClick={clearFilters} variant="outline" size="sm" className="h-10">
-                  <X className="w-4 h-4 mr-2" />
-                  נקה סינונים
-                </Button>
-              )}
             </div>
-
-            {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">עיר</label>
-                <Select value={cityFilter} onValueChange={setCityFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="הכל" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">הכל</SelectItem>
-                    {uniqueCities.map((city) => (
-                      <SelectItem key={city} value={city}>
-                        {city}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {uniqueTreatmentStatuses.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">מצב טיפול</label>
-                  <Select value={treatmentFilter} onValueChange={setTreatmentFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="הכל" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">הכל</SelectItem>
-                      {uniqueTreatmentStatuses.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+            <div className="flex flex-col gap-2">
+              <label className="text-[#111318] dark:text-gray-200 text-sm font-medium">עיר</label>
+              <Select value={cityFilter} onValueChange={setCityFilter}>
+                <SelectTrigger className="w-full h-11 px-4 rounded-lg border border-[#dbdfe6] dark:border-gray-700 bg-white dark:bg-gray-900 text-[#111318] dark:text-white focus:ring-primary focus:border-primary">
+                  <SelectValue placeholder="כל הערים" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">כל הערים</SelectItem>
+                  {uniqueCities.map((city) => (
+                    <SelectItem key={city} value={city}>
+                      {city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-[#111318] dark:text-gray-200 text-sm font-medium">סטטוס טיפול</label>
+              <Select value={treatmentFilter} onValueChange={setTreatmentFilter}>
+                <SelectTrigger className="w-full h-11 px-4 rounded-lg border border-[#dbdfe6] dark:border-gray-700 bg-white dark:bg-gray-900 text-[#111318] dark:text-white focus:ring-primary focus:border-primary">
+                  <SelectValue placeholder="כל הסטטוסים" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">כל הסטטוסים</SelectItem>
+                  {uniqueTreatmentStatuses.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleSearch}
+                className="flex-1 h-11 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-lg">filter_alt</span>
+                חיפוש
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 h-11 bg-white dark:bg-gray-800 border border-[#dbdfe6] dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-[#111318] dark:text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-lg">download</span>
+                ייצוא
+              </Button>
             </div>
           </div>
-        </div>
-      </Card>
+        </section>
 
-      {/* Table */}
-      {currentBuildings.length === 0 ? (
-        <Card className="p-6">
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <Search className="w-16 h-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">לא נמצאו מבנים</h3>
-            <p className="text-muted-foreground mb-4">
-              {hasActiveFilters
-                ? "נסה לשנות את הסינון או החיפוש"
-                : "אין מבנים מסוכנים"}
-            </p>
-            {hasActiveFilters && (
-              <Button onClick={clearFilters} variant="outline">
-                <X className="w-4 h-4 mr-2" />
-                נקה חיפוש
-              </Button>
+        {/* Data Table Section */}
+        {currentBuildings.length === 0 ? (
+          <div className="bg-white dark:bg-slate-900 border border-[#dbdfe6] dark:border-gray-800 rounded-xl p-12">
+            <div className="flex flex-col items-center justify-center text-center">
+              <span className="material-symbols-outlined text-6xl text-slate-400 mb-4">search_off</span>
+              <h3 className="text-xl font-semibold mb-2 text-[#111318] dark:text-white">לא נמצאו מבנים</h3>
+              <p className="text-slate-500 mb-4">
+                {hasActiveFilters
+                  ? "נסה לשנות את הסינון או החיפוש"
+                  : "אין מבנים מסוכנים"}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-background-dark border border-[#dbdfe6] dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-right border-collapse">
+                <thead>
+                  <tr className="bg-[#f0f2f4] dark:bg-gray-800/50 border-b border-[#dbdfe6] dark:border-gray-700">
+                    <th className="px-6 py-4 text-[#111318] dark:text-white font-bold text-sm">עיר</th>
+                    <th className="px-6 py-4 text-[#111318] dark:text-white font-bold text-sm">כתובת</th>
+                    <th className="px-6 py-4 text-[#111318] dark:text-white font-bold text-sm">גוש</th>
+                    <th className="px-6 py-4 text-[#111318] dark:text-white font-bold text-sm">חלקה</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#dbdfe6] dark:divide-gray-800">
+                  {currentBuildings.map((building, index) => (
+                    <tr
+                      key={`${building["כתובת"]}-${building["עיר"]}-${index}`}
+                      className={`hover:bg-[#f8f9fa] dark:hover:bg-gray-800/30 transition-colors ${
+                        index % 2 === 1 ? 'bg-gray-50/50 dark:bg-gray-800/10' : ''
+                      }`}
+                    >
+                      <td className="px-6 py-4 text-[#111318] dark:text-gray-200 text-sm">
+                        {building["עיר"] || "-"}
+                      </td>
+                      <td className="px-6 py-4 text-[#111318] dark:text-gray-200 text-sm">
+                        {building["כתובת"] || "-"}
+                      </td>
+                      <td className="px-6 py-4 text-[#111318] dark:text-gray-200 text-sm font-medium">
+                        {building["גוש"] || "-"}
+                      </td>
+                      <td className="px-6 py-4 text-[#111318] dark:text-gray-200 text-sm font-medium">
+                        {building["חלקה"] || "-"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-[#dbdfe6] dark:border-gray-800 flex items-center justify-between">
+                <p className="text-[#616f89] dark:text-gray-400 text-sm">
+                  מציג {startIndex + 1}-{Math.min(endIndex, filteredBuildings.length)} מתוך {filteredBuildings.length} רשומות
+                </p>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="w-9 h-9 flex items-center justify-center rounded border border-[#dbdfe6] dark:border-gray-700 text-[#616f89] hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-base">chevron_right</span>
+                  </button>
+                  {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 2) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 1) {
+                      pageNum = totalPages - 2 + i;
+                    } else {
+                      pageNum = currentPage - 1 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`w-9 h-9 flex items-center justify-center rounded border border-[#dbdfe6] dark:border-gray-700 text-[#111318] dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                          currentPage === pageNum
+                            ? 'bg-primary text-white font-bold border-primary'
+                            : ''
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="w-9 h-9 flex items-center justify-center rounded border border-[#dbdfe6] dark:border-gray-700 text-[#616f89] hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-base">chevron_left</span>
+                  </button>
+                </div>
+              </div>
             )}
           </div>
-        </Card>
-      ) : (
-        <>
-          <Card className="bg-gradient-card shadow-soft border-0 overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b-2">
-                    <TableHead className="w-[150px] font-semibold text-base text-right">עיר</TableHead>
-                    <TableHead className="font-semibold text-base text-right">כתובת</TableHead>
-                    <TableHead className="w-[120px] text-center font-semibold text-base">גוש</TableHead>
-                    <TableHead className="w-[120px] text-center font-semibold text-base">חלקה</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentBuildings.map((building, index) => (
-                    <TableRow key={`${building["כתובת"]}-${building["עיר"]}-${index}`} className="hover:bg-muted/50">
-                      <TableCell className="font-medium text-base py-3 text-right">
-                        {building["עיר"] || "-"}
-                      </TableCell>
-                      <TableCell className="py-3 text-right">
-                        <div className="font-medium text-base whitespace-nowrap">{building["כתובת"] || "-"}</div>
-                      </TableCell>
-                      <TableCell className="text-center py-3">
-                        <span className="font-medium">{building["גוש"] || "-"}</span>
-                      </TableCell>
-                      <TableCell className="text-center py-3">
-                        <span className="font-medium">{building["חלקה"] || "-"}</span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-4">
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                >
-                  עמוד קודם
-                </Button>
-                <span className="text-sm font-medium px-3">
-                  עמוד {currentPage} מתוך {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  עמוד הבא
-                </Button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 }
