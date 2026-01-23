@@ -1077,10 +1077,12 @@ export async function getUrbanRenewalMitchamim(
 ): Promise<UrbanRenewalMitcham[]> {
   try {
     if (!city) {
+      console.log("⚠️ [getUrbanRenewalMitchamim] No city provided, returning empty array");
       return [];
     }
 
     console.log(`🏘️ Fetching urban renewal mitchamim for city: ${city}, street: ${street || 'N/A'}...`);
+    console.log(`🔍 [getUrbanRenewalMitchamim] Building query...`);
 
     let query = supabase
       .from("urban_renewal_mitchamim_rashut")
@@ -1088,32 +1090,39 @@ export async function getUrbanRenewalMitchamim(
 
     // Filter by city (yeshuv)
     if (city) {
+      console.log(`🔍 [getUrbanRenewalMitchamim] Filtering by city (yeshuv): ${city}`);
       query = query.ilike("yeshuv", `%${city}%`);
     }
 
     // If street is provided, also search in shem_mitcham (name of compound)
     // This helps match addresses that might be mentioned in the compound name
     if (street) {
+      console.log(`🔍 [getUrbanRenewalMitchamim] Also filtering by street (shem_mitcham): ${street}`);
       // Search in shem_mitcham field for street name
       query = query.or(`shem_mitcham.ilike.%${street}%`);
     }
 
+    console.log(`📤 [getUrbanRenewalMitchamim] Executing Supabase query...`);
     const { data: mitchamim, error } = await query.limit(20);
 
     if (error) {
-      console.error("Error fetching urban renewal mitchamim:", error);
+      console.error("❌ [getUrbanRenewalMitchamim] Supabase error:", error);
+      console.error("❌ [getUrbanRenewalMitchamim] Error details:", JSON.stringify(error, null, 2));
       return [];
     }
+
+    console.log(`📥 [getUrbanRenewalMitchamim] Query result: ${mitchamim?.length || 0} records`);
 
     if (!mitchamim || mitchamim.length === 0) {
-      console.log("⚠️ No urban renewal mitchamim found");
+      console.log("⚠️ [getUrbanRenewalMitchamim] No urban renewal mitchamim found");
       return [];
     }
 
-    console.log(`✅ Found ${mitchamim.length} urban renewal mitchamim`);
+    console.log(`✅ [getUrbanRenewalMitchamim] Found ${mitchamim.length} urban renewal mitchamim`);
     return mitchamim as UrbanRenewalMitcham[];
-  } catch (error) {
-    console.error("Error getting urban renewal mitchamim:", error);
+  } catch (error: any) {
+    console.error("❌ [getUrbanRenewalMitchamim] Exception:", error?.message || error);
+    console.error("❌ [getUrbanRenewalMitchamim] Stack:", error?.stack);
     return [];
   }
 }
@@ -1457,15 +1466,23 @@ export async function collectLandCheckData(
     // Step 2.5: Get urban renewal mitchamim AFTER planning status (only if we have city and street)
     // This happens after planning status as requested
     let urbanRenewalMitchamim: UrbanRenewalMitcham[] = [];
+    console.log(`🔍 [Urban Renewal Mitchamim] Checking conditions - city: ${input.city}, street: ${input.street}`);
     if (input.city && input.street) {
+      console.log(`✅ [Urban Renewal Mitchamim] Conditions met, calling getUrbanRenewalMitchamim...`);
       try {
         urbanRenewalMitchamim = await getUrbanRenewalMitchamim(input.city, input.street);
+        console.log(`📊 [Urban Renewal Mitchamim] Result: ${urbanRenewalMitchamim.length} mitchamim found`);
         if (urbanRenewalMitchamim.length > 0) {
           console.log(`✅ Found ${urbanRenewalMitchamim.length} urban renewal mitchamim`);
+        } else {
+          console.log(`⚠️ No urban renewal mitchamim found for city: ${input.city}, street: ${input.street}`);
         }
       } catch (error: any) {
-        console.warn('⚠️ Error fetching urban renewal mitchamim:', error?.message || error);
+        console.error('❌ [Urban Renewal Mitchamim] Error fetching:', error?.message || error);
+        console.error('❌ [Urban Renewal Mitchamim] Error stack:', error?.stack);
       }
+    } else {
+      console.log(`⚠️ [Urban Renewal Mitchamim] Skipping - missing city or street. city: ${input.city}, street: ${input.street}`);
     }
 
     // Step 3: Build report
