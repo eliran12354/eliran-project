@@ -27,8 +27,10 @@ const ListingsPage = () => {
   }, [activeTab]);
 
   return (
-    <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    <div className="w-full" dir="rtl">
+      <div className="max-w-[1200px] mx-auto px-6 py-8">
+        <div className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 bg-green-50/50">
           <TabsTrigger 
             value="rami" 
@@ -53,7 +55,9 @@ const ListingsPage = () => {
         <TabsContent value="execution" className="mt-6">
           <TelegramDocumentsListings />
         </TabsContent>
-      </Tabs>
+          </Tabs>
+        </div>
+      </div>
     </div>
   );
 };

@@ -14,10 +14,15 @@ import {
   Target,
   Flame,
   FileText,
-  Clock
+  Clock,
+  LogOut,
+  User,
+  Shield
 } from "lucide-react";
 import { useState } from "react";
 import { tenderQueries, type Michraz } from "@/lib/tender-queries";
+import { LoginDialog } from "@/components/LoginDialog";
+import { useAuth } from "@/hooks/useAuth";
 
 interface StatCardProps {
   title: string;
@@ -56,6 +61,8 @@ export function Dashboard() {
   const [searchResults, setSearchResults] = useState<Michraz[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
+  const { user, profile, logout, isAdmin } = useAuth();
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -108,6 +115,42 @@ export function Dashboard() {
 
   return (
     <div className="space-y-8 animate-fade-in">
+      {/* Login/Auth Section - בחלק העליון בצד ימין */}
+      <div className="flex justify-end items-center gap-4 w-full">
+        {user ? (
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg">
+              <User className="w-4 h-4 text-primary" />
+              <span className="font-medium">
+                {profile?.username || user.email}
+              </span>
+              {isAdmin && (
+                <Badge variant="default" className="bg-purple-500">
+                  <Shield className="w-3 h-3 ml-1" />
+                  אדמין
+                </Badge>
+              )}
+            </div>
+            <Button
+              variant="outline"
+              onClick={logout}
+              className="gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              התנתק
+            </Button>
+          </div>
+        ) : (
+          <Button
+            onClick={() => setLoginDialogOpen(true)}
+            className="gap-2"
+          >
+            <User className="w-4 h-4" />
+            התחבר
+          </Button>
+        )}
+      </div>
+
       {/* Header Section */}
       <div className="text-center space-y-6 py-16 bg-gradient-hero rounded-2xl shadow-glow">
         <div className="flex items-center justify-center gap-4 mb-6 animate-bounce-in">
@@ -505,6 +548,11 @@ export function Dashboard() {
           <h3 className="text-xl font-semibold mb-2">כרטיס נכס מפורט</h3>
         </Card>
       </div>
+
+      <LoginDialog 
+        open={loginDialogOpen} 
+        onOpenChange={setLoginDialogOpen} 
+      />
     </div>
   );
 }

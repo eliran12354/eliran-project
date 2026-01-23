@@ -1,9 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { LayoutDashboard, Users, Building2, TrendingUp, AlertCircle, FileText, Brain, FileCheck } from "lucide-react";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 export default function AdminDashboardPage() {
   return (
-    <div className="space-y-6 md:space-y-8 animate-fade-in">
+    <ProtectedRoute requireAdmin={true}>
+      <div className="space-y-6 md:space-y-8 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
@@ -179,7 +181,8 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
 
