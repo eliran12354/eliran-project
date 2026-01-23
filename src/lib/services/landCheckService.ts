@@ -118,6 +118,16 @@ export interface TabaPlan {
   [key: string]: any; // שדות נוספים מה-API
 }
 
+export interface UrbanRenewalMitcham {
+  id?: number;
+  shem_mitcham?: string; // שם מתחם
+  yeshuv?: string; // עיר
+  mispar_tochnit?: string; // מספר תוכנית
+  status?: string; // סטטוס
+  yachad_tosafti?: number; // יחידות נוספות
+  [key: string]: any; // שדות נוספים מהטבלה
+}
+
 export interface LandCheckReport {
   parcel_info: ParcelInfo;
   planning_status: PlanningStatus;
@@ -126,6 +136,7 @@ export interface LandCheckReport {
   valuation: ValuationData;
   price_trends?: PriceTrendsData; // נתוני מגמות מחירים מהסקריפט
   urban_renewal_projects?: UrbanRenewalProject[];
+  urban_renewal_mitchamim?: UrbanRenewalMitcham[]; // מתחמי התחדשות עירונית (רשות)
   nearby_dangerous_buildings?: any[];
   construction_progress_projects?: ConstructionProgressProject[]; // פרויקטי התקדמות בנייה
   taba_plans?: TabaPlan[]; // תוכניות בנייה עיר (משרד המשפטים/הקרקעות)
@@ -1056,6 +1067,58 @@ export async function getUrbanRenewalProjects(
 }
 
 /**
+ * Get urban renewal mitchamim (מתחמי התחדשות עירונית) from urban_renewal_mitchamim_rashut table
+ * Searches by city and address (street name)
+ * Only returns results if data is found
+ */
+export async function getUrbanRenewalMitchamim(
+  city?: string,
+  street?: string
+): Promise<UrbanRenewalMitcham[]> {
+  try {
+    if (!city) {
+      return [];
+    }
+
+    console.log(`🏘️ Fetching urban renewal mitchamim for city: ${city}, street: ${street || 'N/A'}...`);
+
+    let query = supabase
+      .from("urban_renewal_mitchamim_rashut")
+      .select("*");
+
+    // Filter by city (yeshuv)
+    if (city) {
+      query = query.ilike("yeshuv", `%${city}%`);
+    }
+
+    // If street is provided, also search in shem_mitcham (name of compound)
+    // This helps match addresses that might be mentioned in the compound name
+    if (street) {
+      // Search in shem_mitcham field for street name
+      query = query.or(`shem_mitcham.ilike.%${street}%`);
+    }
+
+    const { data: mitchamim, error } = await query.limit(20);
+
+    if (error) {
+      console.error("Error fetching urban renewal mitchamim:", error);
+      return [];
+    }
+
+    if (!mitchamim || mitchamim.length === 0) {
+      console.log("⚠️ No urban renewal mitchamim found");
+      return [];
+    }
+
+    console.log(`✅ Found ${mitchamim.length} urban renewal mitchamim`);
+    return mitchamim as UrbanRenewalMitcham[];
+  } catch (error) {
+    console.error("Error getting urban renewal mitchamim:", error);
+    return [];
+  }
+}
+
+/**
  * Get dangerous buildings in the area
  */
 export async function getNearbyDangerousBuildings(
@@ -1362,11 +1425,12 @@ export async function collectLandCheckData(
 
     // Step 2: Collect all data in parallel
     // Include Taba plans only if we have gush and helka
+    // Note: getValuationDataFromDeals is synchronous, so we wrap it in Promise.resolve
     const dataPromises: Promise<any>[] = [
       getPlanningStatus(coordinates, input.gush, input.helka),
       getLandUseInfo(coordinates, input.gush, input.helka),
       getPreparingPlans(coordinates, input.city),
-      getValuationDataFromDeals(scrapedDeals),
+      Promise.resolve(getValuationDataFromDeals(scrapedDeals)),
       getUrbanRenewalProjects(coordinates, input.city),
       getNearbyDangerousBuildings(coordinates, input.city),
       getConstructionProgressProjects(coordinates, input.city, 2, input.gush, input.helka),
@@ -1390,6 +1454,20 @@ export async function collectLandCheckData(
       tabaPlans,
     ] = await Promise.all(dataPromises);
 
+    // Step 2.5: Get urban renewal mitchamim AFTER planning status (only if we have city and street)
+    // This happens after planning status as requested
+    let urbanRenewalMitchamim: UrbanRenewalMitcham[] = [];
+    if (input.city && input.street) {
+      try {
+        urbanRenewalMitchamim = await getUrbanRenewalMitchamim(input.city, input.street);
+        if (urbanRenewalMitchamim.length > 0) {
+          console.log(`✅ Found ${urbanRenewalMitchamim.length} urban renewal mitchamim`);
+        }
+      } catch (error: any) {
+        console.warn('⚠️ Error fetching urban renewal mitchamim:', error?.message || error);
+      }
+    }
+
     // Step 3: Build report
     const report: LandCheckReport = {
       parcel_info: {
@@ -1403,6 +1481,7 @@ export async function collectLandCheckData(
       valuation,
       price_trends: priceTrends,
       urban_renewal_projects: urbanRenewalProjects,
+      urban_renewal_mitchamim: urbanRenewalMitchamim.length > 0 ? urbanRenewalMitchamim : undefined,
       nearby_dangerous_buildings: dangerousBuildings,
       construction_progress_projects: constructionProjects,
       taba_plans: tabaPlans && tabaPlans.length > 0 ? tabaPlans : undefined,
@@ -1419,6 +1498,28 @@ export async function collectLandCheckData(
     if (urbanRenewalProjects.length > 0) {
       report.advantages?.push(
           `יש ${urbanRenewalProjects.length} תוכניות התחדשות עירונית בסביבה`
+      );
+    }
+
+    // Add advantages/recommendations based on urban renewal mitchamim (only if found)
+    if (urbanRenewalMitchamim.length > 0) {
+      const mitchamNames = urbanRenewalMitchamim
+        .filter((m) => m.shem_mitcham)
+        .map((m) => m.shem_mitcham)
+        .slice(0, 3);
+      
+      if (mitchamNames.length > 0) {
+        report.advantages?.push(
+          `נמצאו ${urbanRenewalMitchamim.length} מתחמי התחדשות עירונית רלוונטיים: ${mitchamNames.join(", ")}`
+        );
+      } else {
+        report.advantages?.push(
+          `נמצאו ${urbanRenewalMitchamim.length} מתחמי התחדשות עירונית רלוונטיים באזור`
+        );
+      }
+      
+      report.recommendations?.push(
+        `מומלץ לבדוק את פרטי מתחמי ההתחדשות העירונית הקשורים לכתובת`
       );
     }
 
