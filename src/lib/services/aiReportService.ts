@@ -472,6 +472,37 @@ function formatReportForAI(report: any): string {
     lines.push('');
   }
 
+  // Urban renewal mitchamim (מתחמי התחדשות עירונית - רשות)
+  if (report.urban_renewal_mitchamim && report.urban_renewal_mitchamim.length > 0) {
+    lines.push('=== מתחמי התחדשות עירונית (רשות) - מידע חשוב! ===');
+    lines.push('זהו מידע על מתחמי התחדשות עירונית הקשורים ישירות לכתובת - מידע קריטי לניתוח!');
+    lines.push(`נמצאו ${report.urban_renewal_mitchamim.length} מתחמי התחדשות עירונית רלוונטיים`);
+    lines.push('');
+    
+    report.urban_renewal_mitchamim.slice(0, 10).forEach((mitcham: any, index: number) => {
+      lines.push(`${index + 1}. ${mitcham.shem_mitcham || 'שם לא צוין'}`);
+      if (mitcham.yeshuv) {
+        lines.push(`   עיר: ${mitcham.yeshuv}`);
+      }
+      if (mitcham.mispar_tochnit) {
+        lines.push(`   מספר תוכנית: ${mitcham.mispar_tochnit}`);
+      }
+      if (mitcham.status) {
+        lines.push(`   סטטוס: ${mitcham.status}`);
+      }
+      if (mitcham.yachad_tosafti) {
+        lines.push(`   יחידות נוספות: ${mitcham.yachad_tosafti}`);
+      }
+    });
+    
+    lines.push('\n⚠️ חשוב מאוד: השתמש במידע הזה בניתוח שלך!');
+    lines.push('  - מתחמי התחדשות עירונית = יתרון משמעותי לנכס (פוטנציאל השבחה גבוה)');
+    lines.push('  - מתחמים פעילים = האזור בתהליך התחדשות = ערך עתידי גבוה');
+    lines.push('  - מספר יחידות נוספות גבוה = פוטנציאל השבחה משמעותי');
+    lines.push('  - זה מידע קריטי להערכת הפוטנציאל והשווי של הנכס');
+    lines.push('');
+  }
+
   // Dangerous buildings
   if (report.nearby_dangerous_buildings && report.nearby_dangerous_buildings.length > 0) {
     lines.push('=== מבנים מסוכנים בסביבה ===');
