@@ -16,6 +16,7 @@ export default {
       fontFamily: {
         sans: ['Assistant', 'Inter', 'system-ui', 'sans-serif'],
         hebrew: ['Assistant', 'system-ui', 'sans-serif'],
+        display: ['Manrope', 'Noto Sans Hebrew', 'Public Sans', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -24,12 +25,14 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
+          DEFAULT: "#1152d4",
           foreground: "hsl(var(--primary-foreground))",
           hover: "hsl(var(--primary-hover))",
           light: "hsl(var(--primary-light))",
           glow: "hsl(var(--primary-glow))",
         },
+        "background-light": "#f6f6f8",
+        "background-dark": "#101622",
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
