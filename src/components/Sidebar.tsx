@@ -11,7 +11,8 @@ import {
   AlertTriangle,
   FileSearch,
   LayoutDashboard,
-  Flame
+  Flame,
+  Warehouse
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
@@ -193,6 +194,20 @@ export function Sidebar() {
                   }`}>
                     <FileSearch className="w-6 h-6" />
                     בדיקת קרקע מתקדמת
+                  </Button>
+                </Link>
+              </div>
+
+              {/* מלאי תכנוני למגורים - כפתור רגיל */}
+              <div className="mb-4">
+                <Link to="/residential-inventory">
+                  <Button className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
+                    isActive("/residential-inventory")
+                      ? "bg-gradient-primary shadow-glow text-white"
+                      : "hover:bg-primary/5 hover:text-primary hover-lift"
+                  }`}>
+                    <Warehouse className="w-6 h-6" />
+                    מלאי תכנוני למגורים
                   </Button>
                 </Link>
               </div>
