@@ -1,10 +1,35 @@
 import { PlansListings } from "@/components/PlansListings";
+import { Link } from 'react-router-dom';
 
-const PlansPage = () => {
-  return <PlansListings />;
-};
+export default function PlansPage() {
+  return (
+    <div className="w-full" dir="rtl">
+      <div className="max-w-[1200px] mx-auto px-6 py-8">
+        {/* Breadcrumbs */}
+        <nav className="flex items-center gap-2 mb-6">
+          <Link className="text-[#617589] dark:text-gray-400 text-sm font-medium hover:text-primary transition-colors" to="/">
+            דף הבית
+          </Link>
+          <span className="material-symbols-outlined text-sm text-[#617589]">chevron_left</span>
+          <span className="text-[#111418] dark:text-white text-sm font-semibold">תוכניות בנייה</span>
+        </nav>
 
-export default PlansPage;
+        {/* Headline */}
+        <div className="flex items-center gap-3 mb-8">
+          <div className="p-2 bg-primary/10 rounded-lg text-primary">
+            <span className="material-symbols-outlined text-3xl">description</span>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight font-display">תוכניות בנייה</h1>
+        </div>
+
+        {/* Listings Component */}
+        <PlansListings />
+
+        {/* Pagination will be handled inside PlansListings */}
+      </div>
+    </div>
+  );
+}
 
 
 

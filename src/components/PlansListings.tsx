@@ -101,24 +101,12 @@ export function PlansListings() {
   if (loading) {
     return (
       <div className="space-y-6 md:space-y-8 animate-fade-in">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <Building className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl md:text-3xl font-bold">תוכניות בנייה</h2>
-            </div>
-            <p className="text-xs md:text-sm text-muted-foreground">
-              סקירת כל תוכניות הבנייה הרלוונטיות באזורי העניין שלך
-            </p>
-          </div>
-          <div className="text-xs md:text-sm text-muted-foreground">
-            טוען נתונים...
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">טוען נתונים...</p>
           </div>
         </div>
-
-        <p className="text-base md:text-lg text-muted-foreground">
-          כל התוכניות הפעילות והרלוונטיות ביותר עבורך
-        </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
@@ -144,69 +132,45 @@ export function PlansListings() {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8 animate-fade-in">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <Building className="w-6 h-6 text-primary" />
-            <h2 className="text-2xl md:text-3xl font-bold">תוכניות בנייה</h2>
-          </div>
-          <p className="text-xs md:text-sm text-muted-foreground">
-            כלי עבודה למציאת ומעקב אחרי תוכניות בנייה רלוונטיות בנכסים ובאזורים שונים
-          </p>
-        </div>
-      </div>
-
-      <p className="text-base md:text-lg text-muted-foreground">
-        כל התוכניות הפעילות והרלוונטיות ביותר עבורך • {itemsPerPage} תוכניות בעמוד
-      </p>
-
-      {/* Search and Filters */}
-      <Card className="bg-gradient-card shadow-soft border-0">
-        <div className="p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-primary" />
-            <h3 className="text-lg font-semibold">חיפוש וסינון</h3>
-          </div>
-          
-          <div className="space-y-4">
-            {/* Search */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="חיפוש לפי שם תוכנית, מספר תוכנית, עיר, גוש חלקה..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  className="h-10"
-                />
-              </div>
-              <Button onClick={handleSearch} className="h-10 px-6 w-full sm:w-auto">
-                <Search className="w-4 h-4 mr-2" />
-                חפש
-              </Button>
-              <Button onClick={() => setSearchTerm('')} variant="outline" size="sm" className="w-full sm:w-auto">
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-
-            {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* No filters for now */}
-            </div>
-
-            {/* Clear Filters */}
-            {hasActiveFilters && (
-              <div className="flex justify-end">
-                <Button onClick={clearFilters} variant="outline" size="sm">
-                  <X className="w-4 h-4 mr-2" />
-                  נקה סינונים
-                </Button>
-              </div>
-            )}
+    <div className="space-y-8">
+      {/* Search & Filter Area */}
+      <section className="bg-white dark:bg-gray-900 border border-[#dbe0e6] dark:border-gray-800 rounded-xl p-6 shadow-sm">
+        <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+          <span className="material-symbols-outlined text-primary">filter_list</span>
+          חיפוש וסינון
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">חיפוש חופשי</label>
+            <Input
+              placeholder="חיפוש לפי שם תוכנית, מספר תוכנית, עיר, גוש חלקה..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch()
+                }
+              }}
+              className="h-12 rounded-lg border-[#dbe0e6] dark:border-gray-700 dark:bg-gray-800 focus:ring-primary focus:border-primary text-sm"
+            />
           </div>
         </div>
-      </Card>
+        <div className="flex justify-start gap-4 mt-8">
+          <Button 
+            onClick={handleSearch} 
+            className="bg-primary text-white font-bold py-2.5 px-8 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-sm">search</span>
+            חיפוש
+          </Button>
+          <Button 
+            onClick={clearFilters} 
+            className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold py-2.5 px-8 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            ניקוי
+          </Button>
+        </div>
+      </section>
 
       {/* Advanced Search Button */}
       <div className="flex justify-end">
@@ -220,13 +184,22 @@ export function PlansListings() {
         </Button>
       </div>
 
+      {/* Results Header */}
+      {plans && plans.length > 0 && (
+        <div className="mb-6 flex items-center justify-between">
+          <p className="text-[#617589] dark:text-gray-400 font-medium">
+            מציג {plans.length} מתוך {totalPlans} תוכניות שנמצאו
+          </p>
+        </div>
+      )}
+
       {plans.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-64 bg-muted/20 rounded-lg border border-dashed border-border p-6 text-center">
-          <Building className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+        <div className="bg-white dark:bg-gray-900 border border-[#dbe0e6] dark:border-gray-800 rounded-xl p-12 text-center">
+          <span className="material-symbols-outlined text-6xl text-gray-300 mb-4">description</span>
           {searchTerm ? (
             <>
-              <h3 className="text-xl font-semibold mb-2">לא נמצאו תוכניות התואמות לחיפוש</h3>
-              <p className="text-muted-foreground mb-4">נסה לשנות את מילות החיפוש או לנקות סינונים</p>
+              <h3 className="text-xl font-bold mb-2 text-[#111418] dark:text-white">לא נמצאו תוכניות התואמות לחיפוש</h3>
+              <p className="text-[#617589] dark:text-gray-400 mb-4">נסה לשנות את מילות החיפוש או לנקות סינונים</p>
               {hasActiveFilters && (
                 <Button onClick={clearFilters} variant="outline" size="sm">
                   <X className="w-4 h-4 mr-2" />
@@ -236,115 +209,134 @@ export function PlansListings() {
             </>
           ) : (
             <>
-              <h3 className="text-xl font-semibold mb-2">אין תוכניות בנייה</h3>
-              <p className="text-muted-foreground">נסה שוב מאוחר יותר</p>
+              <h3 className="text-xl font-bold mb-2 text-[#111418] dark:text-white">אין תוכניות בנייה</h3>
+              <p className="text-[#617589] dark:text-gray-400">נסה שוב מאוחר יותר</p>
             </>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 animate-slide-up">
-          {plans.map((plan, index) => {
-            const statusInfo = getStatusBadge(plan.status || 'לא ידוע', plan.daysUntilDeadline);
-            const priorityScore = getPriorityScore(plan.daysUntilDeadline, plan.status || 'לא ידוע');
+        <div className="space-y-4">
+          {plans.map((plan) => {
+            const getStatusBadgeComponent = (status?: string) => {
+              if (!status) return null;
+              
+              const statusLower = status.toLowerCase();
+              if (statusLower.includes('מאושר') || statusLower.includes('אושר')) {
+                return (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    מאושר
+                  </span>
+                );
+              } else if (statusLower.includes('תכנון') || statusLower.includes('בתהליך')) {
+                return (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                    בתהליך תכנון
+                  </span>
+                );
+              } else if (statusLower.includes('הפקדה') || statusLower.includes('מופקד')) {
+                return (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                    בהפקדה
+                  </span>
+                );
+              } else if (statusLower.includes('ביצוע') || statusLower.includes('בביצוע')) {
+                return (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                    בביצוע
+                  </span>
+                );
+              }
+              
+              return (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
+                  {status}
+                </span>
+              );
+            };
 
             return (
-              <Card key={plan.pk} className="overflow-hidden hover-lift bg-gradient-card shadow-soft border-0 group" style={{animationDelay: `${index * 0.1}s`}}>
-                <div className="relative overflow-hidden">
-                  <div className="w-full h-40 bg-gradient-to-br from-primary/20 to-primary/5 p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <Badge 
-                        className={`shadow-medium text-xs ${
-                          priorityScore > 85 
-                            ? "bg-gradient-primary text-white border-0" 
-                            : "bg-white/90 text-primary border-0"
-                        }`}
-                      >
-                        {priorityScore}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs px-2 py-1">
-                        #{plan.meirim_id}
-                      </Badge>
-                    </div>
-                    
-                    {/* Plan Details Display */}
-                    <div className="space-y-2 text-xs">
-                      <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
-                        <div className="font-semibold text-primary mb-1 text-xs">פרטי התוכנית:</div>
-                        <div className="space-y-1 text-xs">
-                          {plan.plan_number && (
-                            <div><span className="font-medium">מספר תוכנית:</span> {plan.plan_number}</div>
-                          )}
-                          {plan.meirim_id && (
-                            <div><span className="font-medium">מזהה מרים:</span> {plan.meirim_id}</div>
-                          )}
-                          {plan.county_name && (
-                            <div><span className="font-medium">עירייה:</span> {plan.county_name}</div>
-                          )}
-                          {plan.plan_character_name && (
-                            <div><span className="font-medium">אופי תוכנית:</span> {plan.plan_character_name}</div>
-                          )}
-                          {plan.entity_subtype_desc && (
-                            <div><span className="font-medium">תת סוג:</span> {plan.entity_subtype_desc}</div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {plan.goals_from_mavat && (
-                        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2">
-                          <div className="font-semibold text-primary mb-1 text-xs">יעדים:</div>
-                          <div className="text-xs line-clamp-3">
-                            {plan.goals_from_mavat}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+              <article 
+                key={plan.id || plan.meirim_id} 
+                className="bg-white dark:bg-gray-900 border border-[#dbe0e6] dark:border-gray-800 rounded-xl p-6 shadow-sm hover:border-primary/50 transition-colors"
+              >
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                  <div>
+                    <h4 className="text-xl font-bold mb-1">
+                      {plan.plan_display_name || plan.plan_name || plan.plan_number || 'ללא שם'}
+                    </h4>
+                    <p className="text-sm text-[#617589] dark:text-gray-400">
+                      {plan.county_name || 'לא צוין'} | {plan.plan_number ? `תוכנית מס' ${plan.plan_number}` : ''} {plan.meirim_id ? `| מזהה מרים: ${plan.meirim_id}` : ''}
+                    </p>
                   </div>
+                  {getStatusBadgeComponent(plan.status || undefined)}
                 </div>
                 
-                <div className="p-4 space-y-3">
-                  <div>
-                    <h3 className="font-bold text-lg mb-1 group-hover:text-primary transition-colors duration-300 line-clamp-2">
-                      {plan.plan_display_name || plan.plan_name || plan.plan_number || 'ללא שם'}
-                    </h3>
-                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                      <MapPin className="w-3 h-3" />
-                      <span className="font-medium">{plan.county_name || 'לא צוין'}</span>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 border-y border-[#f0f2f4] dark:border-gray-800 py-4">
+                  {plan.plan_number && (
+                    <div>
+                      <p className="text-xs text-[#617589] mb-1">מספר תוכנית</p>
+                      <p className="text-lg font-bold">{plan.plan_number}</p>
                     </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Badge 
-                      variant={statusInfo.variant}
-                      className="text-xs font-medium shadow-soft"
-                    >
-                      {statusInfo.text}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs font-medium">
-                      {plan.status || 'ללא סטטוס'}
-                    </Badge>
-                  </div>
-
-                  <Button 
-                    className="w-full h-10 bg-gradient-primary shadow-glow hover:shadow-large transition-all duration-300 font-semibold text-sm"
-                    onClick={() => {
-                      if (plan.plan_url) {
-                        window.open(plan.plan_url, '_blank');
-                      } else if (plan.plan_new_mavat_url) {
-                        window.open(plan.plan_new_mavat_url, '_blank');
-                      } else {
-                        console.log('No plan link available');
-                      }
-                    }}
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      {plan.plan_url || plan.plan_new_mavat_url ? 'צפה בתוכנית' : 'צפה בפרטים'}
-                      {(plan.plan_url || plan.plan_new_mavat_url) && (
-                        <ExternalLink className="w-4 h-4" />
-                      )}
-                    </span>
-                  </Button>
+                  )}
+                  {plan.plan_character_name && (
+                    <div>
+                      <p className="text-xs text-[#617589] mb-1">אופי תוכנית</p>
+                      <p className="text-lg font-bold">{plan.plan_character_name}</p>
+                    </div>
+                  )}
+                  {plan.entity_subtype_desc && (
+                    <div>
+                      <p className="text-xs text-[#617589] mb-1">תת סוג</p>
+                      <p className="text-lg font-bold text-primary">{plan.entity_subtype_desc}</p>
+                    </div>
+                  )}
                 </div>
-              </Card>
+                
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex flex-wrap gap-x-8 gap-y-2 text-xs text-[#617589] dark:text-gray-400">
+                    {plan.county_name && (
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold text-[#111418] dark:text-white">עירייה:</span>
+                        {plan.county_name}
+                      </div>
+                    )}
+                    {plan.plan_number && (
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold text-[#111418] dark:text-white">מספר תוכנית:</span>
+                        {plan.plan_number}
+                      </div>
+                    )}
+                    {plan.meirim_id && (
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold text-[#111418] dark:text-white">מזהה מרים:</span>
+                        {plan.meirim_id}
+                      </div>
+                    )}
+                    {plan.goals_from_mavat && (
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold text-[#111418] dark:text-white">יעדים:</span>
+                        <span className="line-clamp-1">{plan.goals_from_mavat}</span>
+                      </div>
+                    )}
+                  </div>
+                  {(plan.plan_url || plan.plan_new_mavat_url) && (
+                    <a 
+                      href={plan.plan_url || plan.plan_new_mavat_url || '#'} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary font-bold text-sm flex items-center gap-1 hover:underline"
+                      onClick={(e) => {
+                        if (!plan.plan_url && !plan.plan_new_mavat_url) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
+                      צפייה בתוכנית המלאה
+                      <span className="material-symbols-outlined text-sm rotate-180">arrow_forward</span>
+                    </a>
+                  )}
+                </div>
+              </article>
             );
           })}
         </div>
