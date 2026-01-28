@@ -16,6 +16,10 @@ export const config = {
   cors: {
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   },
+  jwt: {
+    secret: process.env.JWT_SECRET || '',
+    expiry: process.env.JWT_EXPIRY || '1h',
+  },
 };
 
 // Validate required environment variables
@@ -27,3 +31,6 @@ if (!config.supabase.serviceRoleKey) {
   throw new Error('SUPABASE_SERVICE_ROLE_KEY is required');
 }
 
+if (!config.jwt.secret || config.jwt.secret.length < 32) {
+  throw new Error('JWT_SECRET must be set and at least 32 characters');
+}
