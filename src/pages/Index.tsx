@@ -14,10 +14,11 @@ const Index = () => {
       <section className="relative min-h-screen w-screen flex flex-col justify-center pt-20 bg-white overflow-hidden" style={{ marginLeft: 'calc(50% - 50vw)', marginRight: 'calc(50% - 50vw)', width: '100vw' }}>
         {/* Background Image */}
         <div 
-          className="absolute inset-0 bg-center bg-no-repeat w-full h-full"
+          className="absolute inset-0 bg-no-repeat w-full h-full"
           style={{
-            backgroundImage: 'url("/nathan-waters-j7q-Z9DV3zw-unsplash.jpg")',
-            backgroundSize: 'cover',
+            backgroundImage: 'url("/istockphoto-94747206-1024x1024.jpg")',
+            backgroundSize: '100% 120%',
+            backgroundPosition: 'center top',
             backgroundAttachment: 'fixed',
             imageRendering: 'high-quality',
             WebkitImageRendering: '-webkit-optimize-contrast',

@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,7 +10,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 interface LoginDialogProps {
@@ -18,64 +17,68 @@ interface LoginDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+function mapAuthError(msg: string | undefined): string | undefined {
+  if (!msg) return undefined;
+  const m = msg.toLowerCase();
+  if (m.includes("email") && m.includes("password") && m.includes("required"))
+    return "נדרשים אימייל וסיסמה";
+  if (m.includes("password") && m.includes("at least") && m.includes("8"))
+    return "הסיסמה חייבת להכיל לפחות 8 תווים";
+  if (m.includes("invalid") && (m.includes("email") || m.includes("password")))
+    return "אימייל או סיסמה שגויים";
+  return msg;
+}
+
 export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const [isLogin, setIsLogin] = useState(true);
-  const [emailOrUsername, setEmailOrUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const { login, signup } = useAuth();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setFormError(null);
     setIsLoading(true);
 
     try {
       if (isLogin) {
-        const result = await login({ emailOrUsername, password });
+        const result = await login({ email, password });
         if (result.data && !result.error) {
           onOpenChange(false);
           resetForm();
+        } else if (result.error) {
+          setFormError(mapAuthError(result.error.message) || "שגיאה בהתחברות");
         }
       } else {
-        const signupResult = await signup({ 
-          email: emailOrUsername, 
-          password, 
-          username: username || undefined 
-        });
-        
+        const signupResult = await signup({ email, password });
         if (signupResult.data && !signupResult.error) {
-          // Auto login after successful signup
-          const loginResult = await login({ emailOrUsername, password });
-          if (loginResult.data && !loginResult.error) {
-            onOpenChange(false);
-            resetForm();
-          }
+          onOpenChange(false);
+          resetForm();
         } else if (
-          signupResult.error?.message?.includes('כבר רשומה') ||
-          signupResult.error?.message?.includes('already exists') ||
-          signupResult.error?.message?.includes('user_already_exists')
+          signupResult.error?.message?.includes("כבר רשומה") ||
+          signupResult.error?.message?.includes("already") ||
+          signupResult.error?.message?.includes("registered")
         ) {
-          // If user already exists, switch to login mode
           setIsLogin(true);
-          toast({
-            title: 'המשתמש כבר קיים',
-            description: 'עברנו למצב התחברות. אנא התחבר עם האימייל והסיסמה שלך',
-          });
+          setFormError(null);
+        } else if (signupResult.error) {
+          setFormError(mapAuthError(signupResult.error.message) || "שגיאה בהרשמה");
         }
       }
     } catch (error) {
       console.error("Auth error:", error);
+      setFormError("אירעה שגיאה. נסה שוב.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const resetForm = () => {
-    setEmailOrUsername("");
+    setEmail("");
     setPassword("");
-    setUsername("");
+    setFormError(null);
   };
 
   const toggleMode = () => {
@@ -83,59 +86,64 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     resetForm();
   };
 
+  const clearErrorOnInput = () => {
+    if (formError) setFormError(null);
+  };
+
+  useEffect(() => {
+    if (open) setFormError(null);
+  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange} dir="rtl">
       <DialogContent className="sm:max-w-[425px] text-right [&>button]:left-4 [&>button]:right-auto" dir="rtl">
         <DialogHeader className="text-right">
           <DialogTitle className="text-right">{isLogin ? "התחברות" : "הרשמה"}</DialogTitle>
           <DialogDescription className="text-right">
-            {isLogin
-              ? "הזן את פרטי ההתחברות שלך"
-              : "צור חשבון חדש"}
+            {isLogin ? "הזן את פרטי ההתחברות שלך" : "צור חשבון חדש"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
-            <div className="space-y-2">
-              <Label htmlFor="username">שם משתמש</Label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="שם משתמש"
-                required={!isLogin}
-                disabled={isLoading}
-              />
-            </div>
-          )}
           <div className="space-y-2">
-            <Label htmlFor="emailOrUsername">
-              {isLogin ? "אימייל או שם משתמש" : "אימייל"}
-            </Label>
+            <Label htmlFor="email">אימייל</Label>
             <Input
-              id="emailOrUsername"
-              type={isLogin ? "text" : "email"}
-              value={emailOrUsername}
-              onChange={(e) => setEmailOrUsername(e.target.value)}
-              placeholder={isLogin ? "אימייל או שם משתמש" : "אימייל"}
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearErrorOnInput();
+              }}
+              placeholder="אימייל"
               required
               disabled={isLoading}
-              autoComplete={isLogin ? "username" : "email"}
+              autoComplete="email"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">סיסמה</Label>
+            <Label htmlFor="password">
+              סיסמה {!isLogin && <span className="text-muted-foreground font-normal">(לפחות 8 תווים)</span>}
+            </Label>
             <Input
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="סיסמה"
+              onChange={(e) => {
+                setPassword(e.target.value);
+                clearErrorOnInput();
+              }}
+              placeholder={isLogin ? "סיסמה" : "לפחות 8 תווים"}
               required
+              minLength={isLogin ? undefined : 8}
               disabled={isLoading}
               autoComplete="current-password"
             />
           </div>
+          {formError && (
+            <p className="text-sm text-destructive font-medium" role="alert">
+              {formError}
+            </p>
+          )}
           <div className="flex flex-col gap-2">
             <Button type="submit" disabled={isLoading} className="w-full">
               {isLoading ? (
@@ -154,9 +162,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
               disabled={isLoading}
               className="text-right"
             >
-              {isLogin
-                ? "אין לך חשבון? הירשם"
-                : "יש לך חשבון? התחבר"}
+              {isLogin ? "אין לך חשבון? הירשם" : "יש לך חשבון? התחבר"}
             </Button>
           </div>
         </form>

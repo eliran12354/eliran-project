@@ -12,15 +12,21 @@ import {
   FileSearch,
   LayoutDashboard,
   Flame,
-  Warehouse
+  Warehouse,
+  User,
+  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { useMemo, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { LoginDialog } from "@/components/LoginDialog";
 
 export function Sidebar() {
   const location = useLocation();
   const [openHotTenders, setOpenHotTenders] = useState(false);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
+  const { user, profile, logout } = useAuth();
   
   const isActive = (path: string) => location.pathname === path;
   const currentTab = useMemo(() => {
@@ -42,6 +48,37 @@ export function Sidebar() {
           מערכת אינטרנטית חכמה למכרזים, נכסים והשקעות נדל״ן
         </p>
       </div>
+
+      {/* Auth – התחברות / משתמש מחובר */}
+      <div className="mb-6 pb-4 border-b border-border/50">
+        {user ? (
+          <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-lg">
+            <User className="w-4 h-4 text-primary shrink-0" />
+            <span className="text-sm font-medium truncate min-w-0 flex-1" title={profile?.email || user.email}>
+              {profile?.email || user.email}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={logout}
+              className="shrink-0 h-8 w-8"
+              title="התנתק"
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
+        ) : (
+          <Button
+            onClick={() => setLoginDialogOpen(true)}
+            className="w-full gap-2"
+          >
+            <User className="w-4 h-4" />
+            התחבר
+          </Button>
+        )}
+      </div>
+
+      <LoginDialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen} />
 
       {/* Main Navigation */}
       <nav className="space-y-4">
@@ -228,10 +265,18 @@ export function Sidebar() {
 
         {/* הגדרות - כפתור רגיל */}
         <div className="mb-4">
-          <Button className="w-full justify-start gap-4 h-14 text-base hover:bg-primary/5 hover:text-primary hover-lift transition-all duration-300">
-            <Settings className="w-6 h-6" />
-            הגדרות
-          </Button>
+          <Link to="/settings">
+            <Button
+              className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
+                isActive("/settings")
+                  ? "bg-gradient-primary shadow-glow text-white"
+                  : "hover:bg-primary/5 hover:text-primary hover-lift"
+              }`}
+            >
+              <Settings className="w-6 h-6" />
+              הגדרות
+            </Button>
+          </Link>
         </div>
       </nav>
     </div>

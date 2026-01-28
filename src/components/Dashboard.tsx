@@ -122,7 +122,7 @@ export function Dashboard() {
             <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg">
               <User className="w-4 h-4 text-primary" />
               <span className="font-medium">
-                {profile?.username || user.email}
+                {profile?.email || user.email}
               </span>
               {isAdmin && (
                 <Badge variant="default" className="bg-purple-500">

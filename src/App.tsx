@@ -16,6 +16,7 @@ import TabuRequestPage from "./pages/TabuRequestPage";
 import LandCheckPage from "./pages/LandCheckPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ResidentialInventoryPage from "./pages/ResidentialInventoryPage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/land-check" element={<LandCheckPage />} />
             <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
             <Route path="/residential-inventory" element={<ResidentialInventoryPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

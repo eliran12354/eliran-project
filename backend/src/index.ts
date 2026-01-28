@@ -8,6 +8,10 @@ import landUseMavatRouter from './routes/landUseMavat.js';
 import nadlanRouter from './routes/nadlan.js';
 import datagovRouter from './routes/datagov.js';
 import tabaRouter from './routes/taba.js';
+import urbanRenewalRouter from './routes/urbanRenewal.js';
+import authRouter from './routes/auth.js';
+import meRouter from './routes/me.js';
+import adminRouter from './routes/admin.js';
 
 const app = express();
 
@@ -52,6 +56,10 @@ app.use('/api/land-use-mavat', landUseMavatRouter);
 app.use('/api/nadlan', nadlanRouter);
 app.use('/api/datagov', datagovRouter);
 app.use('/api/taba', tabaRouter);
+app.use('/api/urban-renewal', urbanRenewalRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/me', meRouter);
+app.use('/api/admin', adminRouter);
 
 // Start server
 const PORT = config.server.port;
@@ -66,4 +74,3 @@ const server = app.listen(PORT, () => {
 server.headersTimeout = 6 * 60 * 1000; // חייב להיות > requestTimeout
 server.requestTimeout = 5 * 60 * 1000; // 5 דקות
 server.keepAliveTimeout = 65 * 1000; // 65 שניות
-
