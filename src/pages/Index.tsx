@@ -1,13 +1,7 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LoginDialog } from "@/components/LoginDialog";
-import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
-  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
-  const { user } = useAuth();
-
   return (
     <div className="w-full bg-[#F5F7FA]" dir="rtl">
       {/* Hero Section */}
@@ -43,20 +37,6 @@ const Index = () => {
         
         {/* Very soft gradient for depth */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
-        
-        {/* Login Button - Fixed Top Right (RTL) */}
-        {!user && (
-          <div className="fixed top-6 left-6 z-50">
-            <Button
-              onClick={() => setLoginDialogOpen(true)}
-              variant="outline"
-              className="border-white/30 bg-white/90 backdrop-blur-md text-[#111318] hover:bg-white transition-all shadow-[0_4px_16px_rgba(0,0,0,0.15)]"
-            >
-              <span className="material-symbols-outlined text-lg ml-2">account_circle</span>
-              התחברות
-            </Button>
-          </div>
-        )}
         
         <div className="max-w-7xl mx-auto px-6 w-full relative z-10 py-20 lg:py-32">
 
@@ -280,9 +260,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* Login Dialog */}
-      <LoginDialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen} />
     </div>
   );
 };
