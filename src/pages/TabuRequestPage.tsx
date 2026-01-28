@@ -508,7 +508,6 @@ export default function TabuRequestPage() {
               </div>
               <div className="flex items-center gap-2 text-slate-400">
                 <span className="material-symbols-outlined text-sm">lock</span>
-                <span className="text-xs">מידע זה מאובטח ומוגן על ידי משרד המשפטים</span>
               </div>
             </div>
           </form>
