@@ -12,6 +12,8 @@ import urbanRenewalRouter from './routes/urbanRenewal.js';
 import authRouter from './routes/auth.js';
 import meRouter from './routes/me.js';
 import adminRouter from './routes/admin.js';
+import portfolioRouter from './routes/portfolio.js';
+import notificationsRouter from './routes/notifications.js';
 
 const app = express();
 
@@ -60,6 +62,8 @@ app.use('/api/urban-renewal', urbanRenewalRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/me', meRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/portfolio', portfolioRouter);
+app.use('/api/notifications', notificationsRouter);
 
 // Start server
 const PORT = config.server.port;
