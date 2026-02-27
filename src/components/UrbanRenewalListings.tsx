@@ -3,6 +3,11 @@ import { useQuery } from '@tanstack/react-query'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { usePortfolio } from '@/hooks/usePortfolio'
+import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/hooks/use-toast'
+import { portfolioSourceId } from '@/lib/api/portfolioApi'
+import { LoginDialog } from '@/components/LoginDialog'
 
 // Backend API URL
 const BACKEND_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:10000';
@@ -86,7 +91,14 @@ async function fetchUrbanRenewalMitchamim(options: {
   };
 }
 
+const ITEM_TYPE_URBAN_RENEWAL = 'urban_renewal'
+
 export function UrbanRenewalListings() {
+  const { user } = useAuth()
+  const { isSaved, toggle, loading: portfolioLoading } = usePortfolio()
+  const { toast } = useToast()
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false)
+  const [savingId, setSavingId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState({
@@ -285,7 +297,7 @@ export function UrbanRenewalListings() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">כל הערים</SelectItem>
-                {uniqueCities.map(city => (
+                {uniqueCities.map((city: string) => (
                   <SelectItem key={city} value={city}>{city}</SelectItem>
                 ))}
               </SelectContent>
@@ -302,7 +314,7 @@ export function UrbanRenewalListings() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">כל הסטטוסים</SelectItem>
-                {uniqueStatuses.map(status => (
+                {uniqueStatuses.map((status: string) => (
                   <SelectItem key={status} value={status}>{status}</SelectItem>
                 ))}
               </SelectContent>
@@ -391,7 +403,52 @@ export function UrbanRenewalListings() {
                     {mitcham.yeshuv || 'לא צוין'} | {mitcham.mispar_mitham ? `מתחם מס' ${mitcham.mispar_mitham}` : ''}
                   </p>
                 </div>
-                {getStatusBadge(mitcham.status)}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {getStatusBadge(mitcham.status)}
+                  {(() => {
+                    const sourceId = portfolioSourceId(ITEM_TYPE_URBAN_RENEWAL, mitcham.mispar_mitham, mitcham.yeshuv, mitcham.id)
+                    const saved = isSaved(ITEM_TYPE_URBAN_RENEWAL, sourceId)
+                    const busy = savingId === mitcham.id
+                    const handleSave = async () => {
+                      if (!user) {
+                        setLoginDialogOpen(true)
+                        toast({ title: 'התחבר כדי לשמור לתיק המשקיע', variant: 'default' })
+                        return
+                      }
+                      setSavingId(mitcham.id)
+                      let fullData: Record<string, unknown>
+                      try {
+                        fullData = JSON.parse(JSON.stringify(mitcham))
+                      } catch {
+                        fullData = { ...mitcham }
+                      }
+                      const snapshot = {
+                        title: mitcham.shem_mitcham || `מתחם ${mitcham.mispar_mitham || ''}`,
+                        ...fullData,
+                      }
+                      const ok = await toggle(ITEM_TYPE_URBAN_RENEWAL, sourceId, snapshot)
+                      setSavingId(null)
+                      toast(ok
+                        ? { title: saved ? 'הוסר מתיק המשקיע' : 'נוסף לתיק המשקיע' }
+                        : { title: 'שגיאה', description: saved ? 'לא ניתן להסיר' : 'לא ניתן לשמור', variant: 'destructive' }
+                      )
+                    }
+                    return (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSave}
+                        disabled={busy || portfolioLoading}
+                        className="gap-1"
+                      >
+                        <span className="material-symbols-outlined text-base">
+                          {saved ? 'bookmark' : 'bookmark_border'}
+                        </span>
+                        {saved ? 'הסר מתיק' : 'שמור לתיק'}
+                      </Button>
+                    )
+                  })()}
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 border-y border-[#f0f2f4] dark:border-gray-800 py-4">
@@ -531,6 +588,7 @@ export function UrbanRenewalListings() {
           </button>
         </div>
       )}
+      <LoginDialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen} />
     </div>
   )
 }
