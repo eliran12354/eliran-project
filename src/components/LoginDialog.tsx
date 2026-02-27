@@ -1,5 +1,6 @@
 import { useState, FormEvent, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
+import { TermsDialog } from "@/components/TermsDialog";
 
 interface LoginDialogProps {
   open: boolean;
@@ -35,6 +37,8 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsDialogOpen, setTermsDialogOpen] = useState(false);
   const { login, signup } = useAuth();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -79,6 +83,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     setEmail("");
     setPassword("");
     setFormError(null);
+    setAcceptedTerms(false);
   };
 
   const toggleMode = () => {
@@ -139,13 +144,44 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
               autoComplete="current-password"
             />
           </div>
+          {!isLogin && (
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="terms"
+                checked={acceptedTerms}
+                onCheckedChange={(v) => setAcceptedTerms(v === true)}
+                disabled={isLoading}
+                className="mt-0.5"
+              />
+              <label
+                htmlFor="terms"
+                className="text-sm leading-tight cursor-pointer select-none"
+              >
+                קראתי ואני מסכים ל
+                <button
+                  type="button"
+                  className="underline text-primary hover:no-underline font-medium inline"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setTermsDialogOpen(true);
+                  }}
+                >
+                  תקנון השימוש
+                </button>
+              </label>
+            </div>
+          )}
           {formError && (
             <p className="text-sm text-destructive font-medium" role="alert">
               {formError}
             </p>
           )}
           <div className="flex flex-col gap-2">
-            <Button type="submit" disabled={isLoading} className="w-full">
+            <Button
+              type="submit"
+              disabled={isLoading || (!isLogin && !acceptedTerms)}
+              className="w-full"
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="ml-2 h-4 w-4 animate-spin" />
@@ -167,6 +203,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
           </div>
         </form>
       </DialogContent>
+      <TermsDialog open={termsDialogOpen} onOpenChange={setTermsDialogOpen} />
     </Dialog>
   );
 }

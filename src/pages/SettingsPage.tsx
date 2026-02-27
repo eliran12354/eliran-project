@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Settings, User, Shield, LogOut, Palette, Info } from "lucide-react";
+import { Settings, User, Shield, LogOut, Palette, Info, Briefcase } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { LoginDialog } from "@/components/LoginDialog";
+import { Link } from "react-router-dom";
 import { useState } from "react";
 
 export default function SettingsPage() {
@@ -77,6 +78,23 @@ export default function SettingsPage() {
                 התנתק
               </Button>
             </div>
+          </Card>
+
+          {/* תיק המשקיע */}
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Briefcase className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold">תיק המשקיע</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              שמירת פריטים מעמודים באתר, מעקב הגרלות דירה בהנחה ותוצאות מכרזי פיתוח ותשתית.
+            </p>
+            <Button asChild className="gap-2">
+              <Link to="/settings/portfolio">
+                <Briefcase className="w-4 h-4" />
+                לפתיחת התיק
+              </Link>
+            </Button>
           </Card>
         </>
       )}

@@ -17,6 +17,7 @@ import LandCheckPage from "./pages/LandCheckPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ResidentialInventoryPage from "./pages/ResidentialInventoryPage";
 import SettingsPage from "./pages/SettingsPage";
+import PortfolioPage from "./pages/PortfolioPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
             <Route path="/residential-inventory" element={<ResidentialInventoryPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/settings/portfolio" element={<PortfolioPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

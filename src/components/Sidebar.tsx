@@ -16,6 +16,7 @@ import {
   User,
   LogOut
 } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { useMemo, useState } from "react";
@@ -39,10 +40,10 @@ export function Sidebar() {
       {/* Logo and Header */}
       <div className="text-center mb-10">
         <Link to="/" className="flex items-center justify-center gap-3 mb-4 group">
-          <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-glow group-hover:shadow-large transition-all duration-300">
+          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
             <Home className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-primary">נדל״ן חכם</h1>
+          <h1 className="text-2xl font-bold text-blue-600">נדל״ן חכם</h1>
         </Link>
         <p className="text-sm text-muted-foreground leading-relaxed">
           מערכת אינטרנטית חכמה למכרזים, נכסים והשקעות נדל״ן
@@ -52,8 +53,9 @@ export function Sidebar() {
       {/* Auth – התחברות / משתמש מחובר */}
       <div className="mb-6 pb-4 border-b border-border/50">
         {user ? (
-          <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-lg">
-            <User className="w-4 h-4 text-primary shrink-0" />
+          <div className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 rounded-lg">
+            <NotificationBell />
+            <User className="w-4 h-4 text-blue-600 shrink-0" />
             <span className="text-sm font-medium truncate min-w-0 flex-1" title={profile?.email || user.email}>
               {profile?.email || user.email}
             </span>
@@ -88,8 +90,8 @@ export function Sidebar() {
             <Button 
               className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
                 isActive("/") 
-                  ? "bg-gradient-primary shadow-glow text-white" 
-                  : "hover:bg-primary/5 hover:text-primary hover-lift"
+                  ? "bg-blue-600 shadow-md text-white" 
+                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
               }`}
             >
               <Home className="w-6 h-6" />
@@ -104,8 +106,8 @@ export function Sidebar() {
             <Button 
               className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
                 isActive("/govmap") 
-                  ? "bg-gradient-primary shadow-glow text-white" 
-                  : "hover:bg-primary/5 hover:text-primary hover-lift"
+                  ? "bg-blue-600 shadow-md text-white" 
+                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
               }`}
             >
               <MapPin className="w-6 h-6" />
@@ -119,7 +121,7 @@ export function Sidebar() {
           <Button 
             variant="default"
             onClick={() => setOpenHotTenders((v) => !v)}
-            className="w-full justify-between gap-4 h-14 text-base transition-all duration-300 bg-gradient-primary shadow-glow text-white hover:shadow-large"
+            className="w-full justify-between gap-4 h-14 text-base transition-all duration-300 bg-blue-600 shadow-md text-white hover:shadow-lg"
           >
             <span className="flex items-center gap-4">
               <FileText className="w-6 h-6" />
@@ -131,10 +133,10 @@ export function Sidebar() {
             <div className="mt-2 space-y-2 pr-2">
               <Link to="/listings?tab=rami">
                 <Button 
-                  className={`w-full justify-start gap-3 h-16 text-base transition-all duration-300 text-green-600 ${
+                  className={`w-full justify-start gap-3 h-16 text-base transition-all duration-300 text-blue-600 ${
                     location.pathname === "/listings" && currentTab !== "execution"
-                      ? "bg-green-500/10"
-                      : "hover:bg-green-500/5 hover-lift"
+                      ? "bg-blue-500/10"
+                      : "hover:bg-blue-500/5 hover-lift"
                   }`}
                   variant="ghost"
                 >
@@ -144,10 +146,10 @@ export function Sidebar() {
               </Link>
               <Link to="/listings?tab=execution">
                 <Button 
-                  className={`w-full justify-start gap-3 h-16 text-base transition-all duration-300 text-green-600 ${
+                  className={`w-full justify-start gap-3 h-16 text-base transition-all duration-300 text-blue-600 ${
                     location.pathname === "/listings" && currentTab === "execution"
-                      ? "bg-green-500/10"
-                      : "hover:bg-green-500/5 hover-lift"
+                      ? "bg-blue-500/10"
+                      : "hover:bg-blue-500/5 hover-lift"
                   }`}
                   variant="ghost"
                 >
@@ -176,7 +178,7 @@ export function Sidebar() {
         {/* פרויקטי התחדשות עירונית - כפתור רגיל */}
         <div className="mb-4">
           <Link to="/urban-renewal">
-            <Button className="w-full justify-start gap-4 h-14 text-base hover:bg-primary/5 hover:text-primary hover-lift transition-all duration-300">
+            <Button className="w-full justify-start gap-4 h-14 text-base hover:bg-blue-500/5 hover:text-blue-600 hover-lift transition-all duration-300">
               <Building2 className="w-6 h-6" />
               מתחמי התחדשות עירונית
             </Button>
@@ -186,7 +188,7 @@ export function Sidebar() {
               {/* תוכניות בנייה - כפתור רגיל */}
               <div className="mb-4">
                 <Link to="/plans">
-                  <Button className="w-full justify-start gap-4 h-14 text-base hover:bg-primary/5 hover:text-primary hover-lift transition-all duration-300">
+                  <Button className="w-full justify-start gap-4 h-14 text-base hover:bg-blue-500/5 hover:text-blue-600 hover-lift transition-all duration-300">
                     <Search className="w-6 h-6" />
                     תוכניות בנייה
                   </Button>
@@ -198,8 +200,8 @@ export function Sidebar() {
                 <Link to="/dangerous-buildings">
                   <Button className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
                     isActive("/dangerous-buildings")
-                      ? "bg-gradient-primary shadow-glow text-white"
-                      : "hover:bg-primary/5 hover:text-primary hover-lift"
+                      ? "bg-blue-600 shadow-md text-white"
+                      : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
                   }`}>
                     <AlertTriangle className="w-6 h-6" />
                     איתור מבנים מסוכנים
@@ -212,8 +214,8 @@ export function Sidebar() {
                 <Link to="/tabu-request">
                   <Button className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
                     isActive("/tabu-request")
-                      ? "bg-gradient-primary shadow-glow text-white"
-                      : "hover:bg-primary/5 hover:text-primary hover-lift"
+                      ? "bg-blue-600 shadow-md text-white"
+                      : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
                   }`}>
                     <FileText className="w-6 h-6" />
                     הפקת נסח טאבו
@@ -226,8 +228,8 @@ export function Sidebar() {
                 <Link to="/land-check">
                   <Button className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
                     isActive("/land-check")
-                      ? "bg-gradient-primary shadow-glow text-white"
-                      : "hover:bg-primary/5 hover:text-primary hover-lift"
+                      ? "bg-blue-600 shadow-md text-white"
+                      : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
                   }`}>
                     <FileSearch className="w-6 h-6" />
                     בדיקת קרקע מתקדמת
@@ -240,8 +242,8 @@ export function Sidebar() {
                 <Link to="/residential-inventory">
                   <Button className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
                     isActive("/residential-inventory")
-                      ? "bg-gradient-primary shadow-glow text-white"
-                      : "hover:bg-primary/5 hover:text-primary hover-lift"
+                      ? "bg-blue-600 shadow-md text-white"
+                      : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
                   }`}>
                     <Warehouse className="w-6 h-6" />
                     מלאי תכנוני למגורים
@@ -254,8 +256,8 @@ export function Sidebar() {
                 <Link to="/admin-dashboard">
                   <Button className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
                     isActive("/admin-dashboard")
-                      ? "bg-gradient-primary shadow-glow text-white"
-                      : "hover:bg-primary/5 hover:text-primary hover-lift"
+                      ? "bg-blue-600 shadow-md text-white"
+                      : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
                   }`}>
                     <LayoutDashboard className="w-6 h-6" />
                     דשבורד ניהול
@@ -269,8 +271,8 @@ export function Sidebar() {
             <Button
               className={`w-full justify-start gap-4 h-14 text-base transition-all duration-300 ${
                 isActive("/settings")
-                  ? "bg-gradient-primary shadow-glow text-white"
-                  : "hover:bg-primary/5 hover:text-primary hover-lift"
+                  ? "bg-blue-600 shadow-md text-white"
+                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
               }`}
             >
               <Settings className="w-6 h-6" />

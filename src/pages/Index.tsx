@@ -10,7 +10,7 @@ const Index = () => {
         <div 
           className="absolute inset-0 bg-no-repeat w-full h-full"
           style={{
-            backgroundImage: 'url("/istockphoto-94747206-1024x1024.jpg")',
+            backgroundImage: 'url("/mathias-reding-dyOrM2JzXhU-unsplash.jpg")',
             backgroundSize: '100% 120%',
             backgroundPosition: 'center top',
             backgroundAttachment: 'fixed',
