@@ -143,9 +143,7 @@ export async function getDealsByPointController(req: Request, res: Response) {
  */
 export async function getLayersByPointController(req: Request, res: Response) {
   try {
-    const { x, y, layers, radius } = req.body;
-
-    if (typeof x !== 'number' || typeof y !== 'number') {
+    const { x, y, layers, radius } = req.body;    if (typeof x !== 'number' || typeof y !== 'number') {
       return res.status(400).json({
         success: false,
         error: 'Invalid parameters',
@@ -215,4 +213,3 @@ export async function geocodeAddressController(req: Request, res: Response) {
     });
   }
 }
-

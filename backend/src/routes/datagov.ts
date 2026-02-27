@@ -3,7 +3,9 @@ import {
   getConstructionProjectsController,
   getDistinctCitiesController,
   executeSqlController,
-  getUrbanRenewalMitchamimController
+  getUrbanRenewalMitchamimController,
+  getHousingLotteryController,
+  getTenderResultsController,
 } from '../controllers/dataGovController.js';
 
 const router = Router();
@@ -19,6 +21,14 @@ router.post('/sql', executeSqlController);
 
 // GET /api/datagov/distinct-cities - Get distinct city names (debug)
 router.get('/distinct-cities', getDistinctCitiesController);
+
+// מעקב אחר הגרלות דירה בהנחה (מחיר למשתכן)
+router.get('/housing-lottery', getHousingLotteryController);
+router.post('/housing-lottery', getHousingLotteryController);
+
+// תוצאות מכרזי פיתוח ותשתית
+router.get('/tender-results', getTenderResultsController);
+router.post('/tender-results', getTenderResultsController);
 
 export default router;
 

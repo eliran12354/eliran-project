@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getConstructionProgressProjects, getDistinctCities, executeSqlQuery, fetchUrbanRenewalMitchamim } from '../services/dataGovService.js';
+import { getConstructionProgressProjects, getDistinctCities, executeSqlQuery, fetchUrbanRenewalMitchamim, fetchHousingLottery, fetchTenderResults } from '../services/dataGovService.js';
 
 /**
  * Get construction progress projects
@@ -134,3 +134,46 @@ export async function getDistinctCitiesController(req: Request, res: Response) {
   }
 }
 
+/**
+ * מעקב אחר הגרלות דירה בהנחה (מחיר למשתכן)
+ * GET/POST /api/datagov/housing-lottery
+ * Query/body: { limit?, offset?, q? }
+ */
+export async function getHousingLotteryController(req: Request, res: Response) {
+  try {
+    const opts = req.method === 'GET' ? req.query : req.body;
+    const limit = opts?.limit != null ? Number(opts.limit) : 100;
+    const offset = opts?.offset != null ? Number(opts.offset) : 0;
+    const q = typeof opts?.q === 'string' ? opts.q : undefined;
+    const result = await fetchHousingLottery({ limit, offset, q });
+    res.json({ success: true, data: result.data, total: result.total });
+  } catch (error: any) {
+    console.error('Error getting housing lottery:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch housing lottery',
+      message: error.message || 'Unknown error',
+    });
+  }
+}/**
+ * תוצאות מכרזי פיתוח ותשתית
+ * GET/POST /api/datagov/tender-results
+ * Query/body: { limit?, offset?, q? }
+ */
+export async function getTenderResultsController(req: Request, res: Response) {
+  try {
+    const opts = req.method === 'GET' ? req.query : req.body;
+    const limit = opts?.limit != null ? Number(opts.limit) : 100;
+    const offset = opts?.offset != null ? Number(opts.offset) : 0;
+    const q = typeof opts?.q === 'string' ? opts.q : undefined;
+    const result = await fetchTenderResults({ limit, offset, q });
+    res.json({ success: true, data: result.data, total: result.total });
+  } catch (error: any) {
+    console.error('Error getting tender results:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch tender results',
+      message: error.message || 'Unknown error',
+    });
+  }
+}

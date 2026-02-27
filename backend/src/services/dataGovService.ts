@@ -1,10 +1,17 @@
 /**
  * Service for data.gov.il API integration
- * Proxies requests to avoid CORS issues from frontend
+ * Proxies requests to avoid CORS issues from frontend.
+ * Uses in-memory cache (stale-while-revalidate, 30s stale, 5s fetch timeout).
  */
+
+import { getOrRefresh, cacheKey } from '../lib/cache.js';
 
 const RESOURCE_ID = '1ec45809-5927-430a-9b30-77f77f528ce3';
 const URBAN_RENEWAL_RESOURCE_ID = 'f65a0daf-f737-49c5-9424-d378d52104f5'; // Urban renewal mitchamim
+/** מעקב אחר הגרלות דירה בהנחה (מחיר למשתכן) */
+const HOUSING_LOTTERY_RESOURCE_ID = '7c8255d0-49ef-49db-8904-4cf917586031';
+/** תוצאות מכרזי פיתוח ותשתית */
+const TENDER_RESULTS_RESOURCE_ID = '04e375ef-08a6-4327-8044-7bd595c4d106';
 const BASE_URL = 'https://data.gov.il/api/3/action';
 const SQL_URL = `${BASE_URL}/datastore_search_sql`; // SQL endpoint
 const SEARCH_URL = `${BASE_URL}/datastore_search`; // Regular search endpoint
@@ -286,10 +293,10 @@ export async function getConstructionProgressProjects(
 }
 
 /**
- * Fetch urban renewal mitchamim from data.gov.il
+ * Fetch urban renewal mitchamim from data.gov.il (raw – no cache).
  * Uses resource_id: f65a0daf-f737-49c5-9424-d378d52104f5
  */
-export async function fetchUrbanRenewalMitchamim(options: {
+async function fetchUrbanRenewalMitchamimRaw(options: {
   limit?: number;
   offset?: number;
   filters?: {
@@ -301,7 +308,7 @@ export async function fetchUrbanRenewalMitchamim(options: {
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-} = {}): Promise<{ data: any[]; total: number }> {
+}): Promise<{ data: any[]; total: number }> {
   try {
     const { limit = 50, offset = 0, filters = {}, search, sortBy = 'IMPORTED_AT', sortOrder = 'desc' } = options;
     
@@ -444,3 +451,119 @@ export async function fetchUrbanRenewalMitchamim(options: {
   }
 }
 
+/**
+ * Fetch urban renewal mitchamim from data.gov.il (with cache).
+ */
+export async function fetchUrbanRenewalMitchamim(options: {
+  limit?: number;
+  offset?: number;
+  filters?: { yeshuv?: string; status?: string; min_units?: number; max_units?: number };
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+} = {}): Promise<{ data: any[]; total: number }> {
+  const key = cacheKey('urban-renewal', {
+    limit: options.limit,
+    offset: options.offset,
+    search: options.search,
+    sortBy: options.sortBy,
+    sortOrder: options.sortOrder,
+    yeshuv: options.filters?.yeshuv,
+    status: options.filters?.status,
+    min_units: options.filters?.min_units,
+    max_units: options.filters?.max_units,
+  });
+  return getOrRefresh(key, () => fetchUrbanRenewalMitchamimRaw(options));
+}
+
+/**
+ * מעקב אחר הגרלות דירה בהנחה – קריאה ל-API (ללא cache).
+ */
+async function fetchHousingLotteryRaw(options: {
+  limit?: number;
+  offset?: number;
+  q?: string;
+}): Promise<{ data: any[]; total: number }> {
+  try {
+    const { limit = 100, offset = 0, q } = options;
+    let url = `${SEARCH_URL}?resource_id=${HOUSING_LOTTERY_RESOURCE_ID}&limit=${limit}&offset=${offset}`;
+    if (q) url += `&q=${encodeURIComponent(q)}`;
+
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', Accept: 'application/json' },
+    });
+    if (!res.ok) {
+      console.warn(`⚠️ Housing lottery fetch failed: ${res.status}`);
+      return { data: [], total: 0 };
+    }
+    const json: any = await res.json();
+    const records = json?.result?.records ?? [];
+    const total = json?.result?.total ?? records.length;
+    return { data: records, total };
+  } catch (error: any) {
+    console.error('❌ Error fetching housing lottery:', error);
+    return { data: [], total: 0 };
+  }
+}
+
+/**
+ * מעקב אחר הגרלות דירה בהנחה (מחיר למשתכן), עם cache.
+ * resource_id: 7c8255d0-49ef-49db-8904-4cf917586031
+ */
+export async function fetchHousingLottery(options: {
+  limit?: number;
+  offset?: number;
+  q?: string;
+} = {}): Promise<{ data: any[]; total: number }> {
+  const key = cacheKey('housing-lottery', {
+    limit: options.limit,
+    offset: options.offset,
+    q: options.q,
+  });
+  return getOrRefresh(key, () => fetchHousingLotteryRaw(options));
+}
+
+/**
+ * תוצאות מכרזי פיתוח ותשתית – קריאה ל-API (ללא cache).
+ */
+async function fetchTenderResultsRaw(options: {
+  limit?: number;
+  offset?: number;
+  q?: string;
+}): Promise<{ data: any[]; total: number }> {
+  try {
+    const { limit = 100, offset = 0, q } = options;
+    let url = `${SEARCH_URL}?resource_id=${TENDER_RESULTS_RESOURCE_ID}&limit=${limit}&offset=${offset}`;
+    if (q) url += `&q=${encodeURIComponent(q)}`;
+
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', Accept: 'application/json' },
+    });
+    if (!res.ok) {
+      console.warn(`⚠️ Tender results fetch failed: ${res.status}`);
+      return { data: [], total: 0 };
+    }
+    const json: any = await res.json();
+    const records = json?.result?.records ?? [];
+    const total = json?.result?.total ?? records.length;
+    return { data: records, total };
+  } catch (error: any) {
+    console.error('❌ Error fetching tender results:', error);
+    return { data: [], total: 0 };
+  }
+}/**
+ * תוצאות מכרזי פיתוח ותשתית, עם cache.
+ * resource_id: 04e375ef-08a6-4327-8044-7bd595c4d106
+ */
+export async function fetchTenderResults(options: {
+  limit?: number;
+  offset?: number;
+  q?: string;
+} = {}): Promise<{ data: any[]; total: number }> {
+  const key = cacheKey('tender-results', {
+    limit: options.limit,
+    offset: options.offset,
+    q: options.q,
+  });
+  return getOrRefresh(key, () => fetchTenderResultsRaw(options));
+}
