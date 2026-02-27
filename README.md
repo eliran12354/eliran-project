@@ -67,8 +67,9 @@ Create a `.env.local` file in the project root with the following variables:
 # Make sure to enable "Maps JavaScript API" for your project
 VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 
-# Backend API URL (Optional, default: http://localhost:3000)
-VITE_API_URL=http://localhost:3000
+# Backend API URL (required for auth: signup/login, and for API calls like nadlan, govmap).
+# Set to your backend URL, e.g. http://localhost:10000 when using this project's backend.
+VITE_API_URL=http://localhost:10000
 
 # GovMap API Token (Optional)
 VITE_GOVMAP_TOKEN=your_govmap_token_here
