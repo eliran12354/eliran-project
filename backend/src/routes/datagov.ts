@@ -4,6 +4,7 @@ import {
   getDistinctCitiesController,
   executeSqlController,
   getUrbanRenewalMitchamimController,
+  getResidentialInventoryController,
   getHousingLotteryController,
   getTenderResultsController,
 } from '../controllers/dataGovController.js';
@@ -15,6 +16,9 @@ router.post('/construction-projects', getConstructionProjectsController);
 
 // POST /api/datagov/urban-renewal-mitchamim - Get urban renewal mitchamim from data.gov.il
 router.post('/urban-renewal-mitchamim', getUrbanRenewalMitchamimController);
+
+// מלאי תכנוני למגורים – data.gov.il
+router.post('/residential-inventory', getResidentialInventoryController);
 
 // POST /api/datagov/sql - Execute raw SQL query (debug)
 router.post('/sql', executeSqlController);

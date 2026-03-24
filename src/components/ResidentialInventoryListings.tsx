@@ -5,7 +5,21 @@ import { Button } from '@/components/ui/button'
 
 // Backend API URL
 const BACKEND_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:10000';
-const RESOURCE_ID = '1ec45809-5927-430a-9b30-77f77f528ce3';
+
+// סדר והקבצה של שדות מלאי תכנוני למגורים (מפתחות בעברית מהמערכת)
+const RESIDENTIAL_INVENTORY_FIELDS: Array<{ key: string; category: 'basic' | 'project' | 'units' | 'dates' | 'links' | 'other' }> = [
+  { key: 'יישוב', category: 'basic' },
+  { key: 'סמל יישוב', category: 'basic' },
+  { key: 'מפתח לפוליגון תכנית', category: 'basic' },
+  { key: 'מספר תוכנית', category: 'project' },
+  { key: 'שם תוכנית', category: 'project' },
+  { key: 'שלב תכנוני', category: 'project' },
+  { key: 'יזם תכנון', category: 'project' },
+  { key: 'יחד פוטנציאל לשיווק', category: 'units' },
+  { key: 'תאריך קיום תנאי סף', category: 'dates' },
+  { key: 'קישור לאתר רשות מקרקעי ישראל', category: 'links' },
+  { key: 'קישור לאתר מנהל תכנון', category: 'links' },
+];
 
 // Fetch residential inventory data from backend (which uses data.gov.il API)
 async function fetchResidentialInventory(options: {
@@ -94,154 +108,41 @@ export function ResidentialInventoryListings() {
 
   const hasActiveFilters = searchQuery !== ''
 
-  // Map field names to Hebrew labels
+  // שמות השדות מגיעים בעברית מהמערכת – מציגים כפי שהם (אין צורך במיפוי)
   const getFieldLabel = (key: string): string => {
-    const fieldMap: Record<string, string> = {
-      // Normalized fields
-      'YESHUV': 'ישוב',
-      'GUSH': 'גוש',
-      'HELKA': 'חלקה',
-      'PROJECT_NAME': 'שם פרויקט',
-      'PROJECT_ID': 'מספר פרויקט',
-      'COMPOUND_NUMBER': 'מספר מתחם',
-      'COMPOUND_NAME': 'שם מתחם',
-      'CITY_CODE': 'סמל ישוב',
-      'UNITS_TOTAL': 'מספר יחידות',
-      'UNITS_ADDITIONAL': 'יחידות תוספת',
-      'UNITS_EXISTING': 'יחידות קיימות',
-      'UNITS_OFFERED': 'יחידות מוצעות',
-      'STATUS': 'סטטוס',
-      'ROUTE': 'מסלול',
-      'PLAN_NUMBER': 'מספר תוכנית',
-      'AREA_PERMITS': 'שטח היתרים',
-      'TOTAL_AREA': 'שטח כולל',
-      'IN_EXECUTION': 'בביצוע',
-      'DECLARATION_DATE': 'תאריך הכרזה',
-      'YEAR_VALID': 'שנת מתן תוקף',
-      'LINK_PLAN': 'קישור לתר',
-      'LINK_MAP': 'קישור למפה',
-      // Original field variations
-      'YESHUV_LAMAS': 'ישוב',
-      'SHEM_YESHUV': 'שם ישוב',
-      'YESHUV_NAME': 'שם ישוב',
-      'SHEM_PROJECT': 'שם פרויקט',
-      'MISPAR_PROJECT': 'מספר פרויקט',
-      'MATZAV': 'מצב',
-      'TAARICH_HACHRAA': 'תאריך הכרזה',
-      'TAARICH_HACHRAAZA': 'תאריך הכרזה',
-      'MISPAR_YAHIDOT': 'מספר יחידות',
-      'YACHAD_TOSAFTI': 'יחידות תוספת',
-      'YACHAD_KAYAM': 'יחידות קיימות',
-      'YACHAD_MUTZA': 'יחידות מוצעות',
-      'MISPAR_TOCHNIT': 'מספר תוכנית',
-      'TOCHNIT_NUMBER': 'מספר תוכנית',
-      'SACH_HETERIM': 'שטח היתרים',
-      'SACH_TOTAL': 'שטח כולל',
-      'MASLUL': 'מסלול',
-      'SHNAT_MATAN_TOKEF': 'שנת מתן תוקף',
-      'BEBITZUA': 'בביצוע',
-      'KISHUR_LATAR': 'קישור לתר',
-      'KISHUR_LA_MAPA': 'קישור למפה',
-      'SEMEL_YESHUV': 'סמל ישוב',
-      'MISPAR_MITHAM': 'מספר מתחם',
-      'SHEM_MITCHAM': 'שם מתחם',
-    };
-    
-    // Remove _original_ prefix for display
-    const cleanKey = key.replace(/^_original_/, '');
-    return fieldMap[cleanKey] || fieldMap[key] || cleanKey;
-  }
+    if (key === '_id') return 'מזהה';
+    return key.replace(/^_original_/, '');
+  };
 
-  // Group fields by category - prioritize normalized fields, then show originals
+  // הקבצת שדות לפי קטגוריות – לפי מבנה מלאי תכנוני למגורים (מפתחות בעברית)
   const groupFields = (item: any) => {
-    const groups: Record<string, Array<{ key: string; value: any; isOriginal?: boolean }>> = {
-      basic: [], // Basic info (city, gush, helka, project name)
-      project: [], // Project details
-      units: [], // Units information
-      dates: [], // Dates
-      links: [], // Links
-      other: [], // Other fields
+    const groups: Record<string, Array<{ key: string; value: any }>> = {
+      basic: [],
+      project: [],
+      units: [],
+      dates: [],
+      links: [],
+      other: [],
     };
-
-    // Priority order for field keys (normalized first, then originals)
     const processedKeys = new Set<string>();
-    
-    // First, process normalized/standard fields
-    const normalizedFields = [
-      { key: 'YESHUV', category: 'basic' },
-      { key: 'GUSH', category: 'basic' },
-      { key: 'HELKA', category: 'basic' },
-      { key: 'PROJECT_NAME', category: 'basic' },
-      { key: 'PROJECT_ID', category: 'basic' },
-      { key: 'COMPOUND_NUMBER', category: 'basic' },
-      { key: 'COMPOUND_NAME', category: 'basic' },
-      { key: 'CITY_CODE', category: 'basic' },
-      { key: 'UNITS_TOTAL', category: 'units' },
-      { key: 'UNITS_ADDITIONAL', category: 'units' },
-      { key: 'UNITS_EXISTING', category: 'units' },
-      { key: 'UNITS_OFFERED', category: 'units' },
-      { key: 'STATUS', category: 'project' },
-      { key: 'ROUTE', category: 'project' },
-      { key: 'PLAN_NUMBER', category: 'project' },
-      { key: 'AREA_PERMITS', category: 'project' },
-      { key: 'TOTAL_AREA', category: 'project' },
-      { key: 'IN_EXECUTION', category: 'project' },
-      { key: 'DECLARATION_DATE', category: 'dates' },
-      { key: 'YEAR_VALID', category: 'dates' },
-      { key: 'LINK_PLAN', category: 'links' },
-      { key: 'LINK_MAP', category: 'links' },
-    ];
 
-    normalizedFields.forEach(({ key, category }) => {
-      if (item.hasOwnProperty(key) && item[key] !== null && item[key] !== undefined && item[key] !== '') {
-        groups[category].push({ key, value: item[key] });
-        processedKeys.add(key);
-      }
-    });
+    for (const { key, category } of RESIDENTIAL_INVENTORY_FIELDS) {
+      if (!item.hasOwnProperty(key)) continue;
+      const value = item[key];
+      if (value === null || value === undefined || value === '') continue;
+      groups[category].push({ key, value });
+      processedKeys.add(key);
+    }
 
-    // Then process all other fields (including original field names)
     Object.keys(item).forEach(key => {
-      // Skip already processed keys and internal keys
-      if (processedKeys.has(key) || key.startsWith('_id') || key.startsWith('_original_')) {
-        return;
-      }
-
+      if (processedKeys.has(key) || key === '_id') return;
       const value = item[key];
       if (value === null || value === undefined || value === '') return;
-
-      const keyUpper = key.toUpperCase();
-      const isOriginal = key.startsWith('_original_');
-      
-      // Skip if we already have the normalized version
-      if (isOriginal) {
-        const normalizedKey = key.replace('_original_', '');
-        if (processedKeys.has(normalizedKey)) {
-          return; // Don't show original if we have normalized
-        }
-      }
-      
-      // Categorize remaining fields
-      if (keyUpper.includes('YESHUV') || keyUpper.includes('GUSH') || keyUpper.includes('HELKA') || 
-          keyUpper.includes('SHEM_PROJECT') || keyUpper.includes('PROJECT') || keyUpper.includes('MITHAM') || keyUpper.includes('MITCHAM')) {
-        groups.basic.push({ key, value, isOriginal });
-      } else if (keyUpper.includes('YACHAD') || keyUpper.includes('MISPAR_YAHIDOT') || keyUpper.includes('UNITS')) {
-        groups.units.push({ key, value, isOriginal });
-      } else if (keyUpper.includes('TAARICH') || keyUpper.includes('DATE') || keyUpper.includes('SHNAT')) {
-        groups.dates.push({ key, value, isOriginal });
-      } else if (keyUpper.includes('KISHUR') || keyUpper.includes('LINK') || keyUpper.includes('URL')) {
-        groups.links.push({ key, value, isOriginal });
-      } else if (keyUpper.includes('STATUS') || keyUpper.includes('MATZAV') || keyUpper.includes('MASLUL') || 
-                 keyUpper.includes('TOCHNIT') || keyUpper.includes('SACH') || keyUpper.includes('BEBITZUA')) {
-        groups.project.push({ key, value, isOriginal });
-      } else {
-        groups.other.push({ key, value, isOriginal });
-      }
-      
-      processedKeys.add(key);
+      groups.other.push({ key, value });
     });
 
     return groups;
-  }
+  };
 
   // Format value for display
   const formatValue = (value: any): string => {
@@ -324,10 +225,8 @@ export function ResidentialInventoryListings() {
             const groups = groupFields(item);
             const recordNumber = index + 1 + (currentPage - 1) * itemsPerPage;
             
-            // Get main title from project name or city (check normalized fields first)
-            const mainTitle = item.PROJECT_NAME || item.COMPOUND_NAME || item.SHEM_PROJECT || 
-                             item.YESHUV || item.YESHUV_LAMAS || item.SHEM_YESHUV || 
-                             `רשומה #${recordNumber}`;
+            // כותרת: שם תוכנית או יישוב (מבנה הנתונים – מפתחות בעברית)
+            const mainTitle = item['שם תוכנית'] || item['יישוב'] || `רשומה #${recordNumber}`;
             
             return (
               <article 
@@ -455,19 +354,19 @@ export function ResidentialInventoryListings() {
                         {groups.links.map(({ key, value }) => {
                           const isUrl = typeof value === 'string' && (value.startsWith('http://') || value.startsWith('https://'));
                           return (
-                            <div key={key} className="border-b border-[#f0f2f4] dark:border-gray-800 pb-2 last:border-0">
+                            <div key={key} className="border-b border-[#f0f2f4] dark:border-gray-800 pb-2 last:border-0 min-w-0 overflow-hidden">
                               <p className="text-xs text-[#617589] dark:text-gray-400 mb-1 font-semibold">
                                 {getFieldLabel(key)}
                               </p>
                               {isUrl ? (
-                                <a 
-                                  href={value} 
-                                  target="_blank" 
+                                <a
+                                  href={value}
+                                  target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-sm font-medium text-primary hover:underline break-words flex items-center gap-1"
+                                  className="text-sm font-medium text-primary hover:underline break-all block max-w-full"
                                 >
                                   {value}
-                                  <span className="material-symbols-outlined text-sm">open_in_new</span>
+                                  <span className="material-symbols-outlined text-sm inline-block mr-1">open_in_new</span>
                                 </a>
                               ) : (
                                 <p className="text-sm font-medium text-[#111418] dark:text-white break-words">
@@ -482,40 +381,6 @@ export function ResidentialInventoryListings() {
                   </div>
                 )}
 
-                {/* Other Fields (Collapsible) */}
-                {groups.other.length > 0 && (
-                  <details className="mt-4 pt-4 border-t border-[#f0f2f4] dark:border-gray-800">
-                    <summary className="cursor-pointer text-primary font-semibold text-sm hover:underline flex items-center gap-2">
-                      <span className="material-symbols-outlined text-base">expand_more</span>
-                      שדות נוספים ({groups.other.length})
-                    </summary>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                      {groups.other.map(({ key, value, isOriginal }) => (
-                        <div key={key} className={`border-b border-[#f0f2f4] dark:border-gray-800 pb-2 ${isOriginal ? 'opacity-70' : ''}`}>
-                          <p className="text-xs text-[#617589] dark:text-gray-400 mb-1 font-semibold flex items-center gap-1">
-                            {getFieldLabel(key)}
-                            {isOriginal && <span className="text-[10px] text-gray-400">(מקורי)</span>}
-                          </p>
-                          <p className="text-sm font-medium text-[#111418] dark:text-white break-words">
-                            {formatValue(value)}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-                )}
-
-                {/* Debug: Show raw data in development */}
-                {process.env.NODE_ENV === 'development' && (
-                  <details className="mt-4 pt-4 border-t-2 border-dashed border-gray-300 dark:border-gray-600">
-                    <summary className="cursor-pointer text-gray-500 dark:text-gray-400 text-xs hover:underline">
-                      🔍 נתונים גולמיים (דיבוג)
-                    </summary>
-                    <pre className="mt-2 p-4 bg-gray-50 dark:bg-gray-800 rounded text-xs overflow-auto max-h-96">
-                      {JSON.stringify(item, null, 2)}
-                    </pre>
-                  </details>
-                )}
               </article>
             );
           })}

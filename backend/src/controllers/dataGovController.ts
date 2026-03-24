@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getConstructionProgressProjects, getDistinctCities, executeSqlQuery, fetchUrbanRenewalMitchamim, fetchHousingLottery, fetchTenderResults } from '../services/dataGovService.js';
+import { getConstructionProgressProjects, getDistinctCities, executeSqlQuery, fetchUrbanRenewalMitchamim, fetchHousingLottery, fetchTenderResults, fetchResidentialInventory } from '../services/dataGovService.js';
 
 /**
  * Get construction progress projects
@@ -135,6 +135,41 @@ export async function getDistinctCitiesController(req: Request, res: Response) {
 }
 
 /**
+ * מלאי תכנוני למגורים – data.gov.il
+ * POST /api/datagov/residential-inventory
+ * Body: { limit?: number, offset?: number, search?: string }
+ */
+export async function getResidentialInventoryController(req: Request, res: Response) {
+  try {
+    const { limit, offset, search } = req.body;
+    const limitNum = limit != null ? Number(limit) : 50;
+    const offsetNum = offset != null ? Number(offset) : 0;
+    const searchStr = typeof search === 'string' ? search : undefined;
+
+    console.log('🏠 Residential inventory request:', { limit: limitNum, offset: offsetNum, search: searchStr ?? '(none)' });
+
+    const result = await fetchResidentialInventory({
+      limit: limitNum,
+      offset: offsetNum,
+      search: searchStr,
+    });
+
+    res.json({
+      success: true,
+      data: result.data,
+      total: result.total,
+    });
+  } catch (error: any) {
+    console.error('Error getting residential inventory:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch residential inventory',
+      message: error.message || 'Unknown error',
+    });
+  }
+}
+
+/**
  * מעקב אחר הגרלות דירה בהנחה (מחיר למשתכן)
  * GET/POST /api/datagov/housing-lottery
  * Query/body: { limit?, offset?, q? }
@@ -155,7 +190,9 @@ export async function getHousingLotteryController(req: Request, res: Response) {
       message: error.message || 'Unknown error',
     });
   }
-}/**
+}
+
+/**
  * תוצאות מכרזי פיתוח ותשתית
  * GET/POST /api/datagov/tender-results
  * Query/body: { limit?, offset?, q? }

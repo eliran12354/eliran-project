@@ -12,6 +12,8 @@ const URBAN_RENEWAL_RESOURCE_ID = 'f65a0daf-f737-49c5-9424-d378d52104f5'; // Urb
 const HOUSING_LOTTERY_RESOURCE_ID = '7c8255d0-49ef-49db-8904-4cf917586031';
 /** תוצאות מכרזי פיתוח ותשתית */
 const TENDER_RESULTS_RESOURCE_ID = '04e375ef-08a6-4327-8044-7bd595c4d106';
+/** מלאי תכנוני למגורים – data.gov.il */
+const RESIDENTIAL_INVENTORY_RESOURCE_ID = '99aad98f-2b54-4eea-834d-650b56389bf3';
 const BASE_URL = 'https://data.gov.il/api/3/action';
 const SQL_URL = `${BASE_URL}/datastore_search_sql`; // SQL endpoint
 const SEARCH_URL = `${BASE_URL}/datastore_search`; // Regular search endpoint
@@ -474,6 +476,58 @@ export async function fetchUrbanRenewalMitchamim(options: {
     max_units: options.filters?.max_units,
   });
   return getOrRefresh(key, () => fetchUrbanRenewalMitchamimRaw(options));
+}
+
+/**
+ * מלאי תכנוני למגורים – קריאה ל-API (ללא cache).
+ * resource_id: 99aad98f-2b54-4eea-834d-650b56389bf3
+ */
+async function fetchResidentialInventoryRaw(options: {
+  limit?: number;
+  offset?: number;
+  search?: string;
+}): Promise<{ data: any[]; total: number }> {
+  try {
+    const { limit = 50, offset = 0, search } = options;
+    let url = `${SEARCH_URL}?resource_id=${RESIDENTIAL_INVENTORY_RESOURCE_ID}&limit=${limit}&offset=${offset}`;
+    if (search && search.trim()) {
+      url += `&q=${encodeURIComponent(search.trim())}`;
+    }
+
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        Accept: 'application/json',
+      },
+    });
+    if (!res.ok) {
+      console.warn(`⚠️ Residential inventory fetch failed: ${res.status}`);
+      return { data: [], total: 0 };
+    }
+    const json: any = await res.json();
+    const records = json?.result?.records ?? [];
+    const total = json?.result?.total ?? records.length;
+    return { data: records, total };
+  } catch (error: any) {
+    console.error('❌ Error fetching residential inventory:', error);
+    return { data: [], total: 0 };
+  }
+}
+
+/**
+ * מלאי תכנוני למגורים, עם cache.
+ */
+export async function fetchResidentialInventory(options: {
+  limit?: number;
+  offset?: number;
+  search?: string;
+} = {}): Promise<{ data: any[]; total: number }> {
+  const key = cacheKey('residential-inventory', {
+    limit: options.limit,
+    offset: options.offset,
+    search: options.search,
+  });
+  return getOrRefresh(key, () => fetchResidentialInventoryRaw(options));
 }
 
 /**

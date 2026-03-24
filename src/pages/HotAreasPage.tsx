@@ -113,25 +113,28 @@ export default function HotAreasPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 space-y-6">
-        <div className="flex items-center gap-3">
-          <Flame className="w-8 h-8 text-orange-500" />
-          <h1 className="text-3xl font-bold">אזורים חמים למעקב</h1>
+      <div className="w-full" dir="rtl">
+        <div className="container mx-auto px-4 py-8 space-y-6 text-right">
+          <div className="flex items-center gap-3 justify-end">
+            <Flame className="w-8 h-8 text-orange-500" />
+            <h1 className="text-3xl font-bold">אזורים חמים למעקב</h1>
+          </div>
+          <p className="text-muted-foreground">טוען נתונים...</p>
         </div>
-        <p className="text-muted-foreground">טוען נתונים...</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8 animate-fade-in">
+    <div className="w-full" dir="rtl">
+      <div className="container mx-auto px-4 py-8 space-y-8 animate-fade-in text-right">
       {/* Header */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-lg">
+      <div className="space-y-3 text-right">
+        <div className="flex items-center gap-3 justify-start">
+          <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-lg shrink-0">
             <Flame className="w-7 h-7 text-white" />
           </div>
-          <div>
+          <div className="text-right">
             <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
               אזורים חמים למעקב
             </h1>
@@ -144,12 +147,12 @@ export default function HotAreasPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="plans" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="plans" className="flex items-center gap-2">
+        <TabsList className="grid w-full grid-cols-2 text-right">
+          <TabsTrigger value="plans" className="flex items-center gap-2 justify-center">
             <Sparkles className="w-4 h-4" />
             תוכניות עם פוטנציאל גבוה
           </TabsTrigger>
-          <TabsTrigger value="urban-renewal" className="flex items-center gap-2">
+          <TabsTrigger value="urban-renewal" className="flex items-center gap-2 justify-center">
             <Building2 className="w-4 h-4" />
             מתחמי פינוי-בינוי מבוקשים
           </TabsTrigger>
@@ -157,7 +160,7 @@ export default function HotAreasPage() {
 
         {/* Land Release Projects Tab */}
         <TabsContent value="plans" className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-end text-right">
             <div>
               <h2 className="text-2xl font-bold">קרקעות בשלבי הפשרה</h2>
               <p className="text-sm text-muted-foreground mt-1">
@@ -167,22 +170,22 @@ export default function HotAreasPage() {
           </div>
 
           {landReleaseProjectsData.length === 0 ? (
-            <Card className="p-8 text-center">
-              <Sparkles className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <Card className="p-8 text-right">
+              <Sparkles className="w-12 h-12 text-muted-foreground ms-auto mb-4 block" />
               <p className="text-muted-foreground">לא נמצאו תוכניות קרקע</p>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {landReleaseProjectsData.map((project, index) => (
                 <Card key={index} className="overflow-hidden bg-gradient-card border-0 shadow-soft hover:shadow-medium transition-all duration-300 hover-lift">
-                  <div className="p-6 space-y-4">
+                  <div className="p-6 space-y-4 text-right">
                     {/* Header */}
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start justify-between gap-3 flex-row-reverse">
                       <div className="flex-1">
                         <h3 className="font-bold text-lg mb-2 line-clamp-2">
                           {project.name}
                         </h3>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground justify-end">
                           <MapPin className="w-4 h-4" />
                           <span>{project.city}</span>
                         </div>
@@ -196,14 +199,14 @@ export default function HotAreasPage() {
                     {project.dbData && (
                       <div className="space-y-2 pt-2 border-t border-border/50">
                         {project.dbData.proposed_units && (
-                          <div className="flex items-center gap-2 text-sm">
+                          <div className="flex items-center gap-2 text-sm justify-end">
                             <Users className="w-4 h-4 text-muted-foreground" />
                             <span className="text-muted-foreground">יחידות מתוכננות:</span>
                             <span className="font-semibold">{project.dbData.proposed_units.toLocaleString()}</span>
                           </div>
                         )}
                         {project.dbData.project_type && (
-                          <div className="flex items-center gap-2 text-sm">
+                          <div className="flex items-center gap-2 text-sm justify-end">
                             <span className="text-muted-foreground">סוג:</span>
                             <Badge variant="outline">{project.dbData.project_type}</Badge>
                           </div>
@@ -220,7 +223,7 @@ export default function HotAreasPage() {
 
         {/* Popular Urban Renewal Tab */}
         <TabsContent value="urban-renewal" className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-end text-right">
             <div>
               <h2 className="text-2xl font-bold">מתחמי פינוי-בינוי מבוקשים</h2>
               <p className="text-sm text-muted-foreground mt-1">
@@ -230,18 +233,18 @@ export default function HotAreasPage() {
           </div>
 
           {urbanRenewalProjects.length === 0 ? (
-            <Card className="p-8 text-center">
-              <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <Card className="p-8 text-right">
+              <Building2 className="w-12 h-12 text-muted-foreground ms-auto mb-4 block" />
               <p className="text-muted-foreground">לא נמצאו מתחמי פינוי-בינוי מבוקשים</p>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {urbanRenewalProjects.map((project, index) => (
                 <Card key={index} className="overflow-hidden bg-gradient-card border-0 shadow-soft hover:shadow-medium transition-all duration-300 hover-lift">
-                  <div className="p-6 space-y-4">
+                  <div className="p-6 space-y-4 text-right">
                     {/* Header */}
                     <div className="space-y-2">
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start justify-between gap-3 flex-row-reverse">
                         <h3 className="font-bold text-lg flex-1 line-clamp-2">
                           {project.name}
                         </h3>
@@ -249,7 +252,7 @@ export default function HotAreasPage() {
                           מבוקש
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground justify-end">
                         <MapPin className="w-4 h-4" />
                         <span>{project.city}</span>
                       </div>
@@ -259,10 +262,10 @@ export default function HotAreasPage() {
                     {project.dbData && (
                       <>
                         {/* Details */}
-                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/50">
+                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/50 text-right">
                           {project.dbData.proposed_units && (
                             <div className="space-y-1">
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground justify-end">
                                 <Users className="w-4 h-4" />
                                 <span>יחידות מתוכננות</span>
                               </div>
@@ -273,7 +276,7 @@ export default function HotAreasPage() {
                           )}
                           {project.dbData.existing_units && (
                             <div className="space-y-1">
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground justify-end">
                                 <Building2 className="w-4 h-4" />
                                 <span>יחידות קיימות</span>
                               </div>
@@ -287,13 +290,13 @@ export default function HotAreasPage() {
                         {/* Additional Info */}
                         <div className="space-y-2 pt-2 border-t border-border/50">
                           {project.dbData.project_type && (
-                            <div className="flex items-center gap-2 text-sm">
+                            <div className="flex items-center gap-2 text-sm justify-end">
                               <span className="text-muted-foreground">סוג:</span>
                               <Badge variant="outline">{project.dbData.project_type}</Badge>
                             </div>
                           )}
                           {project.dbData.plan_name && (
-                            <div className="flex items-center gap-2 text-sm">
+                            <div className="flex items-center gap-2 text-sm justify-end">
                               <span className="text-muted-foreground">תוכנית:</span>
                               <span className="font-medium">{project.dbData.plan_name}</span>
                             </div>
@@ -309,7 +312,7 @@ export default function HotAreasPage() {
                               onClick={() => window.open(project.dbData!.plan_link, '_blank')}
                             >
                               <span>פרטים נוספים</span>
-                              <ExternalLink className="w-4 h-4 mr-2 group-hover:translate-x-1 transition-transform" />
+                              <ExternalLink className="w-4 h-4 ms-2 group-hover:translate-x-1 transition-transform" />
                             </Button>
                           </div>
                         )}
@@ -323,6 +326,7 @@ export default function HotAreasPage() {
           )}
         </TabsContent>
       </Tabs>
+    </div>
     </div>
   );
 }
