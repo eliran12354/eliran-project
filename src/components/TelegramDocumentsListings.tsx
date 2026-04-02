@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -13,6 +15,8 @@ import type { TelegramDocument } from '@/lib/supabase'
 
 export function TelegramDocumentsListings() {
   const queryClient = useQueryClient()
+  const { isAdmin } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [searchTerm, setSearchTerm] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState({
@@ -53,6 +57,16 @@ export function TelegramDocumentsListings() {
   })
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (searchParams.get('add') !== '1') return
+    if (isAdmin) {
+      setIsAddDialogOpen(true)
+    }
+    const next = new URLSearchParams(searchParams)
+    next.delete('add')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, isAdmin, setSearchParams])
 
   // Fetch documents with filters
   const { data: documentsData, isLoading, error } = useQuery({
@@ -292,10 +306,12 @@ export function TelegramDocumentsListings() {
         <div className="space-y-1">
           <h2 className="text-2xl md:text-3xl font-bold">מכרזי הוצאה לפועל</h2>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          הוסף כרטיסייה
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            הוסף כרטיסייה
+          </Button>
+        )}
       </div>
 
       {/* Search */}

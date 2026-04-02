@@ -109,8 +109,8 @@ export default function GovMapPage() {
   };
 
   return (
-    <div className="h-full w-[calc(100%+3rem)] flex flex-col -mx-6 -mb-6">
-      <div className="px-6 py-1 border-b border-border/20">
+    <div className="flex min-h-0 w-[calc(100%+3rem)] flex-col -mx-6 h-[calc(100dvh-3rem)] max-h-[calc(100dvh-3rem)] sm:h-[calc(100dvh-4rem)] sm:max-h-[calc(100dvh-4rem)]">
+      <div className="shrink-0 px-6 py-1 border-b border-border/20">
           <h1 className="text-lg font-bold text-primary mb-0.5">מפת GovMap</h1>
 
           
@@ -255,9 +255,9 @@ export default function GovMapPage() {
         </div>
       </div>
 
-      {/* GovMap embed iframe - תופס את כל העמוד */}
-      <div className="flex-1 flex flex-col py-0 px-0" dir="rtl">
-        <div className="mb-0.5 px-6">
+      {/* GovMap embed iframe — flex-1 + min-h-0 כדי שה-iframe יקבל גובה אמיתי */}
+      <div className="flex min-h-0 flex-1 flex-col py-0 px-0" dir="rtl">
+        <div className="mb-0.5 shrink-0 px-6">
           <div className="flex gap-1.5 flex-wrap">
             <button
               onClick={() => toggleLayer('gushim')}
@@ -452,13 +452,12 @@ export default function GovMapPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-hidden">
           <iframe
             key={Array.from(selectedLayers).sort().join(',') + (searchParams?.query || '') + (searchParams?.coordinates || '')} // מכריח רענון מלא כשמחליפים שכבות או חיפוש
             src={embedSrc}
-            width="100%"
-            height="100%"
-            style={{ border: "none" }}
+            title="מפת GovMap"
+            className="block h-full min-h-0 w-full border-0"
             allowFullScreen
           />
         </div>

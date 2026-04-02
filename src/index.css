@@ -147,6 +147,12 @@ All colors MUST be HSL.
   html, body {
     margin: 0;
     padding: 0;
+    /* מונע גלילה אופקית מ־100vw / אלמנטים רחבים (סרגל גלילה אנכי מקטין את ה־viewport) */
+    overflow-x: hidden;
+  }
+
+  #root {
+    min-width: 0;
   }
 
   body {
@@ -263,5 +269,53 @@ All colors MUST be HSL.
   /* Custom zoom controls */
   .leaflet-control-zoom {
     display: none;
+  }
+
+  /* Accessibility: root font scale (rem-based UI grows with html font-size) */
+  html[data-a11y-font="0"] {
+    font-size: 100%;
+  }
+  html[data-a11y-font="1"] {
+    font-size: 112.5%;
+  }
+  html[data-a11y-font="2"] {
+    font-size: 125%;
+  }
+  html[data-a11y-font="3"] {
+    font-size: 137.5%;
+  }
+
+  html[data-a11y-contrast="high"] {
+    --foreground: 222.2 84% 4.9%;
+    --muted-foreground: 215.4 16.3% 28%;
+    --border: 220 13% 45%;
+    --input: 220 13% 45%;
+  }
+
+  html[data-a11y-motion="reduce"] *,
+  html[data-a11y-motion="reduce"] *::before,
+  html[data-a11y-motion="reduce"] *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* מרווח שורות (line-height) לקריאות */
+  html[data-a11y-line="0"] body,
+  html[data-a11y-line="0"] #root {
+    line-height: inherit;
+  }
+  html[data-a11y-line="1"] body,
+  html[data-a11y-line="1"] #root {
+    line-height: 1.65;
+  }
+  html[data-a11y-line="2"] body,
+  html[data-a11y-line="2"] #root {
+    line-height: 1.85;
+  }
+  html[data-a11y-line="3"] body,
+  html[data-a11y-line="3"] #root {
+    line-height: 2.1;
   }
 }

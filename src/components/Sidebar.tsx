@@ -36,7 +36,10 @@ export function Sidebar() {
   }, [location.search]);
 
   return (
-    <div className="w-72 bg-gradient-card border-l border-border/50 p-6 space-y-6 shadow-medium animate-slide-up sticky top-0 h-screen overflow-y-auto">
+    <aside
+      className="fixed left-0 top-0 z-40 flex h-screen w-72 flex-col overflow-y-auto border-r border-border/50 bg-gradient-card p-6 shadow-lg animate-slide-up"
+      aria-label="תפריט ניווט"
+    >
       {/* Logo and Header */}
       <div className="text-center mb-10">
         <Link to="/" className="flex items-center justify-center gap-3 mb-4 group">
@@ -281,6 +284,6 @@ export function Sidebar() {
           </Link>
         </div>
       </nav>
-    </div>
+    </aside>
   );
 }

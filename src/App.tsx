@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/context/AuthProvider";
 import { Layout } from "./components/Layout";
 import Index from "./pages/Index";
 import MapPage from "./pages/MapPage"; 
@@ -18,6 +19,7 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ResidentialInventoryPage from "./pages/ResidentialInventoryPage";
 import SettingsPage from "./pages/SettingsPage";
 import PortfolioPage from "./pages/PortfolioPage";
+import BusinessAccountPage from "./pages/BusinessAccountPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,28 +29,31 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/map" element={<MapPage />} />
-            <Route path="/govmap" element={<GovMapPage />} />
-            <Route path="/listings" element={<ListingsPage />} />
-            <Route path="/plans" element={<PlansPage />} />
-            <Route path="/hot-areas" element={<HotAreasPage />} />
-            <Route path="/urban-renewal" element={<UrbanRenewalPage />} />
-            <Route path="/dangerous-buildings" element={<DangerousBuildingsPage />} />
-            <Route path="/tabu-request" element={<TabuRequestPage />} />
-            <Route path="/land-check" element={<LandCheckPage />} />
-            <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
-            <Route path="/residential-inventory" element={<ResidentialInventoryPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/settings/portfolio" element={<PortfolioPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/business" element={<BusinessAccountPage />} />
+              <Route path="/map" element={<MapPage />} />
+              <Route path="/govmap" element={<GovMapPage />} />
+              <Route path="/listings" element={<ListingsPage />} />
+              <Route path="/plans" element={<PlansPage />} />
+              <Route path="/hot-areas" element={<HotAreasPage />} />
+              <Route path="/urban-renewal" element={<UrbanRenewalPage />} />
+              <Route path="/dangerous-buildings" element={<DangerousBuildingsPage />} />
+              <Route path="/tabu-request" element={<TabuRequestPage />} />
+              <Route path="/land-check" element={<LandCheckPage />} />
+              <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
+              <Route path="/residential-inventory" element={<ResidentialInventoryPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/settings/portfolio" element={<PortfolioPage />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Layout>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

@@ -1,11 +1,52 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { ContactDialog } from "@/components/ContactDialog";
+
+const CORE_TOOLS = [
+  {
+    to: "/plans",
+    icon: "analytics",
+    title: "ניתוח תכנון ובנייה",
+    description: 'ניתוח היתרים, תב"עות וצפי התקדמות פרויקטים',
+  },
+  {
+    to: "/urban-renewal",
+    icon: "location_city",
+    title: "איתור התחדשות עירונית",
+    description: 'זיהוי מתחמים בעלי פוטנציאל פינוי-בינוי ותמ"א',
+  },
+  {
+    to: "/listings",
+    icon: "payments",
+    title: "מודיעין עסקאות וקרקע",
+    description: "מידע היסטורי ועדכני על מחירי רכישה וחוזים",
+  },
+  {
+    to: "/dangerous-buildings",
+    icon: "report_problem",
+    title: "ניהול סיכוני מבנים",
+    description: "ניטור מצב פיזי, סקרים הנדסיים וסיכונים פיננסיים",
+  },
+] as const;
+
+const coreToolLinkClassName =
+  "group flex items-center gap-4 rounded-xl border-2 border-slate-200/90 bg-white p-4 md:p-5 text-right shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition-all hover:border-primary/50 hover:bg-primary/[0.04] hover:shadow-[0_8px_28px_rgba(17,82,212,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
+
+/** Break out of Layout `main` horizontal padding; document `overflow-x: hidden` avoids 100vw scrollbar overflow. */
+const sectionFullBleedStyle = {
+  marginLeft: "calc(50% - 50vw)",
+  marginRight: "calc(50% - 50vw)",
+  width: "100vw",
+} as const;
 
 const Index = () => {
   return (
     <div className="w-full bg-[#F5F7FA]" dir="rtl">
       {/* Hero Section */}
-      <section className="relative min-h-screen w-screen flex flex-col justify-center pt-20 bg-white overflow-hidden" style={{ marginLeft: 'calc(50% - 50vw)', marginRight: 'calc(50% - 50vw)', width: '100vw' }}>
+      <section
+        className="relative min-h-screen w-full max-w-none flex flex-col justify-center pt-20 bg-white overflow-hidden"
+        style={sectionFullBleedStyle}
+      >
         {/* Background Image */}
         <div 
           className="absolute inset-0 bg-no-repeat w-full h-full"
@@ -59,17 +100,14 @@ const Index = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-5">
-              <Link to="/govmap">
-                <Button className="h-16 px-10 bg-primary text-white text-lg font-bold rounded-xl flex items-center justify-center hover:scale-[1.02] transition-transform shadow-[0_4px_16px_rgba(17,82,212,0.25)]">
-                  לגישה מיידית לנתונים
+              <Link to="/business">
+                <Button 
+                  variant="outline" 
+                  className="h-16 px-10 border-2 border-primary text-primary text-lg font-bold rounded-xl flex items-center justify-center hover:bg-primary/5 transition-colors shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+                >
+                  למה מנוי מקצועי?
                 </Button>
               </Link>
-              <Button 
-                variant="outline" 
-                className="h-16 px-10 border-2 border-primary text-primary text-lg font-bold rounded-xl flex items-center justify-center hover:bg-primary/5 transition-colors shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
-              >
-                למה מנוי מקצועי?
-              </Button>
             </div>
           </div>
         </div>
@@ -79,7 +117,10 @@ const Index = () => {
       <div className="h-px bg-gradient-to-r from-transparent via-slate-200/60 to-transparent"></div>
 
       {/* Value Proposition */}
-      <section className="py-28 lg:py-36 bg-white relative">
+      <section
+        className="py-28 lg:py-36 bg-white relative overflow-hidden"
+        style={sectionFullBleedStyle}
+      >
         {/* Subtle texture overlay */}
         <div 
           className="absolute inset-0 opacity-[0.015]"
@@ -127,7 +168,10 @@ const Index = () => {
       <div className="h-px bg-gradient-to-r from-transparent via-slate-200/60 to-transparent"></div>
 
       {/* Core Tools Section */}
-      <section className="relative py-28 bg-[#F5F7FA]">
+      <section
+        className="relative py-28 bg-[#F5F7FA] overflow-hidden"
+        style={sectionFullBleedStyle}
+      >
         {/* Subtle texture overlay */}
         <div 
           className="absolute inset-0 opacity-[0.025]"
@@ -157,70 +201,21 @@ const Index = () => {
             </Button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Tool Card 1 */}
-            <Link to="/plans" className="group relative overflow-hidden rounded-[16px] aspect-[3/4] border border-slate-200/60 bg-white p-8 flex flex-col justify-end transition-all hover:border-primary/50 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-              <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent z-10"></div>
-              <div className="relative z-20">
-                <span className="material-symbols-outlined text-primary text-4xl mb-4 opacity-0 group-hover:opacity-100 transition-opacity translate-y-4 group-hover:translate-y-0 duration-300">
-                  analytics
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {CORE_TOOLS.map(({ to, icon, title, description }) => (
+              <Link key={to} to={to} className={coreToolLinkClassName}>
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+                  <span className="material-symbols-outlined text-2xl">{icon}</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-bold text-[#111318] group-hover:text-primary transition-colors">{title}</h4>
+                  <p className="text-sm text-slate-600 mt-1.5 leading-relaxed">{description}</p>
+                </div>
+                <span className="material-symbols-outlined text-slate-400 shrink-0 transition-colors group-hover:text-primary">
+                  chevron_left
                 </span>
-                <h4 className="text-xl font-bold text-[#111318] group-hover:text-primary transition-colors">
-                  ניתוח תכנון ובנייה
-                </h4>
-                <p className="text-sm text-slate-600 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  ניתוח היתרים, תב"עות וצפי התקדמות פרוייקטים
-                </p>
-              </div>
-            </Link>
-            
-            {/* Tool Card 2 */}
-            <Link to="/urban-renewal" className="group relative overflow-hidden rounded-[16px] aspect-[3/4] border border-slate-200/60 bg-white p-8 flex flex-col justify-end transition-all hover:border-primary/50 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-              <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent z-10"></div>
-              <div className="relative z-20">
-                <span className="material-symbols-outlined text-primary text-4xl mb-4 opacity-0 group-hover:opacity-100 transition-opacity translate-y-4 group-hover:translate-y-0 duration-300">
-                  location_city
-                </span>
-                <h4 className="text-xl font-bold text-[#111318] group-hover:text-primary transition-colors">
-                  איתור התחדשות עירונית
-                </h4>
-                <p className="text-sm text-slate-600 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  זיהוי מתחמים בעלי פוטנציאל פינוי-בינוי ותמ"א
-                </p>
-              </div>
-            </Link>
-            
-            {/* Tool Card 3 */}
-            <Link to="/listings" className="group relative overflow-hidden rounded-[16px] aspect-[3/4] border border-slate-200/60 bg-white p-8 flex flex-col justify-end transition-all hover:border-primary/50 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-              <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent z-10"></div>
-              <div className="relative z-20">
-                <span className="material-symbols-outlined text-primary text-4xl mb-4 opacity-0 group-hover:opacity-100 transition-opacity translate-y-4 group-hover:translate-y-0 duration-300">
-                  payments
-                </span>
-                <h4 className="text-xl font-bold text-[#111318] group-hover:text-primary transition-colors">
-                  מודיעין עסקאות וקרקע
-                </h4>
-                <p className="text-sm text-slate-600 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  מידע היסטורי ועדכני על מחירי רכישה וחוזים
-                </p>
-              </div>
-            </Link>
-            
-            {/* Tool Card 4 */}
-            <Link to="/dangerous-buildings" className="group relative overflow-hidden rounded-[16px] aspect-[3/4] border border-slate-200/60 bg-white p-8 flex flex-col justify-end transition-all hover:border-primary/50 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-              <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent z-10"></div>
-              <div className="relative z-20">
-                <span className="material-symbols-outlined text-primary text-4xl mb-4 opacity-0 group-hover:opacity-100 transition-opacity translate-y-4 group-hover:translate-y-0 duration-300">
-                  report_problem
-                </span>
-                <h4 className="text-xl font-bold text-[#111318] group-hover:text-primary transition-colors">
-                  ניהול סיכוני מבנים
-                </h4>
-                <p className="text-sm text-slate-600 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  ניטור מצב פיזי, סקרים הנדסיים וסיכונים פיננסיים
-                </p>
-              </div>
-            </Link>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
@@ -229,7 +224,10 @@ const Index = () => {
       <div className="h-px bg-gradient-to-r from-transparent via-slate-200/60 to-transparent"></div>
 
       {/* Final Call to Action - Dark Premium Section */}
-      <section className="py-28 lg:py-44 bg-gradient-to-br from-[#0a1a3a] via-[#0d2447] to-[#0a1a3a] relative overflow-hidden">
+      <section
+        className="py-28 lg:py-44 bg-gradient-to-br from-[#0a1a3a] via-[#0d2447] to-[#0a1a3a] relative overflow-hidden"
+        style={sectionFullBleedStyle}
+      >
         {/* Subtle texture overlay */}
         <div 
           className="absolute inset-0 opacity-[0.02]"
@@ -246,17 +244,20 @@ const Index = () => {
             קבלו גישה לנתוני האמת ולמערכות הניתוח המתקדמות ביותר בישראל כבר היום.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-6">
-            <Link to="/govmap">
+            <Link to="/business">
               <Button className="h-16 px-12 bg-primary text-white text-xl font-black rounded-xl hover:shadow-[0_0_30px_rgba(17,82,212,0.4)] transition-all hover:scale-[1.02] shadow-[0_8px_24px_rgba(17,82,212,0.3)]">
                 פתיחת חשבון עסקי
               </Button>
             </Link>
-            <Button 
-              variant="outline"
-              className="h-16 px-12 border-2 border-white/20 text-white text-xl font-bold rounded-xl hover:bg-white/10 hover:border-white/30 transition-all bg-white/5 backdrop-blur-sm shadow-[0_4px_16px_rgba(0,0,0,0.1)]"
-            >
-              קביעת דמו עם מומחה
-            </Button>
+            <ContactDialog>
+              <Button 
+                type="button"
+                variant="outline"
+                className="h-16 px-12 border-2 border-white/20 text-white text-xl font-bold rounded-xl hover:bg-white/10 hover:border-white/30 transition-all bg-white/5 backdrop-blur-sm shadow-[0_4px_16px_rgba(0,0,0,0.1)]"
+              >
+                צור קשר
+              </Button>
+            </ContactDialog>
           </div>
         </div>
       </section>

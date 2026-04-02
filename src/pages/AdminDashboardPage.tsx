@@ -1,8 +1,123 @@
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { LayoutDashboard, Users, Building2, TrendingUp, AlertCircle, FileText, Brain, FileCheck } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  Building2,
+  Brain,
+  FileCheck,
+  Mail,
+} from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { getToken } from "@/lib/api/authApi";
+import { fetchContactSubmissions, type ContactSubmission } from "@/lib/api/contactApi";
+import { fetchAdminStats } from "@/lib/api/adminApi";
+
+function ContactSubmissionsSection() {
+  const [items, setItems] = useState<ContactSubmission[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      setError("לא מחובר");
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const res = await fetchContactSubmissions(token);
+      if (cancelled) return;
+      if (res.success) {
+        setItems(res.submissions);
+        setError(null);
+      } else {
+        setError(res.error);
+        setItems([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Mail className="w-5 h-5 text-primary" />
+        <h3 className="text-lg font-semibold">פניות צור קשר</h3>
+      </div>
+      {error && (
+        <p className="text-sm text-destructive mb-2">{error}</p>
+      )}
+      {items === null && !error && (
+        <p className="text-sm text-muted-foreground py-6 text-center">טוען…</p>
+      )}
+      {items && items.length === 0 && !error && (
+        <p className="text-sm text-muted-foreground py-6 text-center">אין פניות עדיין</p>
+      )}
+      {items && items.length > 0 && (
+        <ul className="space-y-4 max-h-[28rem] overflow-y-auto pr-1">
+          {items.map((row) => (
+            <li
+              key={row.id}
+              className="rounded-lg border bg-muted/30 p-4 text-sm space-y-2"
+            >
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="font-semibold">{row.name}</span>
+                <time className="text-xs text-muted-foreground tabular-nums">
+                  {new Date(row.created_at).toLocaleString("he-IL", {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  })}
+                </time>
+              </div>
+              <a
+                href={`mailto:${row.email}`}
+                className="text-primary hover:underline break-all block"
+              >
+                {row.email}
+              </a>
+              <p className="text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">
+                {row.message}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+function formatStat(n: number) {
+  return new Intl.NumberFormat("he-IL").format(n);
+}
 
 export default function AdminDashboardPage() {
+  const [stats, setStats] = useState<{
+    usersCount: number;
+    propertiesCount: number;
+    contactSubmissionsCount: number;
+  } | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await fetchAdminStats();
+      if (cancelled) return;
+      if (res.success) {
+        setStats(res.stats);
+        setStatsError(null);
+      } else {
+        setStats(null);
+        setStatsError(res.error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <ProtectedRoute requireAdmin={true}>
       <div className="space-y-6 md:space-y-8 animate-fade-in">
@@ -19,13 +134,21 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {statsError && (
+        <p className="text-sm text-destructive" role="alert">
+          {statsError}
+        </p>
+      )}
+
+      {/* Stats Grid — נתונים מ־API /api/admin/stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card className="p-6 hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">סה״כ משתמשים</p>
-              <p className="text-2xl font-bold mt-1">0</p>
+              <p className="text-2xl font-bold mt-1 tabular-nums">
+                {stats ? formatStat(stats.usersCount) : "…"}
+              </p>
             </div>
             <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
               <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -37,7 +160,9 @@ export default function AdminDashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">סה״כ נכסים</p>
-              <p className="text-2xl font-bold mt-1">0</p>
+              <p className="text-2xl font-bold mt-1 tabular-nums">
+                {stats ? formatStat(stats.propertiesCount) : "…"}
+              </p>
             </div>
             <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
               <Building2 className="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -48,137 +173,44 @@ export default function AdminDashboardPage() {
         <Card className="p-6 hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">שימושים ב-AI (חודש אחרון)</p>
-              <p className="text-2xl font-bold mt-1">0</p>
-              <p className="text-xs text-muted-foreground mt-1">סה״כ: 0</p>
+              <p className="text-sm font-medium text-muted-foreground">פניות צור קשר</p>
+              <p className="text-2xl font-bold mt-1 tabular-nums">
+                {stats ? formatStat(stats.contactSubmissionsCount) : "…"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">סה״כ פניות שהתקבלו</p>
             </div>
             <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
-              <Brain className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">נסחי טאבו שנוצרו</p>
-              <p className="text-2xl font-bold mt-1">0</p>
-              <p className="text-xs text-muted-foreground mt-1">חודש אחרון: 0</p>
-            </div>
-            <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center">
-              <FileCheck className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+              <Mail className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
         </Card>
       </div>
 
+      <ContactSubmissionsSection />
+
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* AI Usage Statistics */}
+        {/* AI — אין מעקב במסד נתונים כרגע */}
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <Brain className="w-5 h-5 text-primary" />
             <h3 className="text-lg font-semibold">שימושים ב-AI</h3>
           </div>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="p-4 bg-purple-50 dark:bg-purple-900/10 rounded-lg">
-                <p className="text-sm text-muted-foreground">היום</p>
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">0</p>
-              </div>
-              <div className="p-4 bg-purple-50 dark:bg-purple-900/10 rounded-lg">
-                <p className="text-sm text-muted-foreground">השבוע</p>
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">0</p>
-              </div>
-            </div>
-            <div className="border-t pt-4">
-              <p className="text-sm font-medium mb-2">שימושים אחרונים</p>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  אין שימושים להצגה
-                </p>
-              </div>
-            </div>
-          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            כרגע אין נתוני שימוש ב-AI שנשמרים במערכת (מסד נתונים / API), ולכן לא ניתן להציג מספרים אמיתיים.
+            כשתתווסף תשתית מעקב — ניתן יהיה לחבר את הסעיף הזה לנתונים בפועל.
+          </p>
         </Card>
 
-        {/* Tabu Reports Statistics */}
+        {/* נסחי טאבו — אין מעקב מרוכז כרגע */}
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <FileCheck className="w-5 h-5 text-primary" />
-            <h3 className="text-lg font-semibold">נסחי טאבו שנוצרו</h3>
+            <h3 className="text-lg font-semibold">נסחי טאבו</h3>
           </div>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="p-4 bg-orange-50 dark:bg-orange-900/10 rounded-lg">
-                <p className="text-sm text-muted-foreground">היום</p>
-                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-1">0</p>
-              </div>
-              <div className="p-4 bg-orange-50 dark:bg-orange-900/10 rounded-lg">
-                <p className="text-sm text-muted-foreground">השבוע</p>
-                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-1">0</p>
-              </div>
-            </div>
-            <div className="border-t pt-4">
-              <p className="text-sm font-medium mb-2">דוחות אחרונים</p>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  אין דוחות להצגה
-                </p>
-              </div>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Additional Stats Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* AI Usage Details */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Brain className="w-5 h-5 text-primary" />
-            <h3 className="text-lg font-semibold">פרטי שימוש ב-AI</h3>
-          </div>
-          <div className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                <span className="text-sm">בדיקות קרקע עם AI</span>
-                <span className="font-semibold">0</span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                <span className="text-sm">דוחות נותחו ב-AI</span>
-                <span className="font-semibold">0</span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                <span className="text-sm">ממוצע שימושים ביום</span>
-                <span className="font-semibold">0</span>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Tabu Reports Details */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <FileCheck className="w-5 h-5 text-primary" />
-            <h3 className="text-lg font-semibold">פרטי נסחי טאבו</h3>
-          </div>
-          <div className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                <span className="text-sm">נסחים שהופקו בהצלחה</span>
-                <span className="font-semibold text-green-600 dark:text-green-400">0</span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                <span className="text-sm">נסחים שנכשלו</span>
-                <span className="font-semibold text-red-600 dark:text-red-400">0</span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                <span className="text-sm">ממוצע הפקות ביום</span>
-                <span className="font-semibold">0</span>
-              </div>
-            </div>
-          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            כרגע אין דשבורד שמציג נתוני הפקות נסחי טאבו מהמערכת. אם תתווסף טבלת מעקב או API — ניתן יהיה לחבר כאן סטטיסטיקות אמיתיות.
+          </p>
         </Card>
       </div>
       </div>
