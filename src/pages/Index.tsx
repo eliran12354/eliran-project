@@ -44,7 +44,7 @@ const Index = () => {
     <div className="w-full bg-[#F5F7FA]" dir="rtl">
       {/* Hero Section */}
       <section
-        className="relative min-h-screen w-full max-w-none flex flex-col justify-center pt-20 bg-white overflow-hidden"
+        className="relative min-h-screen w-full max-w-none flex flex-col justify-center pt-10 lg:pt-20 bg-white overflow-hidden"
         style={sectionFullBleedStyle}
       >
         {/* Background Image */}

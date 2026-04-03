@@ -109,7 +109,7 @@ export default function GovMapPage() {
   };
 
   return (
-    <div className="flex min-h-0 w-[calc(100%+3rem)] flex-col -mx-6 h-[calc(100dvh-3rem)] max-h-[calc(100dvh-3rem)] sm:h-[calc(100dvh-4rem)] sm:max-h-[calc(100dvh-4rem)]">
+    <div className="flex min-h-0 w-[calc(100%+3rem)] max-w-[100vw] flex-col -mx-6 h-[calc(100dvh-4.5rem)] max-h-[calc(100dvh-4.5rem)] sm:h-[calc(100dvh-5rem)] sm:max-h-[calc(100dvh-5rem)] lg:h-[calc(100dvh-1.5rem)] lg:max-h-[calc(100dvh-1.5rem)]">
       <div className="shrink-0 px-6 py-1 border-b border-border/20">
           <h1 className="text-lg font-bold text-primary mb-0.5">מפת GovMap</h1>
 

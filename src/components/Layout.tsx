@@ -20,14 +20,16 @@ export function Layout({ children }: LayoutProps) {
       <main
         id="main-content"
         tabIndex={-1}
-        className={`min-h-screen min-w-0 overflow-x-hidden pl-4 pr-4 sm:pl-6 sm:pr-6 ml-72 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+        className={`min-h-screen min-w-0 overflow-x-hidden pl-4 pr-4 sm:pl-6 sm:pr-6 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+          isHome ? "ml-0" : "ml-0 lg:ml-72"
+        } ${
           isHome
-            ? "pt-0 pb-0"
+            ? "pt-14 pb-0"
             : isFullBleedMain
-              ? "p-0"
+              ? "px-0 pt-14 pb-0 lg:p-0"
               : isGovMap
-                ? "pt-4 sm:pt-6 pb-0"
-                : "py-4 sm:py-6"
+                ? "pt-[calc(3.5rem+1rem)] pb-0 sm:pt-[calc(3.5rem+1.5rem)] lg:pt-6"
+                : "pt-[calc(3.5rem+1rem)] pb-4 sm:pt-[calc(3.5rem+1.5rem)] sm:pb-6 lg:py-6"
         }`}
       >
         {children}
