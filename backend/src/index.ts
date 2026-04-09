@@ -15,6 +15,7 @@ import adminRouter from './routes/admin.js';
 import portfolioRouter from './routes/portfolio.js';
 import notificationsRouter from './routes/notifications.js';
 import contactRouter from './routes/contact.js';
+import taxRouter from './routes/tax.js';
 
 const app = express();
 
@@ -66,6 +67,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/portfolio', portfolioRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/contact', contactRouter);
+app.use('/api/tax', taxRouter);
 
 // Start server
 const PORT = config.server.port;
