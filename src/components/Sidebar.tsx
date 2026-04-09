@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   Flame,
   Warehouse,
+  Calculator,
   User,
   LogOut,
   Menu,
@@ -280,6 +281,22 @@ function SidebarNavBody({
             >
               <NavLabel>מלאי תכנוני למגורים</NavLabel>
               <Warehouse className="size-5 shrink-0" />
+            </Button>
+          </Link>
+        </div>
+
+        <div>
+          <Link to="/tax">
+            <Button
+              dir="ltr"
+              className={`${sidebarNavBtnClass} ${
+                isActive("/tax")
+                  ? "bg-blue-600 shadow-md text-white"
+                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
+              }`}
+            >
+              <NavLabel>מחשבון מס רכישה</NavLabel>
+              <Calculator className="size-5 shrink-0" />
             </Button>
           </Link>
         </div>

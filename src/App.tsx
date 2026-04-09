@@ -20,6 +20,7 @@ import ResidentialInventoryPage from "./pages/ResidentialInventoryPage";
 import SettingsPage from "./pages/SettingsPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import BusinessAccountPage from "./pages/BusinessAccountPage";
+import TaxPage from "./pages/TaxPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/dangerous-buildings" element={<DangerousBuildingsPage />} />
               <Route path="/tabu-request" element={<TabuRequestPage />} />
               <Route path="/land-check" element={<LandCheckPage />} />
+              <Route path="/tax" element={<TaxPage />} />
               <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
               <Route path="/residential-inventory" element={<ResidentialInventoryPage />} />
               <Route path="/settings" element={<SettingsPage />} />
