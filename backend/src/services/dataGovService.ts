@@ -453,6 +453,81 @@ async function fetchUrbanRenewalMitchamimRaw(options: {
   }
 }
 
+function stableUrbanRenewalRecordId(record: Record<string, unknown>): string | null {
+  const rawId = record._id;
+  if (rawId != null && String(rawId).trim() !== '') {
+    return String(rawId);
+  }
+  const m =
+    record.MisparMitham ?? record.MISPAR_MITHAM ?? record.mispar_mitham;
+  const y = record.SemelYeshuv ?? record.semel_yeshuv ?? record.SEMEL_YESHUV;
+  if (m != null && y != null) return `${String(y)}:${String(m)}`;
+  if (m != null) return `m:${String(m)}`;
+  return null;
+}
+
+/**
+ * Full dataset pagination (no cache, no filters) — for sync / diff only.
+ */
+export async function fetchAllUrbanRenewalStableIds(): Promise<string[]> {
+  const PAGE = 5000;
+  let offset = 0;
+  const ids: string[] = [];
+  const seen = new Set<string>();
+
+  for (;;) {
+    const url = `${SEARCH_URL}?resource_id=${URBAN_RENEWAL_RESOURCE_ID}&limit=${PAGE}&offset=${offset}`;
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        Accept: 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      console.warn(`fetchAllUrbanRenewalStableIds: HTTP ${res.status} at offset ${offset}`);
+      if (offset === 0) return [];
+      break;
+    }
+
+    const json: unknown = await res.json();
+    const errObj =
+      json && typeof json === 'object' && json !== null && 'error' in json
+        ? (json as { error?: unknown }).error
+        : undefined;
+    if (errObj) {
+      console.error('fetchAllUrbanRenewalStableIds API error:', errObj);
+      if (offset === 0) return [];
+      break;
+    }
+
+    const records =
+      json &&
+      typeof json === 'object' &&
+      json !== null &&
+      'result' in json &&
+      (json as { result?: { records?: unknown[] } }).result?.records
+        ? (json as { result: { records: unknown[] } }).result.records
+        : [];
+
+    if (!Array.isArray(records) || records.length === 0) break;
+
+    for (const rec of records) {
+      if (!rec || typeof rec !== 'object') continue;
+      const id = stableUrbanRenewalRecordId(rec as Record<string, unknown>);
+      if (id && !seen.has(id)) {
+        seen.add(id);
+        ids.push(id);
+      }
+    }
+
+    if (records.length < PAGE) break;
+    offset += PAGE;
+  }
+
+  return ids;
+}
+
 /**
  * Fetch urban renewal mitchamim from data.gov.il (with cache).
  */

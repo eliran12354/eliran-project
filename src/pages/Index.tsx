@@ -82,12 +82,12 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-6 w-full relative z-10 py-20 lg:py-32">
 
           <div className="max-w-4xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/10 border border-black/20 text-black text-xs font-bold uppercase tracking-widest mb-8 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-              <span className="relative flex h-2 w-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/10 border border-black/20 text-black text-xs sm:text-sm font-bold mb-8 shadow-[0_2px_8px_rgba(0,0,0,0.08)] max-w-[min(100%,28rem)]">
+              <span className="relative flex h-2 w-2 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-black"></span>
               </span>
-              המערכת המתקדמת בישראל
+              <span className="text-right leading-snug">מבוסס על נתונים ממשלתיים ומתעדכן בזמן אמת</span>
             </div>
             
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black leading-[1.1] text-[#111318] mb-8 font-display">
@@ -96,18 +96,21 @@ const Index = () => {
             </h1>
             
             <p className="text-lg md:text-2xl text-black max-w-2xl leading-relaxed mb-12 bg-white/20 backdrop-blur-md border border-white/30 px-6 py-4 rounded-xl shadow-lg">
-              נתונים, תכנון, עסקאות והתראות – במקום אחד, לפני כולם. קבלו החלטות מבוססות דאטה בזמן אמת עם הכלים המקצועיים ביותר בשוק.
+              מערכת לאיתור הזדמנויות נדל״ן וניתוח נכסים, הכוללת דוחות AI, נתונים תכנוניים ממקורות ממשלתיים וכלים מתקדמים – לקבלת החלטות חכמות ובטוחות.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-5">
-              <Link to="/business">
+            <div className="flex flex-col gap-2 w-fit max-w-full">
+              <Link to="/business" className="inline-flex">
                 <Button 
                   variant="outline" 
                   className="h-16 px-10 border-2 border-primary text-primary text-lg font-bold rounded-xl flex items-center justify-center hover:bg-primary/5 transition-colors shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
                 >
-                  למה מנוי מקצועי?
+                  כניסה למערכת
                 </Button>
               </Link>
+              <p className="text-xs sm:text-sm text-black text-right">
+                גישה מיידית ללא התחייבות
+              </p>
             </div>
           </div>
         </div>

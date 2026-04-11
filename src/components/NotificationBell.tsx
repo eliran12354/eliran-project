@@ -59,8 +59,12 @@ export function NotificationBell() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 sm:w-96 p-0" align="start">
-        <div className="flex items-center justify-between px-4 py-3 border-b">
+      <PopoverContent
+        className="w-80 sm:w-96 p-0"
+        align="start"
+        dir="rtl"
+      >
+        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b">
           <h3 className="font-semibold">התראות</h3>
           {unreadCount > 0 && (
             <Button
@@ -75,11 +79,11 @@ export function NotificationBell() {
         </div>
         <ScrollArea className="h-[min(320px,60vh)]">
           {loading ? (
-            <div className="p-6 text-center text-muted-foreground text-sm">
+            <div className="p-6 text-right text-muted-foreground text-sm">
               טוען...
             </div>
           ) : notifications.length === 0 ? (
-            <div className="p-6 text-center text-muted-foreground text-sm">
+            <div className="p-6 text-right text-muted-foreground text-sm">
               אין התראות חדשות
             </div>
           ) : (
@@ -88,7 +92,7 @@ export function NotificationBell() {
                 <div
                   key={n.id}
                   className={cn(
-                    "px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer text-start",
+                    "px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer text-right",
                     !n.read_at && "bg-blue-500/5"
                   )}
                   onClick={() => {
@@ -101,7 +105,7 @@ export function NotificationBell() {
                   {n.link ? (
                     <Link
                       to={n.link}
-                      className="block"
+                      className="block text-right"
                       onClick={() => markAsRead(n.id)}
                     >
                       <p className="font-medium text-sm">{n.title}</p>

@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2 } from "lucide-react";
+import { Loader2, LogIn, UserPlus } from "lucide-react";
 import { TermsDialog } from "@/components/TermsDialog";
 
 interface LoginDialogProps {
@@ -101,16 +101,51 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} dir="rtl">
-      <DialogContent className="sm:max-w-[425px] text-right [&>button]:left-4 [&>button]:right-auto" dir="rtl">
-        <DialogHeader className="text-right">
-          <DialogTitle className="text-right">{isLogin ? "התחברות" : "הרשמה"}</DialogTitle>
-          <DialogDescription className="text-right">
-            {isLogin ? "הזן את פרטי ההתחברות שלך" : "צור חשבון חדש"}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">אימייל</Label>
+      <DialogContent
+        className="w-[min(100vw-1.5rem,32rem)] sm:max-w-none sm:w-[min(100vw-2rem,36rem)] p-0 gap-0 overflow-hidden border-0 bg-transparent text-right shadow-none [&>button]:left-3 [&>button]:right-auto [&>button]:top-3 sm:[&>button]:left-4 sm:[&>button]:top-4 [&>button]:z-20 [&>button]:h-9 [&>button]:w-9 [&>button]:rounded-full [&>button]:border [&>button]:border-border/50 [&>button]:bg-background/55 [&>button]:shadow-md [&>button]:backdrop-blur-md"
+        dir="rtl"
+      >
+        <div className="relative overflow-hidden rounded-[1.35rem] border border-primary/25 bg-background/55 shadow-[0_28px_80px_-16px_rgba(17,82,212,0.22)] ring-1 ring-black/[0.04] backdrop-blur-2xl backdrop-saturate-150 dark:bg-background/50 dark:ring-white/10">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-primary/22 via-primary/10 to-transparent sm:h-48"
+            aria-hidden
+          />
+          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/[0.14] blur-3xl sm:-right-12 sm:h-64 sm:w-64" aria-hidden />
+          <div className="relative px-7 pb-5 pt-10 sm:px-10 sm:pb-6 sm:pt-12">
+            <div className="flex items-start gap-5 sm:gap-6">
+              <div className="flex min-w-0 flex-1 flex-col gap-2 text-right">
+                <DialogHeader className="space-y-3 text-right sm:space-y-3.5">
+                  <DialogTitle className="text-right text-[1.65rem] font-bold leading-snug tracking-tight text-foreground sm:text-3xl sm:leading-tight">
+                    {isLogin ? "התחברות למערכת" : "יצירת חשבון"}
+                  </DialogTitle>
+                  <DialogDescription className="text-right text-base leading-relaxed text-muted-foreground sm:text-[1.05rem] sm:leading-7">
+                    {isLogin
+                      ? "גישה מאובטחת לכלים, דוחות ונתונים שמעודכנים בזמן אמת."
+                      : "הצטרפו וקבלו גישה מלאה לכל יכולות הפלטפורמה."}
+                  </DialogDescription>
+                </DialogHeader>
+              </div>
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-background/75 to-muted/30 shadow-lg ring-2 ring-primary/25 backdrop-blur-md sm:h-[4.25rem] sm:w-[4.25rem]">
+                {isLogin ? (
+                  <LogIn className="h-9 w-9 text-primary sm:h-10 sm:w-10" strokeWidth={2} />
+                ) : (
+                  <UserPlus className="h-9 w-9 text-primary sm:h-10 sm:w-10" strokeWidth={2} />
+                )}
+              </div>
+            </div>
+          </div>
+          <div
+            className="mx-7 h-px bg-gradient-to-l from-transparent via-primary/25 to-transparent sm:mx-10"
+            aria-hidden
+          />
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-5 px-7 pb-9 pt-8 sm:space-y-5 sm:px-10 sm:pb-10"
+          >
+          <div className="space-y-2.5">
+            <Label htmlFor="email" className="text-sm font-medium">
+              אימייל
+            </Label>
             <Input
               id="email"
               type="email"
@@ -123,10 +158,11 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
               required
               disabled={isLoading}
               autoComplete="email"
+              className="h-12 rounded-xl border-border/60 bg-background/40 px-4 text-base backdrop-blur-sm transition-colors focus-visible:bg-background/75 focus-visible:ring-2 focus-visible:ring-primary/25"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">
+          <div className="space-y-2.5">
+            <Label htmlFor="password" className="text-sm font-medium">
               סיסמה {!isLogin && <span className="text-muted-foreground font-normal">(לפחות 8 תווים)</span>}
             </Label>
             <Input
@@ -142,6 +178,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
               minLength={isLogin ? undefined : 8}
               disabled={isLoading}
               autoComplete="current-password"
+              className="h-12 rounded-xl border-border/60 bg-background/40 px-4 text-base backdrop-blur-sm transition-colors focus-visible:bg-background/75 focus-visible:ring-2 focus-visible:ring-primary/25"
             />
           </div>
           {!isLogin && (
@@ -172,21 +209,24 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
             </div>
           )}
           {formError && (
-            <p className="text-sm text-destructive font-medium" role="alert">
+            <p
+              className="rounded-lg border border-destructive/25 bg-destructive/5 px-3 py-2.5 text-sm text-destructive font-medium"
+              role="alert"
+            >
               {formError}
             </p>
           )}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3 pt-1">
             <Button
               type="submit"
               disabled={isLoading || (!isLogin && !acceptedTerms)}
-              className="w-full"
+              className="h-14 w-full rounded-xl text-base font-semibold shadow-md shadow-primary/25 transition-all hover:shadow-lg hover:shadow-primary/30 sm:text-[1.05rem]"
             >
               {isLoading ? (
-                <>
-                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                <span className="inline-flex items-center justify-center gap-2">
                   {isLogin ? "מתחבר..." : "נרשם..."}
-                </>
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
+                </span>
               ) : (
                 isLogin ? "התחבר" : "הירשם"
               )}
@@ -196,12 +236,13 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
               variant="ghost"
               onClick={toggleMode}
               disabled={isLoading}
-              className="text-right"
+              className="text-center w-full text-muted-foreground hover:text-foreground"
             >
               {isLogin ? "אין לך חשבון? הירשם" : "יש לך חשבון? התחבר"}
             </Button>
           </div>
         </form>
+        </div>
       </DialogContent>
       <TermsDialog open={termsDialogOpen} onOpenChange={setTermsDialogOpen} />
     </Dialog>

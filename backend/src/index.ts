@@ -16,6 +16,7 @@ import portfolioRouter from './routes/portfolio.js';
 import notificationsRouter from './routes/notifications.js';
 import contactRouter from './routes/contact.js';
 import taxRouter from './routes/tax.js';
+import internalRouter from './routes/internal.js';
 
 const app = express();
 
@@ -38,7 +39,7 @@ app.use(cors({
     callback(null, true); // Allow all origins for now (can be restricted later)
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
@@ -68,6 +69,7 @@ app.use('/api/portfolio', portfolioRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/contact', contactRouter);
 app.use('/api/tax', taxRouter);
+app.use('/api/internal', internalRouter);
 
 // Start server
 const PORT = config.server.port;

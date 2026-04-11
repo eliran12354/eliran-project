@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Settings, User, Shield, LogOut, Palette, Info, Briefcase } from "lucide-react";
+import { NotificationPreferencesSettingsCard } from "@/components/NotificationPreferencesSettingsCard";
 import { useAuth } from "@/hooks/useAuth";
 import { LoginDialog } from "@/components/LoginDialog";
 import { Link } from "react-router-dom";
@@ -96,6 +97,8 @@ export default function SettingsPage() {
               </Link>
             </Button>
           </Card>
+
+          <NotificationPreferencesSettingsCard />
         </>
       )}
 

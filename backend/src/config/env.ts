@@ -1,7 +1,11 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
-// Load environment variables
-dotenv.config();
+// Load .env from backend/ regardless of process.cwd (e.g. monorepo root)
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const backendRoot = path.resolve(__dirname, '../..');
+dotenv.config({ path: path.join(backendRoot, '.env') });
 
 export const config = {
   supabase: {
@@ -20,6 +24,8 @@ export const config = {
     secret: process.env.JWT_SECRET || '',
     expiry: process.env.JWT_EXPIRY || '1h',
   },
+  /** Shared secret for internal cron/sync endpoints (e.g. X-Cron-Secret header). */
+  cronSecret: process.env.CRON_SECRET || '',
 };
 
 // Validate required environment variables
