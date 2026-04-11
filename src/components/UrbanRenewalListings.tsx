@@ -364,25 +364,20 @@ export function UrbanRenewalListings() {
         </div>
       </section>
 
-      {/* Results Header */}
+      {/* Sort (when there are results) */}
       {mitchamim && mitchamim.length > 0 && (
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-[#617589] dark:text-gray-400 font-medium">
-            מציג {mitchamim.length} מתוך {totalMitchamim} מתחמים שנמצאו
-          </p>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-gray-500">מיון לפי:</span>
-            <Select value={sortBy} onValueChange={(value) => setSortBy(value)}>
-              <SelectTrigger className="bg-transparent border-none focus:ring-0 font-semibold cursor-pointer w-auto">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="imported_at">תאריך עדכון</SelectItem>
-                <SelectItem value="mispar_yahidot">מספר יחידות</SelectItem>
-                <SelectItem value="yeshuv">א-ב</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="mb-6 flex items-center justify-end gap-2 text-sm">
+          <span className="text-gray-500">מיון לפי:</span>
+          <Select value={sortBy} onValueChange={(value) => setSortBy(value)}>
+            <SelectTrigger className="bg-transparent border-none focus:ring-0 font-semibold cursor-pointer w-auto">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="imported_at">תאריך עדכון</SelectItem>
+              <SelectItem value="mispar_yahidot">מספר יחידות</SelectItem>
+              <SelectItem value="yeshuv">א-ב</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       )}
 

@@ -71,3 +71,10 @@ export async function listUsers(): Promise<UserPublic[]> {
   if (error) throw error;
   return (data ?? []) as UserPublic[];
 }
+
+export async function updatePasswordForUser(userId: string, plainPassword: string): Promise<void> {
+  const password_hash = await bcrypt.hash(plainPassword, SALT_ROUNDS);
+  const { error } = await supabase.from('users').update({ password_hash }).eq('id', userId);
+
+  if (error) throw error;
+}

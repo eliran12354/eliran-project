@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { forgotPassword } from "@/lib/api/authApi";
 import { Loader2, LogIn, UserPlus } from "lucide-react";
 import { TermsDialog } from "@/components/TermsDialog";
 
@@ -31,15 +32,21 @@ function mapAuthError(msg: string | undefined): string | undefined {
   return msg;
 }
 
+type AuthMode = "login" | "signup" | "forgot";
+
 export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
-  const [isLogin, setIsLogin] = useState(true);
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [termsDialogOpen, setTermsDialogOpen] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
   const { login, signup } = useAuth();
+
+  const isLogin = authMode === "login";
+  const isForgot = authMode === "forgot";
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -47,7 +54,15 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     setIsLoading(true);
 
     try {
-      if (isLogin) {
+      if (isForgot) {
+        const result = await forgotPassword(email);
+        if (result.success) {
+          setForgotSent(true);
+          setFormError(null);
+        } else {
+          setFormError(result.error || "שגיאה בשליחת הבקשה");
+        }
+      } else if (isLogin) {
         const result = await login({ email, password });
         if (result.data && !result.error) {
           onOpenChange(false);
@@ -65,7 +80,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
           signupResult.error?.message?.includes("already") ||
           signupResult.error?.message?.includes("registered")
         ) {
-          setIsLogin(true);
+          setAuthMode("login");
           setFormError(null);
         } else if (signupResult.error) {
           setFormError(mapAuthError(signupResult.error.message) || "שגיאה בהרשמה");
@@ -84,11 +99,16 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     setPassword("");
     setFormError(null);
     setAcceptedTerms(false);
+    setAuthMode("login");
+    setForgotSent(false);
   };
 
   const toggleMode = () => {
-    setIsLogin(!isLogin);
-    resetForm();
+    setAuthMode((m) => (m === "login" ? "signup" : "login"));
+    setFormError(null);
+    setForgotSent(false);
+    setPassword("");
+    setAcceptedTerms(false);
   };
 
   const clearErrorOnInput = () => {
@@ -96,7 +116,11 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   };
 
   useEffect(() => {
-    if (open) setFormError(null);
+    if (open) {
+      setFormError(null);
+      setAuthMode("login");
+      setForgotSent(false);
+    }
   }, [open]);
 
   return (
@@ -116,17 +140,25 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
               <div className="flex min-w-0 flex-1 flex-col gap-2 text-right">
                 <DialogHeader className="space-y-3 text-right sm:space-y-3.5">
                   <DialogTitle className="text-right text-[1.65rem] font-bold leading-snug tracking-tight text-foreground sm:text-3xl sm:leading-tight">
-                    {isLogin ? "התחברות למערכת" : "יצירת חשבון"}
+                    {isForgot
+                      ? "איפוס סיסמה"
+                      : isLogin
+                        ? "התחברות למערכת"
+                        : "יצירת חשבון"}
                   </DialogTitle>
                   <DialogDescription className="text-right text-base leading-relaxed text-muted-foreground sm:text-[1.05rem] sm:leading-7">
-                    {isLogin
-                      ? "גישה מאובטחת לכלים, דוחות ונתונים שמעודכנים בזמן אמת."
-                      : "הצטרפו וקבלו גישה מלאה לכל יכולות הפלטפורמה."}
+                    {isForgot
+                      ? "הזינו את כתובת האימייל — נשלח קישור לאיפוס (תקף שעה)."
+                      : isLogin
+                        ? "גישה מאובטחת לכלים, דוחות ונתונים שמעודכנים בזמן אמת."
+                        : "הצטרפו וקבלו גישה מלאה לכל יכולות הפלטפורמה."}
                   </DialogDescription>
                 </DialogHeader>
               </div>
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-background/75 to-muted/30 shadow-lg ring-2 ring-primary/25 backdrop-blur-md sm:h-[4.25rem] sm:w-[4.25rem]">
-                {isLogin ? (
+                {isForgot ? (
+                  <LogIn className="h-9 w-9 text-primary sm:h-10 sm:w-10" strokeWidth={2} />
+                ) : isLogin ? (
                   <LogIn className="h-9 w-9 text-primary sm:h-10 sm:w-10" strokeWidth={2} />
                 ) : (
                   <UserPlus className="h-9 w-9 text-primary sm:h-10 sm:w-10" strokeWidth={2} />
@@ -142,6 +174,25 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
             onSubmit={handleSubmit}
             className="space-y-5 px-7 pb-9 pt-8 sm:space-y-5 sm:px-10 sm:pb-10"
           >
+          {forgotSent && isForgot ? (
+            <div className="space-y-5 text-center">
+              <p className="text-base leading-relaxed text-muted-foreground">
+                אם האימייל רשום במערכת, נשלח אליך קישור לאיפוס. בדוק גם בתיקיית הספאם.
+              </p>
+              <Button
+                type="button"
+                className="h-14 w-full rounded-xl text-base font-semibold"
+                onClick={() => {
+                  setForgotSent(false);
+                  setAuthMode("login");
+                  setEmail("");
+                }}
+              >
+                חזרה להתחברות
+              </Button>
+            </div>
+          ) : (
+            <>
           <div className="space-y-2.5">
             <Label htmlFor="email" className="text-sm font-medium">
               אימייל
@@ -161,10 +212,27 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
               className="h-12 rounded-xl border-border/60 bg-background/40 px-4 text-base backdrop-blur-sm transition-colors focus-visible:bg-background/75 focus-visible:ring-2 focus-visible:ring-primary/25"
             />
           </div>
+          {!isForgot && (
           <div className="space-y-2.5">
-            <Label htmlFor="password" className="text-sm font-medium">
-              סיסמה {!isLogin && <span className="text-muted-foreground font-normal">(לפחות 8 תווים)</span>}
-            </Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="password" className="text-sm font-medium">
+                סיסמה {!isLogin && <span className="text-muted-foreground font-normal">(לפחות 8 תווים)</span>}
+              </Label>
+              {isLogin && (
+                <button
+                  type="button"
+                  className="text-sm text-primary underline-offset-4 hover:underline shrink-0"
+                  onClick={() => {
+                    setAuthMode("forgot");
+                    setFormError(null);
+                    setPassword("");
+                  }}
+                  disabled={isLoading}
+                >
+                  שכחתי סיסמה
+                </button>
+              )}
+            </div>
             <Input
               id="password"
               type="password"
@@ -181,7 +249,8 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
               className="h-12 rounded-xl border-border/60 bg-background/40 px-4 text-base backdrop-blur-sm transition-colors focus-visible:bg-background/75 focus-visible:ring-2 focus-visible:ring-primary/25"
             />
           </div>
-          {!isLogin && (
+          )}
+          {!isLogin && !isForgot && (
             <div className="flex items-start gap-2">
               <Checkbox
                 id="terms"
@@ -219,18 +288,37 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
           <div className="flex flex-col gap-3 pt-1">
             <Button
               type="submit"
-              disabled={isLoading || (!isLogin && !acceptedTerms)}
+              disabled={isLoading || (!isLogin && !isForgot && !acceptedTerms)}
               className="h-14 w-full rounded-xl text-base font-semibold shadow-md shadow-primary/25 transition-all hover:shadow-lg hover:shadow-primary/30 sm:text-[1.05rem]"
             >
               {isLoading ? (
                 <span className="inline-flex items-center justify-center gap-2">
-                  {isLogin ? "מתחבר..." : "נרשם..."}
+                  {isForgot ? "שולח..." : isLogin ? "מתחבר..." : "נרשם..."}
                   <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
                 </span>
+              ) : isForgot ? (
+                "שלח קישור לאיפוס"
+              ) : isLogin ? (
+                "התחבר"
               ) : (
-                isLogin ? "התחבר" : "הירשם"
+                "הירשם"
               )}
             </Button>
+            {isForgot ? (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setAuthMode("login");
+                  setFormError(null);
+                  setForgotSent(false);
+                }}
+                disabled={isLoading}
+                className="text-center w-full text-muted-foreground hover:text-foreground"
+              >
+                חזרה להתחברות
+              </Button>
+            ) : (
             <Button
               type="button"
               variant="ghost"
@@ -240,7 +328,10 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
             >
               {isLogin ? "אין לך חשבון? הירשם" : "יש לך חשבון? התחבר"}
             </Button>
+            )}
           </div>
+            </>
+          )}
         </form>
         </div>
       </DialogContent>

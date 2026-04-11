@@ -22,6 +22,7 @@ import PortfolioPage from "./pages/PortfolioPage";
 import BusinessAccountPage from "./pages/BusinessAccountPage";
 import TaxPage from "./pages/TaxPage";
 import NotFound from "./pages/NotFound";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const App = () => (
               <Route path="/residential-inventory" element={<ResidentialInventoryPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/portfolio" element={<PortfolioPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

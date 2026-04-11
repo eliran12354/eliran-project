@@ -66,6 +66,47 @@ export async function login(email: string, password: string): Promise<AuthRespon
   }
 }
 
+export async function forgotPassword(
+  email: string
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const res = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = (await res.json()) as { success?: boolean; message?: string; error?: string };
+    if (!res.ok) {
+      return { success: false, error: data.error || 'Request failed' };
+    }
+    return { success: true, message: data.message };
+  } catch (e) {
+    const err = e as Error;
+    return { success: false, error: err.message || 'Network error' };
+  }
+}
+
+export async function resetPasswordWithToken(
+  token: string,
+  password: string
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const res = await fetch(`${BASE_URL}/api/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password }),
+    });
+    const data = (await res.json()) as { success?: boolean; message?: string; error?: string };
+    if (!res.ok) {
+      return { success: false, error: data.error || 'Reset failed' };
+    }
+    return { success: true, message: data.message };
+  } catch (e) {
+    const err = e as Error;
+    return { success: false, error: err.message || 'Network error' };
+  }
+}
+
 export async function getMe(token: string): Promise<{ success: true; user: AuthUser } | { success: false; error: string }> {
   try {
     const res = await fetch(`${BASE_URL}/api/me`, {

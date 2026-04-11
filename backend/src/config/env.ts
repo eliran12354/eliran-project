@@ -26,6 +26,16 @@ export const config = {
   },
   /** Shared secret for internal cron/sync endpoints (e.g. X-Cron-Secret header). */
   cronSecret: process.env.CRON_SECRET || '',
+  /** Public frontend base URL for password-reset links (no trailing slash). */
+  appPublicUrl: (process.env.APP_PUBLIC_URL || process.env.CORS_ORIGIN || 'http://localhost:5173').replace(
+    /\/$/,
+    ''
+  ),
+  email: {
+    /** Resend API key; if unset, reset links are logged in development only. */
+    resendApiKey: process.env.RESEND_API_KEY || '',
+    from: process.env.EMAIL_FROM || 'noreply@example.com',
+  },
 };
 
 // Validate required environment variables

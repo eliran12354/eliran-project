@@ -16,7 +16,6 @@ export function PlansListings() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalPlans, setTotalPlans] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 50;
 
@@ -45,7 +44,6 @@ export function PlansListings() {
       
       setPlans(plansWithDetails);
       setTotalPages(result.totalPages);
-      setTotalPlans(result.total);
     } catch (error) {
       console.error('Error loading plans:', error);
     } finally {
@@ -183,15 +181,6 @@ export function PlansListings() {
           <ExternalLink className="w-4 h-4" />
         </Button>
       </div>
-
-      {/* Results Header */}
-      {plans && plans.length > 0 && (
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-[#617589] dark:text-gray-400 font-medium">
-            מציג {plans.length} מתוך {totalPlans} תוכניות שנמצאו
-          </p>
-        </div>
-      )}
 
       {plans.length === 0 ? (
         <div className="bg-white dark:bg-gray-900 border border-[#dbe0e6] dark:border-gray-800 rounded-xl p-12 text-center">

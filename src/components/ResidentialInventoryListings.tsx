@@ -209,15 +209,6 @@ export function ResidentialInventoryListings() {
         </div>
       </section>
 
-      {/* Results Header */}
-      {inventory && inventory.length > 0 && (
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-[#617589] dark:text-gray-400 font-medium">
-            מציג {inventory.length} מתוך {totalItems} רשומות שנמצאו
-          </p>
-        </div>
-      )}
-
       {/* Results List */}
       {inventory && inventory.length > 0 ? (
         <div className="space-y-4">

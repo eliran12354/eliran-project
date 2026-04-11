@@ -56,6 +56,7 @@ function SidebarNavBody({
   user,
   profile,
   logout,
+  isAdmin,
   showNotificationBell,
 }: {
   isActive: (path: string) => boolean;
@@ -67,6 +68,7 @@ function SidebarNavBody({
   user: ReturnType<typeof useAuth>["user"];
   profile: ReturnType<typeof useAuth>["profile"];
   logout: () => void;
+  isAdmin: boolean;
   showNotificationBell: boolean;
 }) {
   return (
@@ -301,21 +303,23 @@ function SidebarNavBody({
           </Link>
         </div>
 
-        <div>
-          <Link to="/admin-dashboard">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                isActive("/admin-dashboard")
-                  ? "bg-blue-600 shadow-md text-white"
-                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
-              }`}
-            >
-              <NavLabel>דשבורד ניהול</NavLabel>
-              <LayoutDashboard className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
+        {isAdmin && (
+          <div>
+            <Link to="/admin-dashboard">
+              <Button
+                dir="ltr"
+                className={`${sidebarNavBtnClass} ${
+                  isActive("/admin-dashboard")
+                    ? "bg-blue-600 shadow-md text-white"
+                    : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
+                }`}
+              >
+                <NavLabel>דשבורד ניהול</NavLabel>
+                <LayoutDashboard className="size-5 shrink-0" />
+              </Button>
+            </Link>
+          </div>
+        )}
 
         <div>
           <Link to="/settings">
@@ -347,7 +351,7 @@ export function Sidebar() {
   const [openHotTenders, setOpenHotTenders] = useState(false);
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const { user, profile, logout } = useAuth();
+  const { user, profile, logout, isAdmin } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
   const currentTab = useMemo(() => {
@@ -369,6 +373,7 @@ export function Sidebar() {
     user,
     profile,
     logout,
+    isAdmin,
     showNotificationBell: true as const,
   };
 
