@@ -20,6 +20,10 @@ import ResidentialInventoryPage from "./pages/ResidentialInventoryPage";
 import SettingsPage from "./pages/SettingsPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import BusinessAccountPage from "./pages/BusinessAccountPage";
+import ProfessionalsPage from "./pages/ProfessionalsPage";
+import PersonalAccompanimentPage from "./pages/PersonalAccompanimentPage";
+import PersonalAccompanimentCheckoutPage from "./pages/PersonalAccompanimentCheckoutPage";
+import PersonalAccompanimentWelcomePage from "./pages/PersonalAccompanimentWelcomePage";
 import TaxPage from "./pages/TaxPage";
 import NotFound from "./pages/NotFound";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -37,6 +41,10 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/business" element={<BusinessAccountPage />} />
+              <Route path="/professionals" element={<ProfessionalsPage />} />
+              <Route path="/personal-accompaniment" element={<PersonalAccompanimentPage />} />
+              <Route path="/personal-accompaniment/checkout" element={<PersonalAccompanimentCheckoutPage />} />
+              <Route path="/personal-accompaniment/welcome" element={<PersonalAccompanimentWelcomePage />} />
               <Route path="/map" element={<MapPage />} />
               <Route path="/govmap" element={<GovMapPage />} />
               <Route path="/listings" element={<ListingsPage />} />

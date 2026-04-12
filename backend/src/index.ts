@@ -17,6 +17,7 @@ import notificationsRouter from './routes/notifications.js';
 import contactRouter from './routes/contact.js';
 import taxRouter from './routes/tax.js';
 import internalRouter from './routes/internal.js';
+import featuredProfessionalsPublicRouter from './routes/featuredProfessionalsPublic.js';
 
 const app = express();
 
@@ -70,6 +71,7 @@ app.use('/api/notifications', notificationsRouter);
 app.use('/api/contact', contactRouter);
 app.use('/api/tax', taxRouter);
 app.use('/api/internal', internalRouter);
+app.use('/api/featured-professionals', featuredProfessionalsPublicRouter);
 
 // Start server
 const PORT = config.server.port;

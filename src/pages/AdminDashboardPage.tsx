@@ -12,6 +12,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { getToken } from "@/lib/api/authApi";
 import { fetchContactSubmissions, type ContactSubmission } from "@/lib/api/contactApi";
 import { fetchAdminStats } from "@/lib/api/adminApi";
+import { FeaturedProfessionalsAdminPanel } from "@/components/FeaturedProfessionalsAdminPanel";
 
 function ContactSubmissionsSection() {
   const [items, setItems] = useState<ContactSubmission[] | null>(null);
@@ -187,6 +188,8 @@ export default function AdminDashboardPage() {
       </div>
 
       <ContactSubmissionsSection />
+
+      <FeaturedProfessionalsAdminPanel />
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

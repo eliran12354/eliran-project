@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ContactDialog } from "@/components/ContactDialog";
+import { FeaturedProfessionalsShowcase } from "@/components/FeaturedProfessionalsShowcase";
 
 const CORE_TOOLS = [
   {
@@ -222,6 +223,11 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Subtle Divider */}
+      <div className="h-px bg-gradient-to-r from-transparent via-slate-200/60 to-transparent"></div>
+
+      <FeaturedProfessionalsShowcase />
 
       {/* Subtle Divider */}
       <div className="h-px bg-gradient-to-r from-transparent via-slate-200/60 to-transparent"></div>

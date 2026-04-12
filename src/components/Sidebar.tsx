@@ -17,6 +17,8 @@ import {
   User,
   LogOut,
   Menu,
+  Briefcase,
+  HeartHandshake,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
@@ -122,6 +124,38 @@ function SidebarNavBody({
             >
               <NavLabel>עמוד ראשי</NavLabel>
               <Home className="size-5 shrink-0" />
+            </Button>
+          </Link>
+        </div>
+
+        <div>
+          <Link to="/professionals">
+            <Button
+              dir="ltr"
+              className={`${sidebarNavBtnClass} ${
+                isActive("/professionals")
+                  ? "bg-blue-600 shadow-md text-white"
+                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
+              }`}
+            >
+              <NavLabel>בעלי מקצוע מומלצים</NavLabel>
+              <Briefcase className="size-5 shrink-0" />
+            </Button>
+          </Link>
+        </div>
+
+        <div>
+          <Link to="/personal-accompaniment">
+            <Button
+              dir="ltr"
+              className={`${sidebarNavBtnClass} ${
+                location.pathname.startsWith("/personal-accompaniment")
+                  ? "bg-blue-600 shadow-md text-white"
+                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
+              }`}
+            >
+              <NavLabel>ליווי אישי עד קנייה</NavLabel>
+              <HeartHandshake className="size-5 shrink-0" />
             </Button>
           </Link>
         </div>
