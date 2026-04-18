@@ -10,6 +10,8 @@ export const createFeaturedProfessionalSchema = z.object({
   website_url: z.string().max(2000).nullable().optional(),
   whatsapp: z.string().max(40).nullable().optional(),
   image_url: z.string().max(2000).nullable().optional(),
+  experience_label: z.string().max(120).nullable().optional(),
+  rating: z.number().int().min(1).max(5).nullable().optional(),
   display_order: z.number().int().min(-100000).max(100000).optional(),
   is_published: z.boolean().optional(),
 });

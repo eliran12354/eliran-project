@@ -18,6 +18,7 @@ import contactRouter from './routes/contact.js';
 import taxRouter from './routes/tax.js';
 import internalRouter from './routes/internal.js';
 import featuredProfessionalsPublicRouter from './routes/featuredProfessionalsPublic.js';
+import hotInvestorBoardsPublicRouter from './routes/hotInvestorBoardsPublic.js';
 
 const app = express();
 
@@ -72,6 +73,7 @@ app.use('/api/contact', contactRouter);
 app.use('/api/tax', taxRouter);
 app.use('/api/internal', internalRouter);
 app.use('/api/featured-professionals', featuredProfessionalsPublicRouter);
+app.use('/api/hot-investor-boards', hotInvestorBoardsPublicRouter);
 
 // Start server
 const PORT = config.server.port;

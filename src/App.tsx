@@ -25,6 +25,7 @@ import PersonalAccompanimentPage from "./pages/PersonalAccompanimentPage";
 import PersonalAccompanimentCheckoutPage from "./pages/PersonalAccompanimentCheckoutPage";
 import PersonalAccompanimentWelcomePage from "./pages/PersonalAccompanimentWelcomePage";
 import TaxPage from "./pages/TaxPage";
+import HotInvestorBoardsPage from "./pages/HotInvestorBoardsPage";
 import NotFound from "./pages/NotFound";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 
@@ -50,6 +51,7 @@ const App = () => (
               <Route path="/listings" element={<ListingsPage />} />
               <Route path="/plans" element={<PlansPage />} />
               <Route path="/hot-areas" element={<HotAreasPage />} />
+              <Route path="/hot-investor-boards" element={<HotInvestorBoardsPage />} />
               <Route path="/urban-renewal" element={<UrbanRenewalPage />} />
               <Route path="/dangerous-buildings" element={<DangerousBuildingsPage />} />
               <Route path="/tabu-request" element={<TabuRequestPage />} />

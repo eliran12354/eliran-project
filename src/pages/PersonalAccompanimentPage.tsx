@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PersonalAccompanimentShell } from "@/components/PersonalAccompanimentShell";
-import { PERSONAL_ACCOMPANIMENT_PRICE_LABEL } from "@/config/personalAccompaniment";
-import { Check } from "lucide-react";
+import {
+  PERSONAL_ACCOMPANIMENT_PRICE_HEADING,
+  PERSONAL_ACCOMPANIMENT_PRICE_LABEL,
+} from "@/config/personalAccompaniment";
+import { Check, Flame, MapPinned } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const INCLUDES = [
@@ -15,15 +18,24 @@ const INCLUDES = [
 
 const TERMS = ["מענה עד 24 שעות", "עד 2 שיחות", "ליווי עד 60 יום"] as const;
 
+const WHO_IS_IT_FOR = [
+  "למי שרוצה לקנות דירה ראשונה",
+  "למשקיעים שמחפשים הזדמנויות",
+  "למי ששוקל לקנות קרקע ורוצה להימנע מטעויות",
+  "למי שלא מבין מספיק ורוצה ליווי מקצועי",
+] as const;
+
 export default function PersonalAccompanimentPage() {
   return (
     <PersonalAccompanimentShell>
       <header className="mb-8 text-center">
         <p className="text-sm font-medium text-primary mb-2">אל תקבל החלטה לבד</p>
         <h1 className="text-3xl md:text-4xl font-black tracking-tight font-display text-[#111318] mb-3">
-          לא קונים דירה לבד
+          לא קונים נדל״ן לבד
         </h1>
-        <p className="text-lg text-slate-600 font-medium">ליווי אישי עד קנייה</p>
+        <p className="text-lg text-slate-600 font-medium">
+          ליווי אישי עד לחתימת חוזה ללא טעויות יקרות
+        </p>
       </header>
 
       <section
@@ -52,10 +64,28 @@ export default function PersonalAccompanimentPage() {
       </section>
 
       <div className="flex flex-col items-center gap-4 mb-10">
-        <p className="text-sm text-slate-500">מחיר</p>
+        <p className="text-sm text-slate-600 font-medium text-center max-w-md leading-relaxed">
+          {PERSONAL_ACCOMPANIMENT_PRICE_HEADING}
+        </p>
         <p className="text-3xl font-black font-display text-[#111318] tabular-nums">
           {PERSONAL_ACCOMPANIMENT_PRICE_LABEL}
         </p>
+        <section
+          className="w-full max-w-lg rounded-xl border border-slate-200/90 bg-white/90 p-5 text-right shadow-sm"
+          aria-labelledby="who-heading"
+        >
+          <h2 id="who-heading" className="text-base font-bold text-[#111318] mb-3">
+            למי זה מתאים?
+          </h2>
+          <ul className="space-y-2.5 list-none p-0 m-0">
+            {WHO_IS_IT_FOR.map((line) => (
+              <li key={line} className="flex items-start gap-2 text-sm text-slate-700 leading-relaxed">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+                {line}
+              </li>
+            ))}
+          </ul>
+        </section>
         <Button
           asChild
           size="lg"
@@ -64,6 +94,39 @@ export default function PersonalAccompanimentPage() {
           <Link to="/personal-accompaniment/checkout">התחל ליווי אישי</Link>
         </Button>
       </div>
+
+      <section
+        className="rounded-2xl border border-orange-200/70 bg-gradient-to-br from-orange-50/90 via-white to-slate-50 p-6 md:p-7 shadow-sm mb-8"
+        aria-labelledby="hot-areas-promo-heading"
+      >
+        <div className="flex items-start gap-3 mb-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-md">
+            <Flame className="h-6 w-6" aria-hidden />
+          </div>
+          <div className="text-right min-w-0">
+            <h2 id="hot-areas-promo-heading" className="text-lg font-bold text-[#111318]">
+              אזורים חמים למעקב
+            </h2>
+            <p className="text-sm text-slate-600 mt-1 leading-relaxed">
+              עקבו אחר תוכניות ומתחמים עם פוטנציאל — גם מהאתר.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-stretch sm:justify-end">
+          <Button variant="outline" className="h-11 rounded-xl border-orange-300/80 bg-white font-semibold" asChild>
+            <Link to="/hot-areas" className="gap-2 inline-flex items-center justify-center">
+              <Flame className="h-4 w-4 shrink-0" />
+              הוסף למעקב
+            </Link>
+          </Button>
+          <Button className="h-11 rounded-xl font-semibold shadow-sm" asChild>
+            <Link to="/plans" className="gap-2 inline-flex items-center justify-center">
+              <MapPinned className="h-4 w-4 shrink-0" />
+              גישה למסמכי התוכנית
+            </Link>
+          </Button>
+        </div>
+      </section>
 
       <section
         id="terms"

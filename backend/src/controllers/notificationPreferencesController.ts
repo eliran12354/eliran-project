@@ -40,17 +40,20 @@ export async function patchNotificationPreferences(
     const body = req.body as {
       notify_urban_renewal_new?: unknown;
       notify_dangerous_buildings_new?: unknown;
+      notify_hot_investor_boards_new?: unknown;
     };
 
     const hasUrban = typeof body.notify_urban_renewal_new === 'boolean';
     const hasDangerous =
       typeof body.notify_dangerous_buildings_new === 'boolean';
+    const hasHotBoards =
+      typeof body.notify_hot_investor_boards_new === 'boolean';
 
-    if (!hasUrban && !hasDangerous) {
+    if (!hasUrban && !hasDangerous && !hasHotBoards) {
       res.status(400).json({
         success: false,
         error:
-          'Provide at least one of: notify_urban_renewal_new, notify_dangerous_buildings_new (boolean)',
+          'Provide at least one boolean: notify_urban_renewal_new, notify_dangerous_buildings_new, notify_hot_investor_boards_new',
       });
       return;
     }
@@ -63,12 +66,16 @@ export async function patchNotificationPreferences(
     const nextDangerous = hasDangerous
       ? (body.notify_dangerous_buildings_new as boolean)
       : current.notify_dangerous_buildings_new;
+    const nextHotBoards = hasHotBoards
+      ? (body.notify_hot_investor_boards_new as boolean)
+      : current.notify_hot_investor_boards_new;
     const preferences =
       await notificationPreferencesService.upsertNotificationPreferences(
         userId,
         {
           notify_urban_renewal_new: nextUrban,
           notify_dangerous_buildings_new: nextDangerous,
+          notify_hot_investor_boards_new: nextHotBoards,
         }
       );
     res.json({ success: true, preferences });

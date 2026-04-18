@@ -1,10 +1,16 @@
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { FeaturedProfessionalCard } from "@/components/FeaturedProfessionalCard";
+import { FeaturedProfessionalsFilterBar } from "@/components/FeaturedProfessionalsFilterBar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchFeaturedProfessionalsPublic } from "@/lib/api/featuredProfessionalsApi";
+import {
+  defaultFeaturedProfessionalsFilter,
+  filterFeaturedProfessionals,
+} from "@/lib/featuredProfessionalsFilter";
 import { Briefcase } from "lucide-react";
 
 const SUBTLE_NOISE_BG = `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V4h4V2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V4h4V2H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
@@ -34,6 +40,8 @@ function PageSkeleton() {
 }
 
 export default function ProfessionalsPage() {
+  const [filter, setFilter] = useState(defaultFeaturedProfessionalsFilter);
+
   const { data, isPending, isError, error } = useQuery({
     queryKey: ["featured-professionals-public"],
     queryFn: async () => {
@@ -45,6 +53,16 @@ export default function ProfessionalsPage() {
     },
     staleTime: 60_000,
   });
+
+  const filtered = useMemo(
+    () => (data?.length ? filterFeaturedProfessionals(data, filter) : []),
+    [data, filter],
+  );
+
+  const citySuggestions = useMemo(
+    () => (data?.map((p) => p.city).filter(Boolean) as string[]) ?? [],
+    [data],
+  );
 
   return (
     <div
@@ -82,7 +100,7 @@ export default function ProfessionalsPage() {
           </div>
           <p className="max-w-2xl text-lg leading-relaxed text-slate-600">
             רשימה מלאה של אנשי מקצוע ושותפים — יצירת קשר ישירה בטלפון, במייל, בוואטסאפ או באתר.
-            התוכן מנוהל על ידי צוות האתר.
+            התוכן מנוהל על ידי צוות האתר. ניתן לסנן לפי סוג בעל מקצוע, אזור או חיפוש חופשי.
           </p>
         </header>
 
@@ -111,8 +129,22 @@ export default function ProfessionalsPage() {
         )}
 
         {!isPending && !isError && data && data.length > 0 && (
+          <>
+            <FeaturedProfessionalsFilterBar
+              idPrefix="professionals-fp"
+              value={filter}
+              onChange={setFilter}
+              citySuggestions={citySuggestions}
+            />
+            {filtered.length === 0 ? (
+              <Card className="border-dashed bg-white/80 p-10 text-center shadow-sm">
+                <p className="text-slate-600">
+                  לא נמצאו תוצאות לפי הסינון — נסו לשנות את החיפוש, סוג המקצוע או האזור.
+                </p>
+              </Card>
+            ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {data.map((p) => (
+            {filtered.map((p) => (
               <FeaturedProfessionalCard
                 key={p.id}
                 name={p.name}
@@ -124,10 +156,15 @@ export default function ProfessionalsPage() {
                 websiteUrl={p.website_url}
                 whatsapp={p.whatsapp}
                 imageUrl={p.image_url}
+                experienceLabel={p.experience_label ?? null}
+                rating={p.rating ?? null}
+                variant="full"
                 descriptionClassName={fullPageDescriptionClass}
               />
             ))}
           </div>
+            )}
+          </>
         )}
       </div>
     </div>

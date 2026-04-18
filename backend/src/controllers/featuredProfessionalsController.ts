@@ -14,6 +14,14 @@ import {
 
 const uuidParam = z.string().uuid('מזהה לא תקין');
 
+function parseRatingField(v: unknown): number | null | undefined {
+  if (v === undefined) return undefined;
+  if (v === '' || v === null) return null;
+  const n = typeof v === 'number' ? v : Number(v);
+  if (!Number.isFinite(n)) return undefined;
+  return n;
+}
+
 function normalizeCreateBody(
   raw: Record<string, unknown>,
 ): Record<string, unknown> {
@@ -33,6 +41,8 @@ function normalizeCreateBody(
     website_url: str('website_url'),
     whatsapp: str('whatsapp'),
     image_url: str('image_url'),
+    experience_label: str('experience_label'),
+    rating: parseRatingField(raw.rating),
   };
 }
 

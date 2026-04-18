@@ -19,6 +19,7 @@ import {
   Menu,
   Briefcase,
   HeartHandshake,
+  LayoutGrid,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
@@ -235,6 +236,22 @@ function SidebarNavBody({
             >
               <NavLabel>אזורים חמים למעקב</NavLabel>
               <Flame className="size-5 shrink-0" />
+            </Button>
+          </Link>
+        </div>
+
+        <div>
+          <Link to="/hot-investor-boards">
+            <Button
+              dir="ltr"
+              className={`${sidebarNavBtnClass} ${
+                isActive("/hot-investor-boards")
+                  ? "bg-gradient-to-r from-amber-500 to-orange-600 shadow-md text-white"
+                  : "hover:bg-amber-500/5 hover:text-amber-700 dark:hover:text-amber-300 hover-lift"
+              }`}
+            >
+              <NavLabel>לוחות נדל״ן חמים למשקיעים</NavLabel>
+              <LayoutGrid className="size-5 shrink-0" />
             </Button>
           </Link>
         </div>

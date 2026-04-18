@@ -1,6 +1,9 @@
 /** מחיר לתצוגה בלבד — מקור האמת לתשלום יהיה במערכת התשלומים כשתחובר. */
 export const PERSONAL_ACCOMPANIMENT_PRICE_LABEL = "3,500 ₪";
 
+/** כותרת מעל מחיר הליווי האישי (הטבה למצטרפים חדשים). */
+export const PERSONAL_ACCOMPANIMENT_PRICE_HEADING = "מחיר הטבה למצטרפים חדשים";
+
 /**
  * כשמוגדר (למשל URL של Lemon Squeezy), עמוד התשלום יפנה אליו.
  * כל עוד ריק — זרימת placeholder באתר (מעבר לדף הברוכים הבאים).

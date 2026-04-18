@@ -15,6 +15,8 @@ export type FeaturedProfessional = {
   website_url: string | null;
   whatsapp: string | null;
   image_url: string | null;
+  experience_label?: string | null;
+  rating?: number | null;
   display_order: number;
   is_published: boolean;
 };
@@ -63,6 +65,8 @@ export type FeaturedProfessionalInput = {
   website_url?: string | null;
   whatsapp?: string | null;
   image_url?: string | null;
+  experience_label?: string | null;
+  rating?: number | null;
   display_order?: number;
   is_published?: boolean;
 };

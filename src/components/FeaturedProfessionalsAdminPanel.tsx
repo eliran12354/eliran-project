@@ -24,6 +24,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -42,6 +49,8 @@ const emptyForm = () => ({
   headline: "",
   description: "",
   city: "",
+  experience_label: "",
+  rating: "",
   phone: "",
   email: "",
   website_url: "",
@@ -59,6 +68,8 @@ function formFromProfessional(p: FeaturedProfessional): FormState {
     headline: p.headline ?? "",
     description: p.description ?? "",
     city: p.city ?? "",
+    experience_label: p.experience_label ?? "",
+    rating: p.rating != null && p.rating >= 1 && p.rating <= 5 ? String(p.rating) : "",
     phone: p.phone ?? "",
     email: p.email ?? "",
     website_url: p.website_url ?? "",
@@ -127,6 +138,14 @@ export function FeaturedProfessionalsAdminPanel() {
     const orderNum = Number.parseInt(form.display_order, 10);
     const display_order = Number.isFinite(orderNum) ? orderNum : 0;
 
+    const ratingParsed =
+      form.rating === ""
+        ? null
+        : (() => {
+            const n = Number.parseInt(form.rating, 10);
+            return Number.isFinite(n) && n >= 1 && n <= 5 ? n : null;
+          })();
+
     setSaving(true);
     try {
       if (editingId) {
@@ -135,6 +154,8 @@ export function FeaturedProfessionalsAdminPanel() {
           headline: form.headline.trim() || null,
           description: form.description.trim() || null,
           city: form.city.trim() || null,
+          experience_label: form.experience_label.trim() || null,
+          rating: ratingParsed,
           phone: form.phone.trim() || null,
           email: form.email.trim() || null,
           website_url: form.website_url.trim() || null,
@@ -157,6 +178,8 @@ export function FeaturedProfessionalsAdminPanel() {
           headline: form.headline.trim() || null,
           description: form.description.trim() || null,
           city: form.city.trim() || null,
+          experience_label: form.experience_label.trim() || null,
+          rating: ratingParsed,
           phone: form.phone.trim() || null,
           email: form.email.trim() || null,
           website_url: form.website_url.trim() || null,
@@ -336,12 +359,43 @@ export function FeaturedProfessionalsAdminPanel() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="fp-city">עיר / אזור</Label>
+                <Label htmlFor="fp-city">אזור פעילות</Label>
                 <Input
                   id="fp-city"
                   value={form.city}
                   onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+                  placeholder="למשל: גוש דן, חיפה והקריות"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="fp-exp">ניסיון</Label>
+                <Input
+                  id="fp-exp"
+                  value={form.experience_label}
+                  onChange={(e) => setForm((f) => ({ ...f, experience_label: e.target.value }))}
+                  placeholder="למשל: 10+ שנים"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="fp-rating">דירוג</Label>
+                <Select
+                  value={form.rating === "" ? "none" : form.rating}
+                  onValueChange={(v) => setForm((f) => ({ ...f, rating: v === "none" ? "" : v }))}
+                >
+                  <SelectTrigger id="fp-rating">
+                    <SelectValue placeholder="ללא דירוג" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">ללא דירוג</SelectItem>
+                    <SelectItem value="1">1 — חלש</SelectItem>
+                    <SelectItem value="2">2</SelectItem>
+                    <SelectItem value="3">3</SelectItem>
+                    <SelectItem value="4">4</SelectItem>
+                    <SelectItem value="5">5 — מצוין</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="fp-order">סדר הצגה</Label>

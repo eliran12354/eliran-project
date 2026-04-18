@@ -4,6 +4,7 @@ import { PersonalAccompanimentShell } from "@/components/PersonalAccompanimentSh
 import {
   isPersonalAccompanimentCheckoutConfigured,
   PERSONAL_ACCOMPANIMENT_CHECKOUT_URL,
+  PERSONAL_ACCOMPANIMENT_PRICE_HEADING,
   PERSONAL_ACCOMPANIMENT_PRICE_LABEL,
 } from "@/config/personalAccompaniment";
 
@@ -16,7 +17,7 @@ export default function PersonalAccompanimentCheckoutPage() {
         <h1 className="text-2xl md:text-3xl font-bold font-display text-[#111318] mb-2">
           התחלת ליווי אישי
         </h1>
-        <p className="text-slate-600">מחיר</p>
+        <p className="text-slate-600">{PERSONAL_ACCOMPANIMENT_PRICE_HEADING}</p>
         <p className="text-3xl font-black font-display text-[#111318] mt-1 tabular-nums">
           {PERSONAL_ACCOMPANIMENT_PRICE_LABEL}
         </p>

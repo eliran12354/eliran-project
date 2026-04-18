@@ -8,17 +8,20 @@ import { supabase } from '../config/database.js';
 export type NotificationPreferences = {
   notify_urban_renewal_new: boolean;
   notify_dangerous_buildings_new: boolean;
+  notify_hot_investor_boards_new: boolean;
   updated_at: string | null;
 };
 
 function rowToPreferences(row: {
   notify_urban_renewal_new: unknown;
   notify_dangerous_buildings_new?: unknown;
+  notify_hot_investor_boards_new?: unknown;
   updated_at: string | null;
 }): NotificationPreferences {
   return {
     notify_urban_renewal_new: Boolean(row.notify_urban_renewal_new),
     notify_dangerous_buildings_new: Boolean(row.notify_dangerous_buildings_new),
+    notify_hot_investor_boards_new: Boolean(row.notify_hot_investor_boards_new),
     updated_at: row.updated_at,
   };
 }
@@ -28,7 +31,9 @@ export async function getNotificationPreferences(
 ): Promise<NotificationPreferences> {
   const { data, error } = await supabase
     .from('user_notification_preferences')
-    .select('notify_urban_renewal_new, notify_dangerous_buildings_new, updated_at')
+    .select(
+      'notify_urban_renewal_new, notify_dangerous_buildings_new, notify_hot_investor_boards_new, updated_at',
+    )
     .eq('user_id', userId)
     .maybeSingle();
 
@@ -37,6 +42,7 @@ export async function getNotificationPreferences(
     return {
       notify_urban_renewal_new: false,
       notify_dangerous_buildings_new: false,
+      notify_hot_investor_boards_new: false,
       updated_at: null,
     };
   }
@@ -48,6 +54,7 @@ export async function upsertNotificationPreferences(
   prefs: {
     notify_urban_renewal_new: boolean;
     notify_dangerous_buildings_new: boolean;
+    notify_hot_investor_boards_new: boolean;
   }
 ): Promise<NotificationPreferences> {
   const { data, error } = await supabase
@@ -57,12 +64,13 @@ export async function upsertNotificationPreferences(
         user_id: userId,
         notify_urban_renewal_new: prefs.notify_urban_renewal_new,
         notify_dangerous_buildings_new: prefs.notify_dangerous_buildings_new,
+        notify_hot_investor_boards_new: prefs.notify_hot_investor_boards_new,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'user_id' }
     )
     .select(
-      'notify_urban_renewal_new, notify_dangerous_buildings_new, updated_at'
+      'notify_urban_renewal_new, notify_dangerous_buildings_new, notify_hot_investor_boards_new, updated_at',
     )
     .single();
 
@@ -91,6 +99,19 @@ export async function listUserIdsWithDangerousBuildingsNotificationsEnabled(): P
     .from('user_notification_preferences')
     .select('user_id')
     .eq('notify_dangerous_buildings_new', true);
+
+  if (error) throw error;
+  return (data ?? []).map((row: { user_id: string }) => row.user_id);
+}
+
+/** User IDs that opted in to hot investor board listing notifications. */
+export async function listUserIdsWithHotInvestorBoardsNotificationsEnabled(): Promise<
+  string[]
+> {
+  const { data, error } = await supabase
+    .from('user_notification_preferences')
+    .select('user_id')
+    .eq('notify_hot_investor_boards_new', true);
 
   if (error) throw error;
   return (data ?? []).map((row: { user_id: string }) => row.user_id);

@@ -1,10 +1,16 @@
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { FeaturedProfessionalCard } from "@/components/FeaturedProfessionalCard";
+import { FeaturedProfessionalsFilterBar } from "@/components/FeaturedProfessionalsFilterBar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchFeaturedProfessionalsPublic } from "@/lib/api/featuredProfessionalsApi";
+import {
+  defaultFeaturedProfessionalsFilter,
+  filterFeaturedProfessionals,
+} from "@/lib/featuredProfessionalsFilter";
 
 const sectionFullBleedStyle = {
   marginLeft: "calc(50% - 50vw)",
@@ -34,6 +40,8 @@ function ShowcaseSkeleton() {
 }
 
 export function FeaturedProfessionalsShowcase() {
+  const [filter, setFilter] = useState(defaultFeaturedProfessionalsFilter);
+
   const { data, isPending, isError } = useQuery({
     queryKey: ["featured-professionals-public"],
     queryFn: async () => {
@@ -45,6 +53,16 @@ export function FeaturedProfessionalsShowcase() {
     },
     staleTime: 60_000,
   });
+
+  const filtered = useMemo(
+    () => (data?.length ? filterFeaturedProfessionals(data, filter) : []),
+    [data, filter],
+  );
+
+  const citySuggestions = useMemo(
+    () => (data?.map((p) => p.city).filter(Boolean) as string[]) ?? [],
+    [data],
+  );
 
   if (isError) {
     return null;
@@ -116,26 +134,42 @@ export function FeaturedProfessionalsShowcase() {
             בעלי מקצוע מומלצים
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-600 md:text-lg">
-            אנשי מקצוע שנבחרו לשירותכם — יצירת קשר ישירה מהאתר.
+            אנשי מקצוע שנבחרו לשירותכם — יצירת קשר ישירה מהאתר. סננו לפי סוג מקצוע, אזור או חיפוש חופשי.
           </p>
         </header>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {data.map((p) => (
-            <FeaturedProfessionalCard
-              key={p.id}
-              name={p.name}
-              headline={p.headline}
-              description={p.description}
-              city={p.city}
-              phone={p.phone}
-              email={p.email}
-              websiteUrl={p.website_url}
-              whatsapp={p.whatsapp}
-              imageUrl={p.image_url}
-            />
-          ))}
-        </div>
+        <FeaturedProfessionalsFilterBar
+          idPrefix="showcase-fp"
+          value={filter}
+          onChange={setFilter}
+          citySuggestions={citySuggestions}
+          compact
+        />
+
+        {filtered.length === 0 ? (
+          <p className="mb-10 text-center text-slate-600">
+            לא נמצאו תוצאות לפי הסינון — נסו לשנות את החיפוש או האזור.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((p) => (
+              <FeaturedProfessionalCard
+                key={p.id}
+                name={p.name}
+                headline={p.headline}
+                description={p.description}
+                city={p.city}
+                phone={p.phone}
+                email={p.email}
+                websiteUrl={p.website_url}
+                whatsapp={p.whatsapp}
+                imageUrl={p.image_url}
+              experienceLabel={p.experience_label ?? null}
+              rating={p.rating ?? null}
+              />
+            ))}
+          </div>
+        )}
 
         <div className="mt-12 flex justify-center">
           <Button variant="outline" className="h-12 gap-2 rounded-xl border-primary/30 px-8 font-semibold text-primary shadow-sm hover:bg-primary/5" asChild>

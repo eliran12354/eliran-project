@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const URBAN_RENEWAL_SWITCH_ID = "notify-urban-renewal-new";
 const DANGEROUS_BUILDINGS_SWITCH_ID = "notify-dangerous-buildings-new";
+const HOT_INVESTOR_BOARDS_SWITCH_ID = "notify-hot-investor-boards-new";
 
 export function NotificationPreferencesSettingsCard() {
   const { toast } = useToast();
@@ -18,6 +19,7 @@ export function NotificationPreferencesSettingsCard() {
   const [saving, setSaving] = useState(false);
   const [urbanRenewal, setUrbanRenewal] = useState(false);
   const [dangerousBuildings, setDangerousBuildings] = useState(false);
+  const [hotInvestorBoards, setHotInvestorBoards] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -28,6 +30,7 @@ export function NotificationPreferencesSettingsCard() {
         if (!cancelled) {
           setUrbanRenewal(prefs.notify_urban_renewal_new);
           setDangerousBuildings(prefs.notify_dangerous_buildings_new);
+          setHotInvestorBoards(prefs.notify_hot_investor_boards_new);
         }
       } catch {
         if (!cancelled) {
@@ -49,19 +52,24 @@ export function NotificationPreferencesSettingsCard() {
   const persist = async (next: {
     notify_urban_renewal_new: boolean;
     notify_dangerous_buildings_new: boolean;
+    notify_hot_investor_boards_new: boolean;
   }) => {
     const prevUrban = urbanRenewal;
     const prevDangerous = dangerousBuildings;
+    const prevHot = hotInvestorBoards;
     setUrbanRenewal(next.notify_urban_renewal_new);
     setDangerousBuildings(next.notify_dangerous_buildings_new);
+    setHotInvestorBoards(next.notify_hot_investor_boards_new);
     setSaving(true);
     try {
       const prefs = await updateNotificationPreferences(next);
       setUrbanRenewal(prefs.notify_urban_renewal_new);
       setDangerousBuildings(prefs.notify_dangerous_buildings_new);
+      setHotInvestorBoards(prefs.notify_hot_investor_boards_new);
     } catch {
       setUrbanRenewal(prevUrban);
       setDangerousBuildings(prevDangerous);
+      setHotInvestorBoards(prevHot);
       toast({
         title: "שגיאה",
         description: "לא ניתן לשמור העדפה",
@@ -76,6 +84,7 @@ export function NotificationPreferencesSettingsCard() {
     void persist({
       notify_urban_renewal_new: checked,
       notify_dangerous_buildings_new: dangerousBuildings,
+      notify_hot_investor_boards_new: hotInvestorBoards,
     });
   };
 
@@ -83,6 +92,15 @@ export function NotificationPreferencesSettingsCard() {
     void persist({
       notify_urban_renewal_new: urbanRenewal,
       notify_dangerous_buildings_new: checked,
+      notify_hot_investor_boards_new: hotInvestorBoards,
+    });
+  };
+
+  const onHotInvestorBoardsChange = (checked: boolean) => {
+    void persist({
+      notify_urban_renewal_new: urbanRenewal,
+      notify_dangerous_buildings_new: dangerousBuildings,
+      notify_hot_investor_boards_new: checked,
     });
   };
 
@@ -133,6 +151,26 @@ export function NotificationPreferencesSettingsCard() {
             id={DANGEROUS_BUILDINGS_SWITCH_ID}
             checked={dangerousBuildings}
             onCheckedChange={onDangerousBuildingsChange}
+            disabled={loading || saving}
+            aria-busy={loading || saving}
+          />
+        </div>
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1 min-w-0">
+            <Label
+              htmlFor={HOT_INVESTOR_BOARDS_SWITCH_ID}
+              className="text-sm font-medium"
+            >
+              לוחות נדל״ן חמים למשקיעים
+            </Label>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              התראה כשפורסמה מודעה חדשה בלוחות (פינוי־בינוי, עד מיליון ש״ח, קרקעות בהפשרה).
+            </p>
+          </div>
+          <Switch
+            id={HOT_INVESTOR_BOARDS_SWITCH_ID}
+            checked={hotInvestorBoards}
+            onCheckedChange={onHotInvestorBoardsChange}
             disabled={loading || saving}
             aria-busy={loading || saving}
           />

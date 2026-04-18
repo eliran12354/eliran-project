@@ -7,6 +7,12 @@ import {
   patchAdminFeaturedProfessional,
   postAdminFeaturedProfessional,
 } from '../controllers/featuredProfessionalsController.js';
+import {
+  deleteAdminHotInvestorBoard,
+  getAdminHotInvestorBoards,
+  patchAdminHotInvestorBoard,
+  postAdminHotInvestorBoard,
+} from '../controllers/hotInvestorBoardsController.js';
 
 const router = Router();
 
@@ -18,5 +24,10 @@ router.get('/featured-professionals', requireAuth, requireAdmin, getAdminFeature
 router.post('/featured-professionals', requireAuth, requireAdmin, postAdminFeaturedProfessional);
 router.patch('/featured-professionals/:id', requireAuth, requireAdmin, patchAdminFeaturedProfessional);
 router.delete('/featured-professionals/:id', requireAuth, requireAdmin, deleteAdminFeaturedProfessional);
+
+router.get('/hot-investor-boards', requireAuth, requireAdmin, getAdminHotInvestorBoards);
+router.post('/hot-investor-boards', requireAuth, requireAdmin, postAdminHotInvestorBoard);
+router.patch('/hot-investor-boards/:id', requireAuth, requireAdmin, patchAdminHotInvestorBoard);
+router.delete('/hot-investor-boards/:id', requireAuth, requireAdmin, deleteAdminHotInvestorBoard);
 
 export default router;

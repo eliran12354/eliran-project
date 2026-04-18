@@ -13,6 +13,8 @@ export type FeaturedProfessionalRow = {
   website_url: string | null;
   whatsapp: string | null;
   image_url: string | null;
+  experience_label: string | null;
+  rating: number | null;
   display_order: number;
   is_published: boolean;
 };
@@ -27,6 +29,8 @@ type CreateInput = {
   website_url?: string | null;
   whatsapp?: string | null;
   image_url?: string | null;
+  experience_label?: string | null;
+  rating?: number | null;
   display_order?: number;
   is_published?: boolean;
 };
@@ -43,7 +47,7 @@ export async function listPublishedProfessionals(limit = 24): Promise<FeaturedPr
   const { data, error } = await supabase
     .from('featured_professionals')
     .select(
-      'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, display_order, is_published',
+      'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, experience_label, rating, display_order, is_published',
     )
     .eq('is_published', true)
     .order('display_order', { ascending: true })
@@ -60,7 +64,7 @@ export async function listAllProfessionalsForAdmin(limit = 200): Promise<Feature
   const { data, error } = await supabase
     .from('featured_professionals')
     .select(
-      'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, display_order, is_published',
+      'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, experience_label, rating, display_order, is_published',
     )
     .order('display_order', { ascending: true })
     .order('created_at', { ascending: false })
@@ -83,6 +87,8 @@ export async function createProfessional(input: CreateInput): Promise<FeaturedPr
     website_url: emptyToNull(input.website_url ?? null),
     whatsapp: emptyToNull(input.whatsapp ?? null),
     image_url: emptyToNull(input.image_url ?? null),
+    experience_label: emptyToNull(input.experience_label ?? null),
+    rating: input.rating === undefined ? null : input.rating,
     display_order: input.display_order ?? 0,
     is_published: input.is_published ?? false,
   };
@@ -91,7 +97,7 @@ export async function createProfessional(input: CreateInput): Promise<FeaturedPr
     .from('featured_professionals')
     .insert(row)
     .select(
-      'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, display_order, is_published',
+      'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, experience_label, rating, display_order, is_published',
     )
     .single();
 
@@ -119,6 +125,8 @@ export async function updateProfessional(
   if (input.website_url !== undefined) patch.website_url = emptyToNull(input.website_url);
   if (input.whatsapp !== undefined) patch.whatsapp = emptyToNull(input.whatsapp);
   if (input.image_url !== undefined) patch.image_url = emptyToNull(input.image_url);
+  if (input.experience_label !== undefined) patch.experience_label = emptyToNull(input.experience_label);
+  if (input.rating !== undefined) patch.rating = input.rating;
   if (input.display_order !== undefined) patch.display_order = input.display_order;
   if (input.is_published !== undefined) patch.is_published = input.is_published;
 
@@ -126,7 +134,7 @@ export async function updateProfessional(
     const { data: existing } = await supabase
       .from('featured_professionals')
       .select(
-        'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, display_order, is_published',
+        'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, experience_label, rating, display_order, is_published',
       )
       .eq('id', id)
       .maybeSingle();
@@ -138,7 +146,7 @@ export async function updateProfessional(
     .update(patch)
     .eq('id', id)
     .select(
-      'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, display_order, is_published',
+      'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, experience_label, rating, display_order, is_published',
     )
     .maybeSingle();
 
