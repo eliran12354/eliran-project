@@ -1,0 +1,118 @@
+{
+  "ranAt": "2026-05-02T12:33:10.838Z",
+  "entry": "https://tabanet.co.il/Dashboard",
+  "gush": "6213",
+  "helka": "1",
+  "totalCalls": 11,
+  "calls": [
+    {
+      "idx": 0,
+      "method": "GET",
+      "url": "https://tabanet.co.il/Dashboard",
+      "status": 200,
+      "type": "document",
+      "hasBody": false,
+      "bodySize": 0,
+      "responseSnippet": "<!DOCTYPE html>\n<html lang=\"en\">\n <head>\n  <meta charset=\"utf-8\"/>\n  <link href=\"https://external-site.example/storage/v1/object/public/base44-prod/public/6945411b969696c741736a63/2266d0c4b_tabanet_logo_transparent_4x.png\" rel=\"icon\" type=\"image/png\"/>\n  <meta content=\"width=device-width, initial-scale=1.0\" name=\"viewport\"/>\n  <link href=\"/manifest.json\" rel=\"manifest\"/>\n  <title>\n   Dashboard | תב\"ע-נט\n  </title>\n  <script crossorigin=\"\" src=\"/assets/index-BH3LTaaY.js\" type=\"module\">\n  </script>\n  <link crossorigin=\"\" href=\"/assets/index-C4JRTxPY.css\" rel=\"stylesheet\"/>\n  <meta content='Dashboard on תב\"ע-נט. אפליקציה לניתוח זכויות בנייה והתחדשות עירונית.' name=\"description\"/>\n  <meta content='Dashboard | תב\"ע-נט' property=\"og:title\"/>\n  <meta content='Dashboard on תב\"ע-נט. אפלי"
+    },
+    {
+      "idx": 1,
+      "method": "GET",
+      "url": "https://tabanet.co.il/assets/index-BH3LTaaY.js",
+      "status": 200,
+      "type": "script",
+      "hasBody": false,
+      "bodySize": 0,
+      "responseSnippet": "const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=[\"assets/leaflet-Dgihpmma.css\"])))=>i.map(i=>d[i]);\nvar IR=e=>{throw TypeError(e)};var cB=(e,t,n)=>t.has(e)||IR(\"Cannot \"+n);var De=(e,t,n)=>(cB(e,t,\"read from private field\"),n?n.call(e):t.get(e)),In=(e,t,n)=>t.has(e)?IR(\"Cannot add the same private member more than once\"):t instanceof WeakSet?t.add(e):t.set(e,n),un=(e,t,n,r)=>(cB(e,t,\"write to private field\"),r?r.call(e,n):t.set(e,n),n),vr=(e,t,n)=>(cB(e,t,\"access private method\"),n);var Hb=(e,t,n,r)=>({set _(s){un(e,t,s,n)},get _(){return De(e,t,r)}});function Ale(e,t){for(var n=0;n<t.length;n++){const r=t[n];if(typeof r!=\"string\"&&!Array.isArray(r)){for(const s in r)if(s!==\"default\"&&!(s in e)){const i=Object.getOwnPropertyDescriptor(r,s);i&&Object.defineProperty(e,s,i.get?i:{enum"
+    },
+    {
+      "idx": 2,
+      "method": "GET",
+      "url": "https://base44.app/api/apps/6945411b969696c741736a63/entities/User/me",
+      "status": 401,
+      "type": "xhr",
+      "hasBody": false,
+      "bodySize": 0,
+      "responseSnippet": "{\"message\":\"Authentication required to view users\",\"detail\":\"You must be logged in to perform this operation.\",\"traceback\":null,\"extra_data\":null,\"request_id\":null}"
+    },
+    {
+      "idx": 3,
+      "method": "GET",
+      "url": "https://base44.app/api/apps/public/prod/public-settings/by-id/6945411b969696c741736a63",
+      "status": 200,
+      "type": "xhr",
+      "hasBody": false,
+      "bodySize": 0,
+      "responseSnippet": "{\"id\":\"6945411b969696c741736a63\",\"public_settings\":\"public_without_login\"}"
+    },
+    {
+      "idx": 4,
+      "method": "GET",
+      "url": "https://base44.app/api/apps/6945411b969696c741736a63/entities/User/me",
+      "status": 401,
+      "type": "xhr",
+      "hasBody": false,
+      "bodySize": 0,
+      "responseSnippet": "{\"message\":\"Authentication required to view users\",\"detail\":\"You must be logged in to perform this operation.\",\"traceback\":null,\"extra_data\":null,\"request_id\":null}"
+    },
+    {
+      "idx": 5,
+      "method": "GET",
+      "url": "https://base44.app/api/apps/6945411b969696c741736a63/entities/AppSettings?q=%7B%22key%22:%22app_config%22%7D",
+      "status": 200,
+      "type": "xhr",
+      "hasBody": false,
+      "bodySize": 0,
+      "responseSnippet": "[{\"key\":\"app_config\",\"showUploadOption\":false,\"reportDeliveryMode\":\"auto_full\",\"allowMultipleAddresses\":false,\"strictAddressValidation\":true,\"useMavatGushFast\":false,\"version\":\"2.7\",\"logsEnabled\":true,\"paymentPopupMode\":\"legacy\",\"planningPromptMarkdown\":\"\\nפרומפט ניתוח זכויות — תב״ע-נט (גרסה 2.4)  \\nהנחיות מלאות ל-LLM לקריאה וניתוח מסמכים תכנוניים ולהפקת דו״ח סופי להתחדשות עירונית (ישראל)\\n\\nאתה מודל AI מתקדם המתמחה בתכנון ובנייה בישראל, כולל קריאה וניתוח תכניות סטטוטוריות (תב\\\"עות), טבלאות זכויות (למשל \\\"טבלה 5\\\"), מסמכי מדיניות, נספחים ותשריטים. אתה ממש ברמה של אדריכל מומחה בעל ניסיון של שנים בתחום שמכיר היטב את אזור הפרויקט. \\nבכתיבת הדוח תמיד שמור על שפה מקצועית, ברורה, נגישה וקוהרנטית בעברית.\\n\\n========================================================\\nעיקרון-על — מערכת סגורה (שני מקו"
+    },
+    {
+      "idx": 6,
+      "method": "GET",
+      "url": "https://base44.app/api/apps/6945411b969696c741736a63/entities/User/me",
+      "status": 401,
+      "type": "xhr",
+      "hasBody": false,
+      "bodySize": 0,
+      "responseSnippet": "{\"message\":\"Authentication required to view users\",\"detail\":\"You must be logged in to perform this operation.\",\"traceback\":null,\"extra_data\":null,\"request_id\":null}"
+    },
+    {
+      "idx": 7,
+      "method": "POST",
+      "url": "https://base44.app/api/apps/6945411b969696c741736a63/functions/dataGovIlProxy",
+      "status": 200,
+      "type": "xhr",
+      "hasBody": true,
+      "bodySize": 119,
+      "responseSnippet": "{\"help\":\"https://data.gov.il/api/3/action/help_show?name=datastore_search\",\"success\":true,\"result\":{\"include_total\":true,\"limit\":5000,\"offset\":0,\"records_format\":\"objects\",\"resource_id\":\"5c78e9fa-c2e2-4771-93ff-7f400a12f7ba\",\"total_estimation_threshold\":null,\"records\":[{\"_id\":1,\"סמל_ישוב\":\"3400 \",\"שם_ישוב\":\"חברון \",\"שם_ישוב_לועזי\":\" \",\"סמל_נפה\":77,\"שם_נפה\":\"חברון \",\"סמל_לשכת_מנא\":11,\"לשכה\":\"ירושלים \",\"סמל_מועצה_איזורית\":0,\"שם_מועצה\":null},{\"_id\":2,\"סמל_ישוב\":\"1347 \",\"שם_ישוב\":\"קצר א-סר \",\"שם_ישוב_לועזי\":\" \",\"סמל_נפה\":62,\"שם_נפה\":\"באר שבע \",\"סמל_לשכת_מנא\":62,\"לשכה\":\"באר שבע \",\"סמל_מועצה_איזורית\":68,\"שם_מועצה\":\"נווה מדבר\"},{\"_id\":3,\"סמל_ישוב\":\"1331 \",\"שם_ישוב\":\"כמאנה \",\"שם_ישוב_לועזי\":\" \",\"סמל_נפה\":24,\"שם_נפה\":\"עכו \",\"סמל_לשכת_מנא\":20,\"לשכה\":\"כרמיאל \",\"סמל_מועצה_איזורית\":56,\"שם_מועצה\":\"משגב\""
+    },
+    {
+      "idx": 8,
+      "method": "GET",
+      "url": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2070",
+      "status": 200,
+      "type": "image",
+      "hasBody": false,
+      "bodySize": 0
+    },
+    {
+      "idx": 9,
+      "method": "POST",
+      "url": "https://base44.app/api/apps/6945411b969696c741736a63/analytics/track/batch",
+      "status": 200,
+      "type": "xhr",
+      "hasBody": true,
+      "bodySize": 199,
+      "responseSnippet": "{\"accepted\":1}"
+    },
+    {
+      "idx": 10,
+      "method": "POST",
+      "url": "https://base44.app/api/apps/6945411b969696c741736a63/functions/dataGovIlProxy",
+      "status": 200,
+      "type": "xhr",
+      "hasBody": true,
+      "bodySize": 119,
+      "responseSnippet": "{\"help\":\"https://data.gov.il/api/3/action/help_show?name=datastore_search\",\"success\":true,\"result\":{\"include_total\":true,\"limit\":5000,\"offset\":0,\"records_format\":\"objects\",\"resource_id\":\"5c78e9fa-c2e2-4771-93ff-7f400a12f7ba\",\"total_estimation_threshold\":null,\"records\":[{\"_id\":1,\"סמל_ישוב\":\"3400 \",\"שם_ישוב\":\"חברון \",\"שם_ישוב_לועזי\":\" \",\"סמל_נפה\":77,\"שם_נפה\":\"חברון \",\"סמל_לשכת_מנא\":11,\"לשכה\":\"ירושלים \",\"סמל_מועצה_איזורית\":0,\"שם_מועצה\":null},{\"_id\":2,\"סמל_ישוב\":\"1347 \",\"שם_ישוב\":\"קצר א-סר \",\"שם_ישוב_לועזי\":\" \",\"סמל_נפה\":62,\"שם_נפה\":\"באר שבע \",\"סמל_לשכת_מנא\":62,\"לשכה\":\"באר שבע \",\"סמל_מועצה_איזורית\":68,\"שם_מועצה\":\"נווה מדבר\"},{\"_id\":3,\"סמל_ישוב\":\"1331 \",\"שם_ישוב\":\"כמאנה \",\"שם_ישוב_לועזי\":\" \",\"סמל_נפה\":24,\"שם_נפה\":\"עכו \",\"סמל_לשכת_מנא\":20,\"לשכה\":\"כרמיאל \",\"סמל_מועצה_איזורית\":56,\"שם_מועצה\":\"משגב\""
+    }
+  ]
+}

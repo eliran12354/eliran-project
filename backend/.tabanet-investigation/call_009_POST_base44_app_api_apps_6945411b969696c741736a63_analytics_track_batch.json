@@ -1,0 +1,42 @@
+{
+  "ts": "2026-05-02T12:32:48.425Z",
+  "type": "xhr",
+  "url": "https://base44.app/api/apps/6945411b969696c741736a63/analytics/track/batch",
+  "method": "POST",
+  "requestHeaders": {
+    "x-origin-url": "https://tabanet.co.il/Dashboard",
+    "sec-ch-ua-platform": "\"macOS\"",
+    "referer": "https://tabanet.co.il/",
+    "accept-language": "he-IL",
+    "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+    "sec-ch-ua-mobile": "?0",
+    "x-app-id": "6945411b969696c741736a63",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "accept": "application/json",
+    "content-type": "application/json"
+  },
+  "requestBody": "{\"events\":[{\"event_name\":\"__initialization_event__\",\"properties\":{\"referrer\":\"\"},\"timestamp\":\"2026-05-02T12:32:47.819Z\",\"page_url\":\"/Dashboard\",\"user_id\":null,\"session_id\":\"hhw91wzpgusybx9abxw2ed\"}]}",
+  "status": 200,
+  "responseHeaders": {
+    "access-control-expose-headers": "X-Request-ID",
+    "content-encoding": "br",
+    "cf-cache-status": "DYNAMIC",
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "rndr-id": "bf5f2bbb-b962-4d8e",
+    "x-render-origin-server": "uvicorn",
+    "server-timing": "cfExtPri",
+    "date": "Sat, 02 May 2026 12:32:48 GMT",
+    "content-type": "application/json",
+    "vary": "Accept-Encoding",
+    "priority": "u=1,i",
+    "strict-transport-security": "max-age=31536000",
+    "access-control-allow-credentials": "true",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "cf-ray": "9f570d003defefea-TLV",
+    "access-control-allow-origin": "*",
+    "content-length": "18",
+    "server": "cloudflare"
+  },
+  "responseBody": "{\"accepted\":1}",
+  "responseBodySnippet": "{\"accepted\":1}"
+}

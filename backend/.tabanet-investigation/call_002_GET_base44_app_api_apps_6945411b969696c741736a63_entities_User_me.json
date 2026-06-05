@@ -1,0 +1,38 @@
+{
+  "ts": "2026-05-02T12:32:47.880Z",
+  "type": "xhr",
+  "url": "https://base44.app/api/apps/6945411b969696c741736a63/entities/User/me",
+  "method": "GET",
+  "requestHeaders": {
+    "x-origin-url": "https://tabanet.co.il/Dashboard",
+    "sec-ch-ua-platform": "\"macOS\"",
+    "referer": "https://tabanet.co.il/",
+    "accept-language": "he-IL",
+    "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+    "sec-ch-ua-mobile": "?0",
+    "x-app-id": "6945411b969696c741736a63",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "accept": "application/json"
+  },
+  "status": 401,
+  "responseHeaders": {
+    "access-control-expose-headers": "X-Request-ID",
+    "content-encoding": "br",
+    "cf-cache-status": "DYNAMIC",
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "rndr-id": "0a740e3c-7f2a-46ea",
+    "x-render-origin-server": "uvicorn",
+    "date": "Sat, 02 May 2026 12:32:48 GMT",
+    "content-type": "application/json",
+    "vary": "Accept-Encoding",
+    "strict-transport-security": "max-age=31536000",
+    "access-control-allow-credentials": "true",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "cf-ray": "9f570cfce8faf9c6-TLV",
+    "access-control-allow-origin": "*",
+    "content-length": "122",
+    "server": "cloudflare"
+  },
+  "responseBody": "{\"message\":\"Authentication required to view users\",\"detail\":\"You must be logged in to perform this operation.\",\"traceback\":null,\"extra_data\":null,\"request_id\":null}",
+  "responseBodySnippet": "{\"message\":\"Authentication required to view users\",\"detail\":\"You must be logged in to perform this operation.\",\"traceback\":null,\"extra_data\":null,\"request_id\":null}"
+}

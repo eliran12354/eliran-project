@@ -86,3 +86,6 @@ jspm_packages/
 
 # Bun
 bun.lockb
+
+# Database dumps (GitHub rejects files > 100MB)
+backend/*.dump
