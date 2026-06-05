@@ -2,7 +2,7 @@
  * Notification service – CRUD for user notifications
  */
 
-import { supabase } from '../config/database.js';
+import { query, queryOne, execute, count } from '../config/database.js';
 
 export type UserNotification = {
   id: string;
@@ -21,55 +21,41 @@ export async function getNotificationsByUserId(
   options?: { limit?: number; unreadOnly?: boolean }
 ): Promise<UserNotification[]> {
   const limit = options?.limit ?? 50;
-  let query = supabase
-    .from('user_notifications')
-    .select('id, user_id, type, title, body, link, read_at, metadata, created_at')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(limit);
-
-  if (options?.unreadOnly) {
-    query = query.is('read_at', null);
-  }
-
-  const { data, error } = await query;
-
-  if (error) throw error;
-  return (data ?? []) as UserNotification[];
+  const unreadFilter = options?.unreadOnly ? 'AND read_at IS NULL' : '';
+  return query<UserNotification>(
+    `SELECT id, user_id, type, title, body, link, read_at, metadata, created_at
+     FROM user_notifications
+     WHERE user_id = $1 ${unreadFilter}
+     ORDER BY created_at DESC
+     LIMIT $2`,
+    [userId, limit]
+  );
 }
 
 export async function getUnreadCount(userId: string): Promise<number> {
-  const { count, error } = await supabase
-    .from('user_notifications')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .is('read_at', null);
-
-  if (error) throw error;
-  return count ?? 0;
+  return count(
+    `SELECT count(*)::int AS count FROM user_notifications
+     WHERE user_id = $1 AND read_at IS NULL`,
+    [userId]
+  );
 }
 
 export async function markAsRead(
   userId: string,
   notificationId: string
 ): Promise<void> {
-  const { error } = await supabase
-    .from('user_notifications')
-    .update({ read_at: new Date().toISOString() })
-    .eq('id', notificationId)
-    .eq('user_id', userId);
-
-  if (error) throw error;
+  await execute(
+    `UPDATE user_notifications SET read_at = $1 WHERE id = $2 AND user_id = $3`,
+    [new Date().toISOString(), notificationId, userId]
+  );
 }
 
 export async function markAllAsRead(userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('user_notifications')
-    .update({ read_at: new Date().toISOString() })
-    .eq('user_id', userId)
-    .is('read_at', null);
-
-  if (error) throw error;
+  await execute(
+    `UPDATE user_notifications SET read_at = $1
+     WHERE user_id = $2 AND read_at IS NULL`,
+    [new Date().toISOString(), userId]
+  );
 }
 
 export type CreateNotificationInput = {
@@ -84,19 +70,20 @@ export type CreateNotificationInput = {
 export async function createNotification(
   input: CreateNotificationInput
 ): Promise<UserNotification> {
-  const { data, error } = await supabase
-    .from('user_notifications')
-    .insert({
-      user_id: input.user_id,
-      type: input.type,
-      title: input.title,
-      body: input.body ?? null,
-      link: input.link ?? null,
-      metadata: input.metadata ?? null,
-    })
-    .select('id, user_id, type, title, body, link, read_at, metadata, created_at')
-    .single();
+  const data = await queryOne<UserNotification>(
+    `INSERT INTO user_notifications (user_id, type, title, body, link, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+     RETURNING id, user_id, type, title, body, link, read_at, metadata, created_at`,
+    [
+      input.user_id,
+      input.type,
+      input.title,
+      input.body ?? null,
+      input.link ?? null,
+      input.metadata != null ? JSON.stringify(input.metadata) : null,
+    ]
+  );
 
-  if (error) throw error;
-  return data as UserNotification;
+  if (!data) throw new Error('Failed to create notification');
+  return data;
 }

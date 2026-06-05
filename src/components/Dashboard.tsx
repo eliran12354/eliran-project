@@ -20,7 +20,7 @@ import {
   Shield
 } from "lucide-react";
 import { useState } from "react";
-import { tenderQueries, type Michraz } from "@/lib/tender-queries";
+import { tenderQueries, type Michraz } from "@/lib/api/tendersApi";
 import { LoginDialog } from "@/components/LoginDialog";
 import { useAuth } from "@/hooks/useAuth";
 

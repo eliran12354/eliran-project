@@ -26,6 +26,9 @@ import PersonalAccompanimentCheckoutPage from "./pages/PersonalAccompanimentChec
 import PersonalAccompanimentWelcomePage from "./pages/PersonalAccompanimentWelcomePage";
 import TaxPage from "./pages/TaxPage";
 import HotInvestorBoardsPage from "./pages/HotInvestorBoardsPage";
+import MavatSearchPage from "./pages/MavatSearchPage";
+import GushHelkaSearchPage from "./pages/GushHelkaSearchPage";
+import TenderAnalysisPage from "./pages/TenderAnalysisPage";
 import NotFound from "./pages/NotFound";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 
@@ -52,6 +55,9 @@ const App = () => (
               <Route path="/plans" element={<PlansPage />} />
               <Route path="/hot-areas" element={<HotAreasPage />} />
               <Route path="/hot-investor-boards" element={<HotInvestorBoardsPage />} />
+              <Route path="/mavat-search" element={<MavatSearchPage />} />
+              <Route path="/gush-helka-search" element={<GushHelkaSearchPage />} />
+              <Route path="/tender-analysis" element={<TenderAnalysisPage />} />
               <Route path="/urban-renewal" element={<UrbanRenewalPage />} />
               <Route path="/dangerous-buildings" element={<DangerousBuildingsPage />} />
               <Route path="/tabu-request" element={<TabuRequestPage />} />

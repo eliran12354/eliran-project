@@ -1,37 +1,32 @@
 /**
- * Persists dataset fingerprints for sync jobs (Supabase: app_data_snapshots).
+ * Persists dataset fingerprints for sync jobs (table: app_data_snapshots).
  */
 
-import { supabase } from '../config/database.js';
+import { queryOne, execute } from '../config/database.js';
 
 export const URBAN_RENEWAL_SNAPSHOT_KEY = 'urban_renewal_mitchamim';
 export const DANGEROUS_BUILDINGS_SNAPSHOT_KEY = 'dangerous_buildings_active';
 
 export async function getKnownIds(snapshotKey: string): Promise<string[] | null> {
-  const { data, error } = await supabase
-    .from('app_data_snapshots')
-    .select('known_ids')
-    .eq('snapshot_key', snapshotKey)
-    .maybeSingle();
+  const row = await queryOne<{ known_ids: unknown }>(
+    `SELECT known_ids FROM app_data_snapshots WHERE snapshot_key = $1`,
+    [snapshotKey]
+  );
 
-  if (error) throw error;
-  if (!data) return null;
+  if (!row) return null;
 
-  const raw = data.known_ids;
+  const raw = row.known_ids;
   if (raw == null) return null;
   if (!Array.isArray(raw)) return [];
   return raw.filter((x): x is string => typeof x === 'string');
 }
 
 export async function saveKnownIds(snapshotKey: string, knownIds: string[]): Promise<void> {
-  const { error } = await supabase.from('app_data_snapshots').upsert(
-    {
-      snapshot_key: snapshotKey,
-      known_ids: knownIds,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'snapshot_key' }
+  await execute(
+    `INSERT INTO app_data_snapshots (snapshot_key, known_ids, updated_at)
+     VALUES ($1, $2::jsonb, $3)
+     ON CONFLICT (snapshot_key)
+     DO UPDATE SET known_ids = EXCLUDED.known_ids, updated_at = EXCLUDED.updated_at`,
+    [snapshotKey, JSON.stringify(knownIds), new Date().toISOString()]
   );
-
-  if (error) throw error;
 }

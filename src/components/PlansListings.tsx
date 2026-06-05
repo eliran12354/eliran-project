@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight, MapPin, Calendar, Clock, FileText, ChevronLeft, ChevronRight, Building, ExternalLink, Search, Filter, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { plansQueries, type MeirimPlan } from "@/lib/tender-queries";
+import { plansQueries, type MeirimPlan } from "@/lib/api/plansApi";
 
 interface PlanWithDetails extends MeirimPlan {
   daysUntilDeadline?: number | null;

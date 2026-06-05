@@ -1,5 +1,14 @@
 import { Request, Response } from 'express';
-import { getConstructionProgressProjects, getDistinctCities, executeSqlQuery, fetchUrbanRenewalMitchamim, fetchHousingLottery, fetchTenderResults, fetchResidentialInventory } from '../services/dataGovService.js';
+import {
+  getConstructionProgressProjects,
+  getDistinctCities,
+  executeSqlQuery,
+  fetchUrbanRenewalMitchamim,
+  fetchHousingLottery,
+  fetchTenderResults,
+  fetchResidentialInventory,
+  ckanDatastoreSearch,
+} from '../services/dataGovService.js';
 
 /**
  * Get construction progress projects
@@ -211,6 +220,48 @@ export async function getTenderResultsController(req: Request, res: Response) {
       success: false,
       error: 'Failed to fetch tender results',
       message: error.message || 'Unknown error',
+    });
+  }
+}
+
+/**
+ * Generic CKAN datastore_search proxy (data.gov.il).
+ * POST /api/datagov/datastore-search
+ * Body: { resource_id: string, filters?: object, q?: string, limit?: number, offset?: number }
+ */
+export async function datastoreSearchController(req: Request, res: Response) {
+  try {
+    const { resource_id, filters, q, limit, offset } = req.body ?? {};
+    if (!resource_id || typeof resource_id !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'resource_id is required',
+      });
+    }
+
+    const out = await ckanDatastoreSearch({
+      resource_id,
+      filters: typeof filters === 'object' && filters !== null ? filters : undefined,
+      q: typeof q === 'string' ? q : undefined,
+      limit: limit != null ? Number(limit) : undefined,
+      offset: offset != null ? Number(offset) : undefined,
+    });
+
+    if (!out.success) {
+      return res.status(out.status).json({
+        success: false,
+        error: out.message,
+      });
+    }
+
+    return res.json({ success: true, result: out.result });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error in datastoreSearchController:', message);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to query data.gov.il',
+      message,
     });
   }
 }

@@ -255,11 +255,27 @@ function formatReportForAI(report: any): string {
     lines.push('');
   }
 
-  // Land use
+  // Land use - יעודי קרקע (מבא"ת) - GovMap שכבה 14
   if (report.land_use && report.land_use.length > 0) {
-    lines.push('=== ייעודי קרקע ===');
+    lines.push('=== ייעודי קרקע (מבא״ת) — מידע ישיר מ-GovMap שכבה 14 ===');
+    lines.push('זהו הייעוד התכנוני המאושר *ישירות* על נקודת הנכס (חלקה/כתובת).');
+    lines.push('זה אחד הנתונים החשובים ביותר לניתוח — הוא קובע מה מותר ומה אסור לבנות.');
+    lines.push('');
+
     report.land_use.forEach((lu: any, index: number) => {
-      lines.push(`${index + 1}. ${lu.mavat_name || 'לא צוין'}`);
+      const nameParts: string[] = [];
+      if (lu.mavat_name) nameParts.push(lu.mavat_name);
+      if (lu.mavat_code) nameParts.push(`(קוד ${lu.mavat_code})`);
+      lines.push(`${index + 1}. ייעוד: ${nameParts.join(' ') || 'לא צוין'}`);
+      if (lu.pl_number) {
+        lines.push(`   מספר תוכנית: ${lu.pl_number}`);
+      }
+      if (lu.pl_name) {
+        lines.push(`   שם תוכנית: ${lu.pl_name}`);
+      }
+      if (lu.defq) {
+        lines.push(`   תיאור / הערות: ${lu.defq}`);
+      }
       if (lu.area_m2) {
         lines.push(`   שטח: ${lu.area_m2} מ"ר`);
       }
@@ -267,6 +283,14 @@ function formatReportForAI(report: any): string {
         lines.push(`   זכויות: ${lu.rights}`);
       }
     });
+
+    lines.push('');
+    lines.push('⚠️ חשוב מאוד: השתמש בייעוד הקרקע בניתוח שלך!');
+    lines.push('  - "מגורים" / "מגורים א\'/ב\'/ג\'" → ייעוד למגורים, בדוק זכויות בנייה ותב״ע');
+    lines.push('  - "חקלאי" / "שטח פתוח" → לרוב אסור לבנות, צריך הפשרה — סיכון משמעותי');
+    lines.push('  - "מסחר" / "תעשייה" / "תעסוקה" → ייעוד עסקי, פוטנציאל להשקעה מניבה');
+    lines.push('  - "ציבורי" / "שב״צ" → שטח לצרכי ציבור, מגבלות חזקות');
+    lines.push('  - הסתמך על מספר התוכנית הספציפי כדי לקבוע את המצב התכנוני המעודכן');
     lines.push('');
   }
 

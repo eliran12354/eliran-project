@@ -680,7 +680,66 @@ async function fetchTenderResultsRaw(options: {
     console.error('❌ Error fetching tender results:', error);
     return { data: [], total: 0 };
   }
-}/**
+}
+
+const RESOURCE_ID_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Generic CKAN `datastore_search` against data.gov.il (same public API tabanet
+ * hits via base44 `dataGovIlProxy`). Caller must supply a valid `resource_id`.
+ */
+export async function ckanDatastoreSearch(params: {
+  resource_id: string;
+  filters?: Record<string, unknown>;
+  q?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ success: true; result: unknown } | { success: false; message: string; status: number }> {
+  const { resource_id, filters, q } = params;
+  if (!resource_id || !RESOURCE_ID_UUID_RE.test(resource_id)) {
+    return { success: false, message: 'resource_id must be a valid UUID', status: 400 };
+  }
+
+  const limit = Math.min(5000, Math.max(1, Math.floor(params.limit ?? 100)));
+  const offset = Math.max(0, Math.floor(params.offset ?? 0));
+
+  const url = new URL(SEARCH_URL);
+  url.searchParams.set('resource_id', resource_id);
+  url.searchParams.set('limit', String(limit));
+  url.searchParams.set('offset', String(offset));
+  if (filters && Object.keys(filters).length > 0) {
+    url.searchParams.set('filters', JSON.stringify(filters));
+  }
+  if (q && String(q).trim() !== '') {
+    url.searchParams.set('q', String(q));
+  }
+
+  const res = await fetch(url.toString(), {
+    headers: {
+      Accept: 'application/json',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+    },
+  });
+
+  const text = await res.text();
+  let json: unknown;
+  try {
+    json = JSON.parse(text) as { success?: boolean; result?: unknown; error?: unknown };
+  } catch {
+    return { success: false, message: 'Invalid JSON from data.gov.il', status: 502 };
+  }
+
+  const obj = json as { success?: boolean; result?: unknown; error?: { message?: string } };
+  if (!res.ok || !obj.success) {
+    const msg = obj.error?.message || `datastore_search failed (${res.status})`;
+    return { success: false, message: msg, status: res.ok ? 502 : res.status };
+  }
+
+  return { success: true, result: obj.result };
+}
+
+/**
  * תוצאות מכרזי פיתוח ותשתית, עם cache.
  * resource_id: 04e375ef-08a6-4327-8044-7bd595c4d106
  */

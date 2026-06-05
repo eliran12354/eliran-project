@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { constructionProgressQueries } from "@/lib/supabase-queries";
-import type { ConstructionProgressRecord } from "@/lib/supabase";
+import { constructionProgressQueries } from "@/lib/api/constructionProgressApi";
+import type { ConstructionProgressRecord } from "@/lib/types/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

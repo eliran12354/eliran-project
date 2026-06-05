@@ -20,6 +20,9 @@ import {
   Briefcase,
   HeartHandshake,
   LayoutGrid,
+  Landmark,
+  MapPinned,
+  ScrollText,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
@@ -178,6 +181,22 @@ function SidebarNavBody({
         </div>
 
         <div>
+          <Link to="/gush-helka-search">
+            <Button
+              dir="ltr"
+              className={`${sidebarNavBtnClass} ${
+                isActive("/gush-helka-search")
+                  ? "bg-emerald-600 shadow-md text-white"
+                  : "hover:bg-emerald-500/5 hover:text-emerald-600 hover-lift"
+              }`}
+            >
+              <NavLabel>חיפוש לפי גוש וחלקה</NavLabel>
+              <MapPinned className="size-5 shrink-0" />
+            </Button>
+          </Link>
+        </div>
+
+        <div>
           <Button
             dir="ltr"
             variant="default"
@@ -222,6 +241,22 @@ function SidebarNavBody({
               </Link>
             </div>
           )}
+        </div>
+
+        <div>
+          <Link to="/tender-analysis">
+            <Button
+              dir="ltr"
+              className={`${sidebarNavBtnClass} ${
+                isActive("/tender-analysis")
+                  ? "bg-blue-600 shadow-md text-white"
+                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
+              }`}
+            >
+              <NavLabel>ניתוח מכרזים חכם</NavLabel>
+              <ScrollText className="size-5 shrink-0" />
+            </Button>
+          </Link>
         </div>
 
         <div>
@@ -270,6 +305,22 @@ function SidebarNavBody({
             <Button dir="ltr" className={`${sidebarNavBtnClass} hover:bg-blue-500/5 hover:text-blue-600 hover-lift`}>
               <NavLabel>תוכניות בנייה</NavLabel>
               <Search className="size-5 shrink-0" />
+            </Button>
+          </Link>
+        </div>
+
+        <div>
+          <Link to="/mavat-search">
+            <Button
+              dir="ltr"
+              className={`${sidebarNavBtnClass} ${
+                isActive("/mavat-search")
+                  ? "bg-blue-600 shadow-md text-white"
+                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
+              }`}
+            >
+              <NavLabel>חיפוש תכנון (מנהל התכנון)</NavLabel>
+              <Landmark className="size-5 shrink-0" />
             </Button>
           </Link>
         </div>

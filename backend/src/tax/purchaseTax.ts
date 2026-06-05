@@ -42,7 +42,7 @@ export function calculatePurchaseTax(
 
   if (brackets.length === 0) {
     warnings.push(
-      `לא נמצאו מדרגות מס בגרסת החוקים עבור קטגוריית רוכש "${buyerCategory}". יש לעדכן נתונים ב-Supabase.`
+      `לא נמצאו מדרגות מס בגרסת החוקים עבור קטגוריית רוכש "${buyerCategory}". יש לעדכן נתונים במסד הנתונים.`
     );
     return emptyResult(ctx.ruleVersion, warnings, propertyValue);
   }

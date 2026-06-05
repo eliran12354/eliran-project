@@ -1,4 +1,4 @@
-import { supabase } from '../config/database.js';
+import { query, queryOne, execute } from '../config/database.js';
 
 export type HotInvestorBoardCategory = 'pinui_binui' | 'up_to_1m' | 'land_thaw';
 
@@ -49,79 +49,74 @@ const selectCols =
 export async function listPublishedBoards(
   category?: HotInvestorBoardCategory,
 ): Promise<HotInvestorBoardRow[]> {
-  let q = supabase
-    .from('hot_investor_board_listings')
-    .select(selectCols)
-    .eq('is_published', true)
-    .order('display_order', { ascending: true })
-    .order('created_at', { ascending: false })
-    .limit(200);
-
   if (category) {
-    q = q.eq('category', category);
+    return query<HotInvestorBoardRow>(
+      `SELECT ${selectCols}
+       FROM hot_investor_board_listings
+       WHERE is_published = true AND category = $1
+       ORDER BY display_order ASC, created_at DESC
+       LIMIT 200`,
+      [category]
+    );
   }
-
-  const { data, error } = await q;
-  if (error) throw new Error(error.message);
-  return (data ?? []) as HotInvestorBoardRow[];
+  return query<HotInvestorBoardRow>(
+    `SELECT ${selectCols}
+     FROM hot_investor_board_listings
+     WHERE is_published = true
+     ORDER BY display_order ASC, created_at DESC
+     LIMIT 200`
+  );
 }
 
 export async function listAllBoardsForAdmin(): Promise<HotInvestorBoardRow[]> {
-  const { data, error } = await supabase
-    .from('hot_investor_board_listings')
-    .select(selectCols)
-    .order('display_order', { ascending: true })
-    .order('created_at', { ascending: false })
-    .limit(500);
-
-  if (error) throw new Error(error.message);
-  return (data ?? []) as HotInvestorBoardRow[];
+  return query<HotInvestorBoardRow>(
+    `SELECT ${selectCols}
+     FROM hot_investor_board_listings
+     ORDER BY display_order ASC, created_at DESC
+     LIMIT 500`
+  );
 }
 
 export async function getBoardById(id: string): Promise<HotInvestorBoardRow | null> {
-  const { data, error } = await supabase
-    .from('hot_investor_board_listings')
-    .select(selectCols)
-    .eq('id', id)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  return data as HotInvestorBoardRow | null;
+  return queryOne<HotInvestorBoardRow>(
+    `SELECT ${selectCols} FROM hot_investor_board_listings WHERE id = $1`,
+    [id]
+  );
 }
 
 export async function createBoard(input: CreateInput): Promise<HotInvestorBoardRow> {
-  const row = {
-    category: input.category,
-    title: input.title.trim(),
-    subtitle: emptyToNull(input.subtitle ?? null),
-    description: emptyToNull(input.description ?? null),
-    price_label: emptyToNull(input.price_label ?? null),
-    location_label: emptyToNull(input.location_label ?? null),
-    contact_phone: emptyToNull(input.contact_phone ?? null),
-    contact_email: emptyToNull(input.contact_email ?? null),
-    external_link: emptyToNull(input.external_link ?? null),
-    image_url: emptyToNull(input.image_url ?? null),
-    display_order: input.display_order ?? 0,
-    is_published: input.is_published ?? false,
-    updated_at: new Date().toISOString(),
-  };
+  const data = await queryOne<HotInvestorBoardRow>(
+    `INSERT INTO hot_investor_board_listings
+       (category, title, subtitle, description, price_label, location_label,
+        contact_phone, contact_email, external_link, image_url, display_order,
+        is_published, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now())
+     RETURNING ${selectCols}`,
+    [
+      input.category,
+      input.title.trim(),
+      emptyToNull(input.subtitle ?? null),
+      emptyToNull(input.description ?? null),
+      emptyToNull(input.price_label ?? null),
+      emptyToNull(input.location_label ?? null),
+      emptyToNull(input.contact_phone ?? null),
+      emptyToNull(input.contact_email ?? null),
+      emptyToNull(input.external_link ?? null),
+      emptyToNull(input.image_url ?? null),
+      input.display_order ?? 0,
+      input.is_published ?? false,
+    ]
+  );
 
-  const { data, error } = await supabase
-    .from('hot_investor_board_listings')
-    .insert(row)
-    .select(selectCols)
-    .single();
-
-  if (error) throw new Error(error.message);
   if (!data) throw new Error('Insert failed');
-  return data as HotInvestorBoardRow;
+  return data;
 }
 
 export async function updateBoard(
   id: string,
   input: UpdateInput,
 ): Promise<HotInvestorBoardRow | null> {
-  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  const patch: Record<string, unknown> = {};
 
   if (input.category !== undefined) patch.category = input.category;
   if (input.title !== undefined) patch.title = input.title.trim();
@@ -136,29 +131,24 @@ export async function updateBoard(
   if (input.display_order !== undefined) patch.display_order = input.display_order;
   if (input.is_published !== undefined) patch.is_published = input.is_published;
 
-  const keys = Object.keys(patch).filter((k) => k !== 'updated_at');
-  if (keys.length === 0) {
+  const columns = Object.keys(patch);
+  if (columns.length === 0) {
     return getBoardById(id);
   }
 
-  const { data, error } = await supabase
-    .from('hot_investor_board_listings')
-    .update(patch)
-    .eq('id', id)
-    .select(selectCols)
-    .maybeSingle();
+  const setClause = columns.map((col, i) => `${col} = $${i + 1}`).join(', ');
+  const values = columns.map((col) => patch[col]);
 
-  if (error) throw new Error(error.message);
-  return data as HotInvestorBoardRow | null;
+  return queryOne<HotInvestorBoardRow>(
+    `UPDATE hot_investor_board_listings
+     SET ${setClause}, updated_at = now()
+     WHERE id = $${columns.length + 1}
+     RETURNING ${selectCols}`,
+    [...values, id]
+  );
 }
 
 export async function deleteBoard(id: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('hot_investor_board_listings')
-    .delete()
-    .eq('id', id)
-    .select('id');
-
-  if (error) throw new Error(error.message);
-  return Array.isArray(data) && data.length > 0;
+  const rowCount = await execute(`DELETE FROM hot_investor_board_listings WHERE id = $1`, [id]);
+  return rowCount > 0;
 }

@@ -1,4 +1,7 @@
-import { supabase } from '../config/database.js';
+import { query, queryOne, execute } from '../config/database.js';
+
+const SELECT_COLS =
+  'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, experience_label, rating, display_order, is_published';
 
 export type FeaturedProfessionalRow = {
   id: string;
@@ -44,70 +47,61 @@ function emptyToNull(s: string | undefined | null): string | null {
 }
 
 export async function listPublishedProfessionals(limit = 24): Promise<FeaturedProfessionalRow[]> {
-  const { data, error } = await supabase
-    .from('featured_professionals')
-    .select(
-      'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, experience_label, rating, display_order, is_published',
-    )
-    .eq('is_published', true)
-    .order('display_order', { ascending: true })
-    .order('created_at', { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-  return (data ?? []) as FeaturedProfessionalRow[];
+  return query<FeaturedProfessionalRow>(
+    `SELECT ${SELECT_COLS}
+     FROM featured_professionals
+     WHERE is_published = true
+     ORDER BY display_order ASC, created_at DESC
+     LIMIT $1`,
+    [limit]
+  );
 }
 
 export async function listAllProfessionalsForAdmin(limit = 200): Promise<FeaturedProfessionalRow[]> {
-  const { data, error } = await supabase
-    .from('featured_professionals')
-    .select(
-      'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, experience_label, rating, display_order, is_published',
-    )
-    .order('display_order', { ascending: true })
-    .order('created_at', { ascending: false })
-    .limit(limit);
+  return query<FeaturedProfessionalRow>(
+    `SELECT ${SELECT_COLS}
+     FROM featured_professionals
+     ORDER BY display_order ASC, created_at DESC
+     LIMIT $1`,
+    [limit]
+  );
+}
 
-  if (error) {
-    throw new Error(error.message);
-  }
-  return (data ?? []) as FeaturedProfessionalRow[];
+export async function getProfessionalById(id: string): Promise<FeaturedProfessionalRow | null> {
+  return queryOne<FeaturedProfessionalRow>(
+    `SELECT ${SELECT_COLS} FROM featured_professionals WHERE id = $1`,
+    [id]
+  );
 }
 
 export async function createProfessional(input: CreateInput): Promise<FeaturedProfessionalRow> {
-  const row = {
-    name: input.name.trim(),
-    headline: emptyToNull(input.headline ?? null),
-    description: emptyToNull(input.description ?? null),
-    city: emptyToNull(input.city ?? null),
-    phone: emptyToNull(input.phone ?? null),
-    email: emptyToNull(input.email ?? null),
-    website_url: emptyToNull(input.website_url ?? null),
-    whatsapp: emptyToNull(input.whatsapp ?? null),
-    image_url: emptyToNull(input.image_url ?? null),
-    experience_label: emptyToNull(input.experience_label ?? null),
-    rating: input.rating === undefined ? null : input.rating,
-    display_order: input.display_order ?? 0,
-    is_published: input.is_published ?? false,
-  };
+  const data = await queryOne<FeaturedProfessionalRow>(
+    `INSERT INTO featured_professionals
+       (name, headline, description, city, phone, email, website_url, whatsapp,
+        image_url, experience_label, rating, display_order, is_published)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+     RETURNING ${SELECT_COLS}`,
+    [
+      input.name.trim(),
+      emptyToNull(input.headline ?? null),
+      emptyToNull(input.description ?? null),
+      emptyToNull(input.city ?? null),
+      emptyToNull(input.phone ?? null),
+      emptyToNull(input.email ?? null),
+      emptyToNull(input.website_url ?? null),
+      emptyToNull(input.whatsapp ?? null),
+      emptyToNull(input.image_url ?? null),
+      emptyToNull(input.experience_label ?? null),
+      input.rating === undefined ? null : input.rating,
+      input.display_order ?? 0,
+      input.is_published ?? false,
+    ]
+  );
 
-  const { data, error } = await supabase
-    .from('featured_professionals')
-    .insert(row)
-    .select(
-      'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, experience_label, rating, display_order, is_published',
-    )
-    .single();
-
-  if (error) {
-    throw new Error(error.message);
-  }
   if (!data) {
     throw new Error('Insert failed');
   }
-  return data as FeaturedProfessionalRow;
+  return data;
 }
 
 export async function updateProfessional(
@@ -130,37 +124,24 @@ export async function updateProfessional(
   if (input.display_order !== undefined) patch.display_order = input.display_order;
   if (input.is_published !== undefined) patch.is_published = input.is_published;
 
-  if (Object.keys(patch).length === 0) {
-    const { data: existing } = await supabase
-      .from('featured_professionals')
-      .select(
-        'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, experience_label, rating, display_order, is_published',
-      )
-      .eq('id', id)
-      .maybeSingle();
-    return existing as FeaturedProfessionalRow | null;
+  const columns = Object.keys(patch);
+  if (columns.length === 0) {
+    return getProfessionalById(id);
   }
 
-  const { data, error } = await supabase
-    .from('featured_professionals')
-    .update(patch)
-    .eq('id', id)
-    .select(
-      'id, created_at, updated_at, name, headline, description, city, phone, email, website_url, whatsapp, image_url, experience_label, rating, display_order, is_published',
-    )
-    .maybeSingle();
+  const setClause = columns.map((col, i) => `${col} = $${i + 1}`).join(', ');
+  const values = columns.map((col) => patch[col]);
 
-  if (error) {
-    throw new Error(error.message);
-  }
-  return data as FeaturedProfessionalRow | null;
+  return queryOne<FeaturedProfessionalRow>(
+    `UPDATE featured_professionals
+     SET ${setClause}, updated_at = now()
+     WHERE id = $${columns.length + 1}
+     RETURNING ${SELECT_COLS}`,
+    [...values, id]
+  );
 }
 
 export async function deleteProfessional(id: string): Promise<boolean> {
-  const { data, error } = await supabase.from('featured_professionals').delete().eq('id', id).select('id');
-
-  if (error) {
-    throw new Error(error.message);
-  }
-  return Array.isArray(data) && data.length > 0;
+  const rowCount = await execute(`DELETE FROM featured_professionals WHERE id = $1`, [id]);
+  return rowCount > 0;
 }

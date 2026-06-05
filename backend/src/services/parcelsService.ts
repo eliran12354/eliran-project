@@ -1,4 +1,4 @@
-import { supabase } from '../config/database.js';
+import { query, count } from '../config/database.js';
 
 /**
  * Service for parcels data operations
@@ -62,21 +62,16 @@ export async function getParcelsChunk(
 ): Promise<{ features: any[]; hasMore: boolean; page: number; totalLoaded: number }> {
   try {
     const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
 
-    // Build query with pagination
-    let query = supabase
-      .from('parcel_ownership_new')
-      .select('id, govmap_object_id, gush_num, gush_suffi, parcel, legal_area_m2, ownership_type, remark, doc_url, raw_entity')
-      .not('raw_entity->centroid', 'is', null)
-      .order('id', { ascending: true })
-      .range(from, to);
-
-    const { data, error } = await query;
-
-    if (error) {
-      throw error;
-    }
+    const data = await query<ParcelRaw>(
+      `SELECT id, govmap_object_id, gush_num, gush_suffi, parcel, legal_area_m2,
+              ownership_type, remark, doc_url, raw_entity
+       FROM parcel_ownership_new
+       WHERE raw_entity -> 'centroid' IS NOT NULL
+       ORDER BY id ASC
+       LIMIT $1 OFFSET $2`,
+      [pageSize, from]
+    );
 
     if (!data || data.length === 0) {
       return {
@@ -174,19 +169,14 @@ export async function getParcels(
   limit: number = 1000
 ): Promise<any[]> {
   try {
-    // Build query
-    let query = supabase
-      .from('parcel_ownership_new')
-      .select('id, govmap_object_id, gush_num, gush_suffi, parcel, legal_area_m2, ownership_type, remark, doc_url, raw_entity')
-      .not('raw_entity->centroid', 'is', null)
-      .limit(limit);
-
-    // Apply viewport filter if provided (will filter after coordinate conversion)
-    const { data, error } = await query;
-
-    if (error) {
-      throw error;
-    }
+    const data = await query<ParcelRaw>(
+      `SELECT id, govmap_object_id, gush_num, gush_suffi, parcel, legal_area_m2,
+              ownership_type, remark, doc_url, raw_entity
+       FROM parcel_ownership_new
+       WHERE raw_entity -> 'centroid' IS NOT NULL
+       LIMIT $1`,
+      [limit]
+    );
 
     if (!data || data.length === 0) {
       return [];
@@ -268,19 +258,7 @@ export async function getParcels(
  */
 export async function getParcelsCount(): Promise<number> {
   try {
-    // Use a simpler query - just count all rows
-    // We'll filter by centroid existence in the actual data query
-    const { count, error } = await supabase
-      .from('parcel_ownership_new')
-      .select('id', { count: 'exact', head: true });
-
-    if (error) {
-      console.error('Error getting parcels count:', error);
-      // Return 0 instead of throwing to prevent API errors
-      return 0;
-    }
-
-    return count || 0;
+    return await count(`SELECT count(*)::int AS count FROM parcel_ownership_new`);
   } catch (error) {
     console.error('Error getting parcels count:', error);
     // Return 0 instead of throwing to prevent API errors

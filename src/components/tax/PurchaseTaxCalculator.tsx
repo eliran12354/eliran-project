@@ -30,7 +30,7 @@ const PROPERTY_TYPES = [
   { value: "land", label: "קרקע" },
 ];
 
-/** קודי זכאות לדוגמה — חייבים להתאים לשורות ב-purchase_tax_adjustments ב-Supabase */
+/** קודי זכאות לדוגמה — חייבים להתאים לשורות ב-purchase_tax_adjustments במסד הנתונים */
 const MOCK_ELIGIBILITY = [
   { code: "MOCK_EXEMPT_FULL", label: "דוגמה: פטור מלא (בדיקה בלבד)" },
   { code: "MOCK_DISCOUNT_10", label: "דוגמה: הנחה 10% (בדיקה בלבד)" },

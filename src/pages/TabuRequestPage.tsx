@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/lib/supabase";
+import { createTabuRequest } from "@/lib/api/tabuRequestsApi";
 import { useToast } from "@/hooks/use-toast";
 
 type IdentificationType = "parcel" | "address";
@@ -80,26 +80,19 @@ export default function TabuRequestPage() {
     try {
       setLoading(true);
 
-      const { error } = await supabase.from("tabu_requests").insert([
-        {
-          identification_type: formData.identification_type,
-          gush: formData.gush || null,
-          helka: formData.helka || null,
-          sub_helka: formData.sub_helka || null,
-          city: formData.city || null,
-          street: formData.street || null,
-          house_number: formData.house_number || null,
-          apartment: formData.apartment || null,
-          document_type: formData.document_type,
-          email: formData.email,
-          full_name: formData.full_name || null,
-        },
-      ]);
-
-      if (error) {
-        console.error("Error saving request:", error);
-        throw error;
-      }
+      await createTabuRequest({
+        identification_type: formData.identification_type,
+        gush: formData.gush || null,
+        helka: formData.helka || null,
+        sub_helka: formData.sub_helka || null,
+        city: formData.city || null,
+        street: formData.street || null,
+        house_number: formData.house_number || null,
+        apartment: formData.apartment || null,
+        document_type: formData.document_type,
+        email: formData.email,
+        full_name: formData.full_name || null,
+      });
 
       toast({
         title: "הצלחה",

@@ -14,8 +14,8 @@ import {
   ExternalLink,
   Sparkles
 } from "lucide-react";
-import { urbanRenewalProjectQueries } from "@/lib/supabase-queries";
-import type { UrbanRenewalProject } from "@/lib/supabase";
+import { urbanRenewalProjectQueries } from "@/lib/api/urbanRenewalApi";
+import type { UrbanRenewalProject } from "@/lib/types/db";
 
 // רשימת פרויקטי פינוי-בינוי מבוקשים
 const popularUrbanRenewalProjects = [

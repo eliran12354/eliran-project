@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import * as notificationPreferencesService from '../services/notificationPreferencesService.js';
-import { formatSupabaseError } from '../lib/supabaseError.js';
+import { formatDbError } from '../lib/dbError.js';
 
 export async function getNotificationPreferences(
   req: Request,
@@ -21,7 +21,7 @@ export async function getNotificationPreferences(
     res.status(500).json({
       success: false,
       error: 'Failed to load notification preferences',
-      message: formatSupabaseError(err),
+      message: formatDbError(err),
     });
   }
 }
@@ -84,7 +84,7 @@ export async function patchNotificationPreferences(
     res.status(500).json({
       success: false,
       error: 'Failed to save notification preferences',
-      message: formatSupabaseError(err),
+      message: formatDbError(err),
     });
   }
 }

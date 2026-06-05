@@ -1,4 +1,4 @@
-import { supabase } from '../config/database.js';
+import { query, queryOne } from '../config/database.js';
 
 export type ContactSubmissionRow = {
   id: string;
@@ -13,34 +13,24 @@ export async function insertContactSubmission(input: {
   email: string;
   message: string;
 }): Promise<{ id: string }> {
-  const { data, error } = await supabase
-    .from('contact_submissions')
-    .insert({
-      name: input.name,
-      email: input.email,
-      message: input.message,
-    })
-    .select('id')
-    .single();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-  if (!data) {
+  const row = await queryOne<{ id: string }>(
+    `INSERT INTO contact_submissions (name, email, message)
+     VALUES ($1, $2, $3)
+     RETURNING id`,
+    [input.name, input.email, input.message]
+  );
+  if (!row) {
     throw new Error('Insert failed');
   }
-  return { id: data.id as string };
+  return { id: row.id };
 }
 
 export async function listContactSubmissions(limit = 200): Promise<ContactSubmissionRow[]> {
-  const { data, error } = await supabase
-    .from('contact_submissions')
-    .select('id, created_at, name, email, message')
-    .order('created_at', { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-  return (data ?? []) as ContactSubmissionRow[];
+  return query<ContactSubmissionRow>(
+    `SELECT id, created_at, name, email, message
+     FROM contact_submissions
+     ORDER BY created_at DESC
+     LIMIT $1`,
+    [limit]
+  );
 }

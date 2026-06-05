@@ -8,10 +8,13 @@ const backendRoot = path.resolve(__dirname, '../..');
 dotenv.config({ path: path.join(backendRoot, '.env') });
 
 export const config = {
-  supabase: {
-    url: process.env.SUPABASE_URL || '',
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-    anonKey: process.env.SUPABASE_ANON_KEY || '',
+  database: {
+    /** PostgreSQL connection string, e.g. postgresql://user:pass@host:5432/db */
+    url: process.env.DATABASE_URL || '',
+    /** Enable SSL (required by most managed Postgres providers like Render). */
+    ssl: (process.env.DATABASE_SSL ?? 'true').toLowerCase() !== 'false',
+    /** Maximum number of clients in the connection pool. */
+    poolMax: parseInt(process.env.DATABASE_POOL_MAX || '10', 10),
   },
   server: {
     port: parseInt(process.env.PORT || '10000', 10),
@@ -39,12 +42,8 @@ export const config = {
 };
 
 // Validate required environment variables
-if (!config.supabase.url) {
-  throw new Error('SUPABASE_URL is required');
-}
-
-if (!config.supabase.serviceRoleKey) {
-  throw new Error('SUPABASE_SERVICE_ROLE_KEY is required');
+if (!config.database.url) {
+  throw new Error('DATABASE_URL is required');
 }
 
 if (!config.jwt.secret || config.jwt.secret.length < 32) {

@@ -22,7 +22,7 @@ export function estimateCapitalGainsTax(
 
   const { rule, ruleVersion } = ctx;
   if (!rule.estimatorOnly) {
-    warnings.push('גרסת כללים מסומנת כלא-מעריכית בלבד — יש לבדוק הגדרות ב-Supabase.');
+    warnings.push('גרסת כללים מסומנת כלא-מעריכית בלבד — יש לבדוק הגדרות במסד הנתונים.');
   }
 
   let deductions = input.deductibleExpenses;

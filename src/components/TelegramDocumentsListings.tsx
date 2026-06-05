@@ -10,8 +10,8 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Search, FileText, MapPin, Calendar, DollarSign, Building2, Filter, X, ChevronLeft, ChevronRight, Phone, Mail, CreditCard, Maximize2, ExternalLink, Plus, Upload } from 'lucide-react'
-import { telegramDocumentQueries } from '@/lib/supabase-queries'
-import type { TelegramDocument } from '@/lib/supabase'
+import { telegramDocumentQueries } from '@/lib/api/telegramDocumentsApi'
+import type { TelegramDocument } from '@/lib/types/db'
 
 export function TelegramDocumentsListings() {
   const queryClient = useQueryClient()

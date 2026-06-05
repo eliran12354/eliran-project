@@ -14,11 +14,10 @@ npm install
 cp .env.example .env
 ```
 
-3. Fill in your Supabase credentials and Auth config in `.env`:
+3. Fill in your PostgreSQL connection and Auth config in `.env`:
 ```env
-SUPABASE_URL=your-supabase-url
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-SUPABASE_ANON_KEY=your-anon-key
+DATABASE_URL=postgresql://user:password@host:5432/database
+DATABASE_SSL=true
 
 JWT_SECRET=your-256-bit-plus-secret-at-least-32-characters-long
 JWT_EXPIRY=1h
@@ -26,12 +25,15 @@ JWT_EXPIRY=1h
 PORT=3000
 CORS_ORIGIN=http://localhost:5173
 ```
+- `DATABASE_URL`: Required. PostgreSQL connection string (Render, pgAdmin, local, etc.).
+- `DATABASE_SSL`: `true` for managed providers (Render). Set `false` for a local Postgres without SSL.
 - `JWT_SECRET`: Required for auth. Use a long random string (e.g. `openssl rand -base64 48`). Min 32 chars.
 - `JWT_EXPIRY`: Token lifetime (e.g. `15m`, `1h`, `7d`). Default `1h`.
 
-4. **Auth users table (Custom JWT):** If you use custom auth (no Supabase Auth), run the migration in Supabase SQL Editor:
-   - Project root: `create_auth_users_standalone.sql`
-   - This creates a standalone `public.users` table with `id`, `email`, `password_hash`, `role` (replacing any Supabase Auth–based `users` table).
+4. **Database schema:** The data layer talks to plain PostgreSQL via `pg` (see `src/config/database.ts`).
+   Import your schema/data into the target database (e.g. via `pg_dump`/`pg_restore` or pgAdmin).
+   The expected tables/columns are documented in `database.md`. PostGIS must be enabled for the
+   geometry-backed tables (e.g. `land_use_mavat`, `parcel_ownership_new`).
 
 5. Run in development mode:
 ```bash
@@ -49,7 +51,7 @@ npm start
 ### Health
 - `GET /health` - Health check
 
-### Auth (JWT, no Supabase Auth)
+### Auth (JWT)
 - `POST /api/auth/signup` - Register. Body: `{ email, password }`. Returns `{ token, user }`.
 - `POST /api/auth/login` - Login. Body: `{ email, password }`. Returns `{ token, user }`.
 - `GET /api/me` - Current user (requires `Authorization: Bearer <token>`).

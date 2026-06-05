@@ -1,9 +1,9 @@
 /**
  * Urban Renewal Mitchamim Service
- * Fetches urban renewal mitchamim from Supabase
+ * Fetches urban renewal mitchamim from PostgreSQL
  */
 
-import { supabase } from '../config/database.js';
+import { query } from '../config/database.js';
 
 /**
  * Get urban renewal mitchamim by city and street
@@ -21,32 +21,25 @@ export async function getUrbanRenewalMitchamim(
 
     console.log(`🏘️ [UrbanRenewalService] Fetching mitchamim for city: ${city}, street: ${street || 'N/A'}...`);
 
-    let query = supabase
-      .from('urban_renewal_mitchamim_rashut')
-      .select('*');
+    const conditions: string[] = ['yeshuv ILIKE $1'];
+    const params: unknown[] = [`%${city}%`];
+    console.log(`🔍 [UrbanRenewalService] Filtering by city (yeshuv): ${city}`);
 
-    // Filter by city (yeshuv)
-    if (city) {
-      console.log(`🔍 [UrbanRenewalService] Filtering by city (yeshuv): ${city}`);
-      query = query.ilike('yeshuv', `%${city}%`);
-    }
-
-    // If street is provided, also search in shem_mitcham (name of compound)
-    // This helps match addresses that might be mentioned in the compound name
     if (street) {
       console.log(`🔍 [UrbanRenewalService] Also filtering by street (shem_mitcham): ${street}`);
-      query = query.or(`shem_mitcham.ilike.%${street}%`);
+      params.push(`%${street}%`);
+      conditions.push(`shem_mitcham ILIKE $${params.length}`);
     }
 
-    const { data: mitchamim, error } = await query.limit(20);
+    const mitchamim = await query<any>(
+      `SELECT * FROM urban_renewal_mitchamim_rashut
+       WHERE ${conditions.join(' AND ')}
+       LIMIT 20`,
+      params
+    );
 
-    if (error) {
-      console.error('❌ [UrbanRenewalService] Supabase error:', error);
-      throw error;
-    }
-
-    console.log(`✅ [UrbanRenewalService] Found ${mitchamim?.length || 0} mitchamim`);
-    return mitchamim || [];
+    console.log(`✅ [UrbanRenewalService] Found ${mitchamim.length} mitchamim`);
+    return mitchamim;
   } catch (error: any) {
     console.error('❌ [UrbanRenewalService] Error:', error?.message || error);
     throw error;

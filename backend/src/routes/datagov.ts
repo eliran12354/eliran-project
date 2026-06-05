@@ -7,12 +7,16 @@ import {
   getResidentialInventoryController,
   getHousingLotteryController,
   getTenderResultsController,
+  datastoreSearchController,
 } from '../controllers/dataGovController.js';
 
 const router = Router();
 
 // POST /api/datagov/construction-projects - Get construction progress projects
 router.post('/construction-projects', getConstructionProjectsController);
+
+// POST /api/datagov/datastore-search — CKAN datastore_search (public data.gov.il)
+router.post('/datastore-search', datastoreSearchController);
 
 // POST /api/datagov/urban-renewal-mitchamim - Get urban renewal mitchamim from data.gov.il
 router.post('/urban-renewal-mitchamim', getUrbanRenewalMitchamimController);

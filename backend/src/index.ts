@@ -19,6 +19,18 @@ import taxRouter from './routes/tax.js';
 import internalRouter from './routes/internal.js';
 import featuredProfessionalsPublicRouter from './routes/featuredProfessionalsPublic.js';
 import hotInvestorBoardsPublicRouter from './routes/hotInvestorBoardsPublic.js';
+import mavatRouter from './routes/mavat.js';
+import tenderAnalysisRouter from './routes/tenderAnalysis.js';
+import tendersRouter from './routes/tenders.js';
+import plansRouter from './routes/plans.js';
+import dealsRouter from './routes/deals.js';
+import telegramDocumentsRouter from './routes/telegramDocuments.js';
+import constructionProgressRouter from './routes/constructionProgress.js';
+import urbanRenewalDataRouter from './routes/urbanRenewalData.js';
+import tama70Router from './routes/tama70.js';
+import dangerousBuildingsRouter from './routes/dangerousBuildings.js';
+import tabuRequestsRouter from './routes/tabuRequests.js';
+import landCheckRouter from './routes/landCheck.js';
 
 const app = express();
 
@@ -44,7 +56,14 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.use(express.json());
+// Global JSON parser with the default 100KB limit. The tender-analysis route
+// handles its own JSON parsing with a much larger limit because PDF/DOCX
+// uploads arrive as base64, so we skip the global parser for that path only.
+const defaultJsonParser = express.json();
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/tender-analysis')) return next();
+  return defaultJsonParser(req, res, next);
+});
 
 // Health check endpoint
 app.get('/health', (req: express.Request, res: express.Response) => {
@@ -74,6 +93,18 @@ app.use('/api/tax', taxRouter);
 app.use('/api/internal', internalRouter);
 app.use('/api/featured-professionals', featuredProfessionalsPublicRouter);
 app.use('/api/hot-investor-boards', hotInvestorBoardsPublicRouter);
+app.use('/api/mavat-search', mavatRouter);
+app.use('/api/tender-analysis', tenderAnalysisRouter);
+app.use('/api/tenders', tendersRouter);
+app.use('/api/plans', plansRouter);
+app.use('/api/deals', dealsRouter);
+app.use('/api/telegram-documents', telegramDocumentsRouter);
+app.use('/api/construction-progress', constructionProgressRouter);
+app.use('/api/urban-renewal-data', urbanRenewalDataRouter);
+app.use('/api/tama70', tama70Router);
+app.use('/api/dangerous-buildings', dangerousBuildingsRouter);
+app.use('/api/tabu-requests', tabuRequestsRouter);
+app.use('/api/land-check', landCheckRouter);
 
 // Start server
 const PORT = config.server.port;

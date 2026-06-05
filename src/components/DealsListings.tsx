@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Search, Filter, TrendingUp, TrendingDown, MapPin, Calendar, DollarSign, Home, ChevronLeft, ChevronRight } from 'lucide-react'
-import { dealQueries } from '@/lib/supabase-queries'
-import type { Deal } from '@/lib/supabase'
+import { dealQueries } from '@/lib/api/dealsApi'
+import type { Deal } from '@/lib/types/db'
 
 export function DealsListings() {
   const [searchTerm, setSearchTerm] = useState('')

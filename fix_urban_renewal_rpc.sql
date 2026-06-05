@@ -1,5 +1,5 @@
 -- Fix RPC function to transform coordinates from Israel Grid to WGS84
--- Run this in your Supabase SQL editor
+-- Run this in your PostgreSQL client (e.g. pgAdmin)
 
 -- First, check what SRID the geometry is stored in
 -- You can run this query to check:

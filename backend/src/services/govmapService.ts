@@ -2,7 +2,12 @@
  * Service for GovMap API integration
  */
 
-import { supabase } from '../config/database.js';
+import { randomBytes } from 'crypto';
+import { query, queryOne } from '../config/database.js';
+
+function randomHexId(): string {
+  return randomBytes(16).toString('hex');
+}
 
 /**
  * Interface for GovMap entitiesByPoint request
@@ -79,12 +84,18 @@ export async function getEntitiesByPoint(
       coordinates_note: `Y coordinate ${y} seems ${y > 1000000 ? 'like Web Mercator' : y < 500000 ? 'too small for ITM' : 'possibly correct ITM'}`,
     });
 
+    const traceId = randomHexId();
+    const userId = randomHexId();
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Accept': 'application/json, text/plain, */*',
+        'Referer': 'https://www.govmap.gov.il/',
+        'Origin': 'https://www.govmap.gov.il',
+        'x-trace-id': traceId,
+        'x-user-id': userId,
       },
       body: JSON.stringify(requestBody),
     });
@@ -217,7 +228,7 @@ interface ParcelSearchResult {
 
 /**
  * Search for parcel by GUSH and HELKA
- * First tries Supabase database, then falls back to GovMap API
+ * First tries the local parcel cache tables, then falls back to GovMap API
  * @param gush - Gush number
  * @param helka - Helka (parcel) number
  * @returns Parcel coordinates and data
@@ -227,72 +238,82 @@ export async function searchParcelByGushHelka(
   helka: number
 ): Promise<ParcelSearchResult> {
   try {
-    // First, try to find the parcel in our Supabase database
+    // First, try to find the parcel in our database cache
     console.log(`Searching for parcel: gush=${gush}, helka=${helka}`);
     
     // Try multiple search strategies across different tables
     let parcelData: any = null;
     
     // Strategy 1: Search in govmap_gushim_parcels_by_search table (primary search table)
-    let { data, error: dbError } = await supabase
-      .from('govmap_gushim_parcels_by_search')
-      .select('id, govmap_object_id, gush_num, gush_suffix, parcel, centroid_geom, raw_entity, legal_area_m2, status_text, note')
-      .eq('gush_num', gush)
-      .eq('parcel', helka)
-      .limit(1)
-      .maybeSingle();
-
-    if (!dbError && data) {
-      parcelData = data;
-      console.log('Found parcel in govmap_gushim_parcels_by_search (direct search):', parcelData.id);
-    } else {
-      if (dbError) {
-        console.log('Direct search in govmap_gushim_parcels_by_search error:', dbError.message);
+    try {
+      const data = await queryOne<any>(
+        `SELECT id, govmap_object_id, gush_num, gush_suffix, parcel, centroid_geom,
+                raw_entity, legal_area_m2, status_text, note
+         FROM govmap_gushim_parcels_by_search
+         WHERE gush_num = $1 AND parcel = $2
+         LIMIT 1`,
+        [gush, helka]
+      );
+      if (data) {
+        parcelData = data;
+        console.log('Found parcel in govmap_gushim_parcels_by_search (direct search):', parcelData.id);
       } else {
         console.log('No parcel found in govmap_gushim_parcels_by_search with direct search');
       }
-      
-      // Strategy 2: Search in parcel_ownership_new table (fallback)
-      const { data: data2, error: error2 } = await supabase
-        .from('parcel_ownership_new')
-        .select('id, govmap_object_id, gush_num, parcel, centroid_geom, raw_entity')
-        .eq('gush_num', gush)
-        .eq('parcel', helka)
-        .limit(1)
-        .maybeSingle();
+    } catch (dbError: any) {
+      console.log('Direct search in govmap_gushim_parcels_by_search error:', dbError?.message || dbError);
+    }
 
-      if (!error2 && data2) {
-        parcelData = data2;
-        console.log('Found parcel in parcel_ownership_new (direct search):', parcelData.id);
-      } else {
-        // Strategy 3: Search in raw_entity fields in govmap_gushim_parcels_by_search
-        const { data: data3, error: error3 } = await supabase
-          .from('govmap_gushim_parcels_by_search')
-          .select('id, govmap_object_id, gush_num, gush_suffix, parcel, centroid_geom, raw_entity, legal_area_m2, status_text, note')
-          .eq('gush_num', gush)
-          .limit(100); // Get multiple parcels from same gush
-        
-        if (!error3 && data3 && data3.length > 0) {
-          // Search for the helka in raw_entity fields
-          const found = data3.find((p: any) => {
-            if (p.parcel === helka) return true;
-            // Check in raw_entity fields
-            if (p.raw_entity?.fields) {
-              const helkaField = p.raw_entity.fields.find((f: any) => 
-                f.fieldName === 'חלקה' && f.fieldValue === helka
-              );
-              if (helkaField) return true;
+    if (!parcelData) {
+      // Strategy 2: Search in parcel_ownership_new table (fallback)
+      try {
+        const data2 = await queryOne<any>(
+          `SELECT id, govmap_object_id, gush_num, parcel, centroid_geom, raw_entity
+           FROM parcel_ownership_new
+           WHERE gush_num = $1 AND parcel = $2
+           LIMIT 1`,
+          [gush, helka]
+        );
+        if (data2) {
+          parcelData = data2;
+          console.log('Found parcel in parcel_ownership_new (direct search):', parcelData.id);
+        }
+      } catch (error2: any) {
+        console.log('Direct search in parcel_ownership_new error:', error2?.message || error2);
+      }
+
+      // Strategy 3: Search in raw_entity fields in govmap_gushim_parcels_by_search
+      if (!parcelData) {
+        try {
+          const data3 = await query<any>(
+            `SELECT id, govmap_object_id, gush_num, gush_suffix, parcel, centroid_geom,
+                    raw_entity, legal_area_m2, status_text, note
+             FROM govmap_gushim_parcels_by_search
+             WHERE gush_num = $1
+             LIMIT 100`,
+            [gush]
+          );
+
+          if (data3.length > 0) {
+            const found = data3.find((p: any) => {
+              if (p.parcel === helka) return true;
+              if (p.raw_entity?.fields) {
+                const helkaField = p.raw_entity.fields.find((f: any) =>
+                  f.fieldName === 'חלקה' && f.fieldValue === helka
+                );
+                if (helkaField) return true;
+              }
+              return false;
+            });
+
+            if (found) {
+              parcelData = found;
+              console.log('Found parcel in govmap_gushim_parcels_by_search (field search):', parcelData.id);
+            } else {
+              console.log(`No parcel found with helka=${helka} in gush=${gush}. Found ${data3.length} parcels in this gush.`);
             }
-            return false;
-          });
-          
-          if (found) {
-            parcelData = found;
-            console.log('Found parcel in govmap_gushim_parcels_by_search (field search):', parcelData.id);
-          } else {
-            console.log(`No parcel found with helka=${helka} in gush=${gush}. Found ${data3.length} parcels in this gush.`);
           }
-        } else if (error3) {
+        } catch (error3: any) {
           console.error('Error searching parcels by gush in govmap_gushim_parcels_by_search:', error3);
         }
       }
@@ -332,50 +353,38 @@ export async function searchParcelByGushHelka(
     // If not found in database, try to find what parcels exist in this gush
     if (!parcelData) {
       // Try to get a list of available parcels in this gush from both tables
+      const extractHelkas = (rows: any[]): number[] =>
+        rows
+          .map((p: any) => {
+            if (p.parcel) return p.parcel;
+            if (p.raw_entity?.fields) {
+              const helkaField = p.raw_entity.fields.find((f: any) => f.fieldName === 'חלקה');
+              if (helkaField) return helkaField.fieldValue;
+            }
+            return null;
+          })
+          .filter((h: any): h is number => h !== null && typeof h === 'number');
+
       const [result1, result2] = await Promise.all([
-        supabase
-          .from('govmap_gushim_parcels_by_search')
-          .select('parcel, raw_entity')
-          .eq('gush_num', gush)
-          .limit(20),
-        supabase
-          .from('parcel_ownership_new')
-          .select('parcel, raw_entity')
-          .eq('gush_num', gush)
-          .limit(20)
+        query<any>(
+          `SELECT parcel, raw_entity FROM govmap_gushim_parcels_by_search
+           WHERE gush_num = $1 LIMIT 20`,
+          [gush]
+        ).catch((err) => {
+          console.error('Error listing parcels in govmap_gushim_parcels_by_search:', err);
+          return [] as any[];
+        }),
+        query<any>(
+          `SELECT parcel, raw_entity FROM parcel_ownership_new
+           WHERE gush_num = $1 LIMIT 20`,
+          [gush]
+        ).catch((err) => {
+          console.error('Error listing parcels in parcel_ownership_new:', err);
+          return [] as any[];
+        }),
       ]);
-      
-      let availableHelkas: number[] = [];
-      
-      // Process results from govmap_gushim_parcels_by_search
-      if (!result1.error && result1.data) {
-        const helkas1 = result1.data
-          .map((p: any) => {
-            if (p.parcel) return p.parcel;
-            if (p.raw_entity?.fields) {
-              const helkaField = p.raw_entity.fields.find((f: any) => f.fieldName === 'חלקה');
-              if (helkaField) return helkaField.fieldValue;
-            }
-            return null;
-          })
-          .filter((h: any): h is number => h !== null && typeof h === 'number');
-        availableHelkas.push(...helkas1);
-      }
-      
-      // Process results from parcel_ownership_new
-      if (!result2.error && result2.data) {
-        const helkas2 = result2.data
-          .map((p: any) => {
-            if (p.parcel) return p.parcel;
-            if (p.raw_entity?.fields) {
-              const helkaField = p.raw_entity.fields.find((f: any) => f.fieldName === 'חלקה');
-              if (helkaField) return helkaField.fieldValue;
-            }
-            return null;
-          })
-          .filter((h: any): h is number => h !== null && typeof h === 'number');
-        availableHelkas.push(...helkas2);
-      }
+
+      let availableHelkas: number[] = [...extractHelkas(result1), ...extractHelkas(result2)];
       
       // Remove duplicates and sort
       availableHelkas = [...new Set(availableHelkas)].sort((a, b) => a - b);

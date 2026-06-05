@@ -4,7 +4,13 @@
  */
 
 import { chromium } from 'playwright';
-import { supabase } from '../config/database.js';
+import { pool } from '../config/database.js';
+
+const DEAL_COLUMNS = [
+  'city_id', 'city_name', 'serial_no', 'address', 'area_m2', 'deal_date',
+  'price_nis', 'block_parcel_subparcel', 'property_type', 'rooms', 'floor',
+  'trend', 'source_url', 'raw',
+];
 
 function parseNumber(text) {
   if (!text) return null;
@@ -45,13 +51,34 @@ function mapRowToDeal(cityName, street, houseNumber, row, serialFallback, source
 
 async function insertBatch(rows) {
   if (!rows.length) return;
-  const { error } = await supabase.from('deals').insert(rows, { returning: 'minimal' });
-  if (error) {
+
+  const values = [];
+  const tuples = rows.map((row, rowIndex) => {
+    const base = rowIndex * DEAL_COLUMNS.length;
+    const placeholders = DEAL_COLUMNS.map((col, colIndex) => {
+      const position = base + colIndex + 1;
+      return col === 'raw' ? `$${position}::jsonb` : `$${position}`;
+    });
+    values.push(
+      row.city_id, row.city_name, row.serial_no, row.address, row.area_m2,
+      row.deal_date, row.price_nis, row.block_parcel_subparcel, row.property_type,
+      row.rooms, row.floor, row.trend, row.source_url,
+      row.raw != null ? JSON.stringify(row.raw) : null
+    );
+    return `(${placeholders.join(', ')})`;
+  });
+
+  try {
+    await pool.query(
+      `INSERT INTO deals (${DEAL_COLUMNS.join(', ')}) VALUES ${tuples.join(', ')}`,
+      values
+    );
+  } catch (error) {
     if (error.code === '23505' || /duplicate key value/i.test(error.message || '')) {
       console.warn('⚠️ דילוג על כפילויות בבאצ\' הנוכחי.');
       return;
     }
-    console.error('❌ שגיאה בהכנסה לסופרבייס:', error.message);
+    console.error('❌ שגיאה בהכנסה למסד הנתונים:', error.message);
     throw error;
   }
 }
@@ -59,31 +86,47 @@ async function insertBatch(rows) {
 async function saveTrendsData(addressId, cityName, street, houseNumber, trendsData) {
   if (!trendsData || Object.keys(trendsData).length === 0) return;
 
-  const trendsRow = {
-    address_id: addressId,
-    city_name: cityName,
-    street_name: street,
-    house_number: houseNumber,
-    address: `${street} ${houseNumber}, ${cityName}`,
-    rental_yield_percent: trendsData.rental_yield_percent || null,
-    price_increase_percent: trendsData.price_increase_percent || null,
-    prestige_score: trendsData.prestige_score ? parseInt(trendsData.prestige_score) : null,
-    prestige_max: trendsData.prestige_max ? parseInt(trendsData.prestige_max) : null,
-    median_prices_by_rooms: trendsData.median_prices_by_rooms || null,
-    quarter_prices: trendsData.quarter_prices || null,
-    raw_trends_data: trendsData,
-    scraped_at: new Date().toISOString(),
-  };
+  const params = [
+    addressId,
+    cityName,
+    street,
+    houseNumber,
+    `${street} ${houseNumber}, ${cityName}`,
+    trendsData.rental_yield_percent || null,
+    trendsData.price_increase_percent || null,
+    trendsData.prestige_score ? parseInt(trendsData.prestige_score) : null,
+    trendsData.prestige_max ? parseInt(trendsData.prestige_max) : null,
+    trendsData.median_prices_by_rooms ? JSON.stringify(trendsData.median_prices_by_rooms) : null,
+    trendsData.quarter_prices ? JSON.stringify(trendsData.quarter_prices) : null,
+    JSON.stringify(trendsData),
+    new Date().toISOString(),
+  ];
 
-  const { error } = await supabase.from('address_price_trends').upsert(trendsRow, {
-    onConflict: 'address_id',
-    ignoreDuplicates: false,
-  });
-
-  if (error) {
+  try {
+    await pool.query(
+      `INSERT INTO address_price_trends
+         (address_id, city_name, street_name, house_number, address,
+          rental_yield_percent, price_increase_percent, prestige_score, prestige_max,
+          median_prices_by_rooms, quarter_prices, raw_trends_data, scraped_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12::jsonb, $13)
+       ON CONFLICT (address_id) DO UPDATE SET
+         city_name = EXCLUDED.city_name,
+         street_name = EXCLUDED.street_name,
+         house_number = EXCLUDED.house_number,
+         address = EXCLUDED.address,
+         rental_yield_percent = EXCLUDED.rental_yield_percent,
+         price_increase_percent = EXCLUDED.price_increase_percent,
+         prestige_score = EXCLUDED.prestige_score,
+         prestige_max = EXCLUDED.prestige_max,
+         median_prices_by_rooms = EXCLUDED.median_prices_by_rooms,
+         quarter_prices = EXCLUDED.quarter_prices,
+         raw_trends_data = EXCLUDED.raw_trends_data,
+         scraped_at = EXCLUDED.scraped_at`,
+      params
+    );
+    console.log('✅ נתוני מגמות נשמרו במסד הנתונים');
+  } catch (error) {
     console.warn('⚠️ שגיאה בשמירת נתוני מגמות:', error.message);
-  } else {
-    console.log('✅ נתוני מגמות נשמרו ב-Supabase');
   }
 }
 

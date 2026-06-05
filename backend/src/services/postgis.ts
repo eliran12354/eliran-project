@@ -2,34 +2,24 @@
  * PostGIS service for coordinate transformations and spatial queries
  */
 
+import { queryOne } from '../config/database.js';
+
 /**
  * Convert Web Mercator (EPSG:3857) coordinates to WGS84 (EPSG:4326)
- * This is done using PostGIS ST_Transform function
+ * using PostGIS ST_Transform. Returns [lat, lng].
  */
 export async function convertWebMercatorToWGS84(
-  supabase: any,
   x: number,
   y: number
 ): Promise<[number, number] | null> {
   try {
-    // Use PostGIS to transform coordinates
-    const { data, error } = await supabase.rpc('transform_coordinates', {
-      x: x,
-      y: y,
-      from_srid: 3857, // Web Mercator
-      to_srid: 4326,   // WGS84
-    });
-
-    if (error) {
-      console.error('PostGIS transform error:', error);
-      return null;
-    }
-
-    if (data && data.length === 2) {
-      return [data[1], data[0]]; // [lat, lng]
-    }
-
-    return null;
+    const row = await queryOne<{ lat: number; lng: number }>(
+      `SELECT ST_Y(p) AS lat, ST_X(p) AS lng
+       FROM (SELECT ST_Transform(ST_SetSRID(ST_MakePoint($1, $2), 3857), 4326) AS p) t`,
+      [x, y]
+    );
+    if (!row) return null;
+    return [row.lat, row.lng];
   } catch (err) {
     console.error('Error converting coordinates:', err);
     return null;
@@ -37,34 +27,19 @@ export async function convertWebMercatorToWGS84(
 }
 
 /**
- * Create a PostGIS geometry point from coordinates
- * and transform it to WGS84
+ * Create a PostGIS geometry point from coordinates and transform it to WGS84.
  */
 export async function transformPointToWGS84(
-  supabase: any,
   x: number,
   y: number,
   sourceSrid: number = 3857
 ): Promise<{ lat: number; lng: number } | null> {
   try {
-    // Use PostGIS ST_Transform to convert coordinates
-    const { data, error } = await supabase.rpc('transform_point', {
-      x: x,
-      y: y,
-      from_srid: sourceSrid,
-      to_srid: 4326,
-    });
-
-    if (error) {
-      console.error('PostGIS transform error:', error);
-      return null;
-    }
-
-    if (data) {
-      return { lat: data.lat, lng: data.lng };
-    }
-
-    return null;
+    return await queryOne<{ lat: number; lng: number }>(
+      `SELECT ST_Y(p) AS lat, ST_X(p) AS lng
+       FROM (SELECT ST_Transform(ST_SetSRID(ST_MakePoint($1, $2), $3), 4326) AS p) t`,
+      [x, y, sourceSrid]
+    );
   } catch (err) {
     console.error('Error transforming point:', err);
     return null;

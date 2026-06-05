@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useMap, InfoWindow } from "@vis.gl/react-google-maps";
-import { urbanRenewalCompoundQueries } from "@/lib/supabase-queries";
+import { urbanRenewalCompoundQueries } from "@/lib/api/urbanRenewalApi";
 import type { Feature, FeatureCollection, Polygon as GeoJSONPolygon, MultiPolygon } from "geojson";
 
 interface UrbanRenewalProperties {

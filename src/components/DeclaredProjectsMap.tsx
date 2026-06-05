@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import L, { type Layer, type PathOptions } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Feature, FeatureCollection, GeoJsonProperties, MultiPolygon, Polygon } from "geojson";
-import { urbanRenewalCompoundQueries, talarPrepQueries } from "@/lib/supabase-queries";
+import { urbanRenewalCompoundQueries, talarPrepQueries } from "@/lib/api/urbanRenewalApi";
 import { ParcelsLayer } from "./ParcelsLayer";
 import { Tama70Layer } from "./Tama70Layer";
 import { GushimLayer } from "./GushimLayer";
@@ -806,7 +806,7 @@ export default function DeclaredProjectsMap({ searchGush, searchHelka }: Declare
           featuresCount: geoJSON?.features?.length || 0,
           firstFeature: geoJSON?.features?.[0],
           firstFeatureGeometry: geoJSON?.features?.[0]?.geometry,
-          firstFeatureCoords: geoJSON?.features?.[0]?.geometry?.coordinates?.[0]?.[0]
+          firstFeatureCoords: (geoJSON?.features?.[0]?.geometry as any)?.coordinates?.[0]?.[0]
         });
 
         if (isMounted) {

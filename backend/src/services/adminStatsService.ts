@@ -1,4 +1,4 @@
-import { supabase } from '../config/database.js';
+import { count } from '../config/database.js';
 
 export type AdminDashboardStats = {
   usersCount: number;
@@ -6,13 +6,17 @@ export type AdminDashboardStats = {
   contactSubmissionsCount: number;
 };
 
-async function countRows(table: string): Promise<number> {
-  const { count, error } = await supabase.from(table).select('*', { count: 'exact', head: true });
-  if (error) {
-    console.error(`adminStats count ${table}:`, error);
+// Table names are hardcoded constants (never user input), so interpolation is safe here.
+const COUNTABLE_TABLES = ['users', 'properties', 'contact_submissions'] as const;
+type CountableTable = (typeof COUNTABLE_TABLES)[number];
+
+async function countRows(table: CountableTable): Promise<number> {
+  try {
+    return await count(`SELECT count(*)::int AS count FROM ${table}`);
+  } catch (err) {
+    console.error(`adminStats count ${table}:`, err);
     return 0;
   }
-  return count ?? 0;
 }
 
 export async function getDashboardStats(): Promise<AdminDashboardStats> {

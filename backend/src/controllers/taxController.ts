@@ -32,7 +32,7 @@ export async function postPurchaseTax(req: Request, res: Response): Promise<void
     if (err.code === 'NO_RULE_VERSION') {
       res.status(422).json({
         success: false,
-        error: 'לא נמצאה גרסת כללים לתאריך העסקה. יש לטעון נתוני מס ב-Supabase.',
+        error: 'לא נמצאה גרסת כללים לתאריך העסקה. יש לטעון נתוני מס במסד הנתונים.',
       });
       return;
     }
@@ -62,7 +62,7 @@ export async function postCapitalGains(req: Request, res: Response): Promise<voi
     if (err.code === 'NO_RULE_VERSION') {
       res.status(422).json({
         success: false,
-        error: 'לא נמצאה גרסת כללים לתאריך המכירה. יש לטעון נתוני מס ב-Supabase.',
+        error: 'לא נמצאה גרסת כללים לתאריך המכירה. יש לטעון נתוני מס במסד הנתונים.',
       });
       return;
     }

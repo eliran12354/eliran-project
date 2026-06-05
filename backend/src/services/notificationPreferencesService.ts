@@ -1,9 +1,9 @@
 /**
- * User notification preferences (Supabase: user_notification_preferences).
+ * User notification preferences (table: user_notification_preferences).
  * FK user_id must reference public.users — app auth uses that table, not auth.users.
  */
 
-import { supabase } from '../config/database.js';
+import { query, queryOne } from '../config/database.js';
 
 export type NotificationPreferences = {
   notify_urban_renewal_new: boolean;
@@ -29,15 +29,19 @@ function rowToPreferences(row: {
 export async function getNotificationPreferences(
   userId: string
 ): Promise<NotificationPreferences> {
-  const { data, error } = await supabase
-    .from('user_notification_preferences')
-    .select(
-      'notify_urban_renewal_new, notify_dangerous_buildings_new, notify_hot_investor_boards_new, updated_at',
-    )
-    .eq('user_id', userId)
-    .maybeSingle();
+  const data = await queryOne<{
+    notify_urban_renewal_new: unknown;
+    notify_dangerous_buildings_new: unknown;
+    notify_hot_investor_boards_new: unknown;
+    updated_at: string | null;
+  }>(
+    `SELECT notify_urban_renewal_new, notify_dangerous_buildings_new,
+            notify_hot_investor_boards_new, updated_at
+     FROM user_notification_preferences
+     WHERE user_id = $1`,
+    [userId]
+  );
 
-  if (error) throw error;
   if (!data) {
     return {
       notify_urban_renewal_new: false,
@@ -57,24 +61,33 @@ export async function upsertNotificationPreferences(
     notify_hot_investor_boards_new: boolean;
   }
 ): Promise<NotificationPreferences> {
-  const { data, error } = await supabase
-    .from('user_notification_preferences')
-    .upsert(
-      {
-        user_id: userId,
-        notify_urban_renewal_new: prefs.notify_urban_renewal_new,
-        notify_dangerous_buildings_new: prefs.notify_dangerous_buildings_new,
-        notify_hot_investor_boards_new: prefs.notify_hot_investor_boards_new,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id' }
-    )
-    .select(
-      'notify_urban_renewal_new, notify_dangerous_buildings_new, notify_hot_investor_boards_new, updated_at',
-    )
-    .single();
+  const data = await queryOne<{
+    notify_urban_renewal_new: unknown;
+    notify_dangerous_buildings_new: unknown;
+    notify_hot_investor_boards_new: unknown;
+    updated_at: string | null;
+  }>(
+    `INSERT INTO user_notification_preferences
+       (user_id, notify_urban_renewal_new, notify_dangerous_buildings_new,
+        notify_hot_investor_boards_new, updated_at)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (user_id) DO UPDATE SET
+       notify_urban_renewal_new = EXCLUDED.notify_urban_renewal_new,
+       notify_dangerous_buildings_new = EXCLUDED.notify_dangerous_buildings_new,
+       notify_hot_investor_boards_new = EXCLUDED.notify_hot_investor_boards_new,
+       updated_at = EXCLUDED.updated_at
+     RETURNING notify_urban_renewal_new, notify_dangerous_buildings_new,
+               notify_hot_investor_boards_new, updated_at`,
+    [
+      userId,
+      prefs.notify_urban_renewal_new,
+      prefs.notify_dangerous_buildings_new,
+      prefs.notify_hot_investor_boards_new,
+      new Date().toISOString(),
+    ]
+  );
 
-  if (error) throw error;
+  if (!data) throw new Error('Failed to upsert notification preferences');
   return rowToPreferences(data);
 }
 
@@ -82,37 +95,28 @@ export async function upsertNotificationPreferences(
 export async function listUserIdsWithUrbanRenewalNotificationsEnabled(): Promise<
   string[]
 > {
-  const { data, error } = await supabase
-    .from('user_notification_preferences')
-    .select('user_id')
-    .eq('notify_urban_renewal_new', true);
-
-  if (error) throw error;
-  return (data ?? []).map((row: { user_id: string }) => row.user_id);
+  const rows = await query<{ user_id: string }>(
+    `SELECT user_id FROM user_notification_preferences WHERE notify_urban_renewal_new = true`
+  );
+  return rows.map((row) => row.user_id);
 }
 
 /** User IDs that opted in to dangerous buildings notifications. */
 export async function listUserIdsWithDangerousBuildingsNotificationsEnabled(): Promise<
   string[]
 > {
-  const { data, error } = await supabase
-    .from('user_notification_preferences')
-    .select('user_id')
-    .eq('notify_dangerous_buildings_new', true);
-
-  if (error) throw error;
-  return (data ?? []).map((row: { user_id: string }) => row.user_id);
+  const rows = await query<{ user_id: string }>(
+    `SELECT user_id FROM user_notification_preferences WHERE notify_dangerous_buildings_new = true`
+  );
+  return rows.map((row) => row.user_id);
 }
 
 /** User IDs that opted in to hot investor board listing notifications. */
 export async function listUserIdsWithHotInvestorBoardsNotificationsEnabled(): Promise<
   string[]
 > {
-  const { data, error } = await supabase
-    .from('user_notification_preferences')
-    .select('user_id')
-    .eq('notify_hot_investor_boards_new', true);
-
-  if (error) throw error;
-  return (data ?? []).map((row: { user_id: string }) => row.user_id);
+  const rows = await query<{ user_id: string }>(
+    `SELECT user_id FROM user_notification_preferences WHERE notify_hot_investor_boards_new = true`
+  );
+  return rows.map((row) => row.user_id);
 }

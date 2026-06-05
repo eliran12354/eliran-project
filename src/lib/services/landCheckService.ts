@@ -3,8 +3,17 @@
  * Collects data from various sources to generate comprehensive land reports
  */
 
-import { supabase } from "../supabase";
-import type { Deal, GovmapPlan, UrbanRenewalProject } from "../supabase";
+import { landCheckApi } from "../api/landCheckApi";
+import type { Deal, GovmapPlan, UrbanRenewalProject } from "../types/db";
+import {
+  fetchLandUseMavatByPoint,
+  govMapAutocomplete,
+  parseWktPointToWebMercator,
+  pickExactParcelAutocompleteHit,
+  webMercatorToLatLng,
+  wgs84ToWebMercator,
+  type GovMapLandUseEntry,
+} from "../api/govmapApi";
 
 // Types
 export interface Coordinates {
@@ -178,7 +187,15 @@ function calculateDistance(
 }
 
 /**
- * Get coordinates from gush and helka using GovMap WFS API
+ * Get coordinates from gush and helka.
+ *
+ * Strategy:
+ *   1. Look up in our parcel cache (`govmap_gushim_parcels_by_search`) via the backend.
+ *   2. Fall back to the same GovMap browser API that /gush-helka-search uses
+ *      (autocomplete → WKT POINT in Web Mercator → WGS84).
+ *
+ * The old WFS endpoint at `ags.govmap.gov.il/arcgis/.../WFSServer` returns 404
+ * (GovMap retired it), so we no longer use it.
  */
 export async function getCoordinatesFromParcel(
   gush: string,
@@ -192,57 +209,32 @@ export async function getCoordinatesFromParcel(
       throw new Error("גוש וחלקה חייבים להיות מספרים");
     }
 
-    // Try Supabase first
-    const { data: supabaseData, error: supabaseError } = await supabase
-      .from("govmap_gushim_parcels_by_search")
-      .select("raw_entity, centroid_geom")
-      .eq("gush_num", gushNum)
-      .eq("parcel", helkaNum)
-      .limit(1)
-      .maybeSingle();
-
-    if (!supabaseError && supabaseData?.raw_entity?.centroid) {
-      const [x, y] = supabaseData.raw_entity.centroid;
-      // Convert Web Mercator to WGS84
-      const lng = (x / 20037508.34) * 180;
-      let lat = (y / 20037508.34) * 180;
-      lat =
-        (180 / Math.PI) *
-        (2 * Math.atan(Math.exp((lat * Math.PI) / 180)) - Math.PI / 2);
-      return { lat, lng };
-    }
-
-    // Fallback to GovMap WFS API
-    const wfsUrl = `https://ags.govmap.gov.il/arcgis/services/cadastre/MapServer/WFSServer?service=WFS&version=2.0.0&request=GetFeature&typeName=Cadastre&outputFormat=application/json&CQL_FILTER=gush=${gushNum}%20AND%20helka=${helkaNum}`;
-
-    const response = await fetch(wfsUrl);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    if (data.features && data.features.length > 0) {
-      const feature = data.features[0];
-      const geometry = feature.geometry;
-      
-      if (geometry && geometry.coordinates) {
-        // Get centroid from polygon
-        let sumLat = 0;
-        let sumLng = 0;
-        let count = 0;
-        
-        const coords = geometry.coordinates[0]; // First ring of polygon
-        for (const coord of coords) {
-          sumLng += coord[0];
-          sumLat += coord[1];
-          count++;
-        }
-        
-        return {
-          lat: sumLat / count,
-          lng: sumLng / count,
-        };
+    // Strategy 1: backend parcel cache
+    try {
+      const cached = await landCheckApi.getParcel(gushNum, helkaNum);
+      if (cached?.raw_entity?.centroid) {
+        const [x, y] = cached.raw_entity.centroid;
+        const [lat, lng] = webMercatorToLatLng(x, y);
+        return { lat, lng };
       }
+    } catch (cacheErr) {
+      console.warn("⚠️ Parcel cache lookup failed:", cacheErr);
+    }
+
+    // Strategy 2: GovMap autocomplete (same flow as /gush-helka-search)
+    try {
+      const ac = await govMapAutocomplete(`גוש ${gushNum} חלקה ${helkaNum}`);
+      const hit = pickExactParcelAutocompleteHit(ac.results, gushNum, helkaNum);
+      const wm = hit ? parseWktPointToWebMercator(hit.shape) : null;
+      if (wm) {
+        const [lat, lng] = webMercatorToLatLng(wm[0], wm[1]);
+        return { lat, lng };
+      }
+      console.warn(
+        `⚠️ GovMap autocomplete did not return an exact match for גוש ${gushNum} חלקה ${helkaNum} (returned ${ac.results?.length ?? 0} hits)`,
+      );
+    } catch (acErr) {
+      console.warn("⚠️ GovMap autocomplete failed:", acErr);
     }
 
     return null;
@@ -274,14 +266,14 @@ export async function getCoordinatesFromAddress(
 
     // Method 1: Try to find coordinates from deals table
     // Search for similar addresses
-    const { data: deals, error: dealsError } = await supabase
-      .from("deals")
-      .select("address, raw, city_name")
-      .or(`address.ilike.%${searchAddress}%,address.ilike.%${street}%${house_number}%`)
-      .ilike("city_name", `%${city}%`)
-      .limit(10);
+    let deals: Array<{ address?: string; raw?: any; city_name?: string }> = [];
+    try {
+      deals = await landCheckApi.searchDealsByAddress(searchAddress, street, house_number, city);
+    } catch (dealsErr) {
+      console.warn("⚠️ Deals address lookup failed:", dealsErr);
+    }
 
-    if (!dealsError && deals && deals.length > 0) {
+    if (deals && deals.length > 0) {
       // Check if raw data contains coordinates
       for (const deal of deals) {
         if (deal.raw) {
@@ -512,9 +504,10 @@ async function getPlansFromGovMapAPI(
 }
 
 /**
- * Get planning status and plans from GovMap
- * 
- * NOTE: Currently uses Supabase. Uncomment GovMap API section below to test direct API calls.
+ * Get planning status and plans from GovMap.
+ *
+ * TODO: wire to backend/PostGIS spatial queries on `govmap_plans` when needed.
+ * Today returns unknown — the old direct-table path was removed.
  */
 export async function getPlanningStatus(
   coordinates: Coordinates,
@@ -522,66 +515,9 @@ export async function getPlanningStatus(
   helka?: string
 ): Promise<PlanningStatus> {
   try {
-    // OPTION 1: Try GovMap API directly first (for testing)
-    // Uncomment to test:
-    /*
-    const govmapPlans = await getPlansFromGovMapAPI(coordinates, 50, 500);
-    
-    if (govmapPlans && govmapPlans.length > 0) {
-      const firstPlan = govmapPlans[0];
-      return {
-        status: "approved_plan",
-        plan_name: firstPlan.tochnit || firstPlan.plan_name || firstPlan.name,
-        plan_number: firstPlan.migrash || firstPlan.plan_number || firstPlan.number,
-        inclusion_level: "unknown",
-        future_rights: [],
-      };
-    }
-    */
-
-    // OPTION 2: Use Supabase (COMMENTED FOR TESTING GOVMAP API)
-    /*
-    let query = supabase.from("govmap_plans").select("*");
-
-    // If we have gush/helka, try to filter by them
-    if (gush && helka) {
-      // Search in plan details - this is a simplified search
-      // Full implementation would use spatial queries with PostGIS
-      query = query.limit(100);
-    } else {
-      query = query.limit(50);
-    }
-
-    const { data: plans, error } = await query;
-
-    if (error || !plans || plans.length === 0) {
-      return {
-        status: "unknown",
-        inclusion_level: "unknown",
-      };
-    }
-
-    // Find plans that might be relevant
-    // For now, return the first plan as example
-    // TODO: Implement proper spatial filtering
-    const relevantPlan = plans[0];
-    
-    // Determine status based on plan type
-    let status: PlanningStatus["status"] = "unknown";
-    if (relevantPlan.tochnit) {
-      status = "approved_plan";
-    }
-    
-    return {
-      status,
-      plan_name: relevantPlan.tochnit,
-      plan_number: relevantPlan.migrash?.toString(),
-      inclusion_level: "unknown", // Should be calculated based on area overlap
-      future_rights: [],
-    };
-    */
-    
-    // Return default if Supabase is disabled
+    void coordinates;
+    void gush;
+    void helka;
     return {
       status: "unknown",
       inclusion_level: "unknown",
@@ -665,76 +601,51 @@ async function getLandUseFromGovMapAPI(
   }
 }
 
+/** Pick the first value among `entry.fieldsForDisplay` whose label matches a regex. */
+function pickFieldValue(entry: GovMapLandUseEntry, labelRe: RegExp): string | undefined {
+  const row = entry.fieldsForDisplay.find((r) => labelRe.test(r.label));
+  const v = row?.value?.trim();
+  return v ? v : undefined;
+}
+
+function parseNumericOrUndef(v: string | undefined): number | undefined {
+  if (!v) return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 /**
- * Get land use information (יעודי קרקע - מבא"ת)
- * 
- * NOTE: Currently uses Supabase. Uncomment GovMap API section below to test direct API calls.
+ * Get land use information (יעודי קרקע - מבא"ת) from GovMap layer 14, using the
+ * same point-in-layer flow the dedicated /gush-helka-search page uses.
+ *
+ * Works for any identification method (parcel or address) — the layer query
+ * runs at the resolved WGS84 coordinates regardless of how we got there.
  */
 export async function getLandUseInfo(
   coordinates: Coordinates,
-  gush?: string,
-  helka?: string
+  _gush?: string,
+  _helka?: string,
 ): Promise<LandUseInfo[]> {
   try {
-    // OPTION 1: Try GovMap API directly first (for testing)
-    // Uncomment to test:
-    /*
-    const govmapLandUse = await getLandUseFromGovMapAPI(coordinates, 500);
-    
-    if (govmapLandUse && govmapLandUse.length > 0) {
-      return govmapLandUse.map((item: any) => ({
-        mavat_code: item.mavat_code || item.code,
-        mavat_name: item.mavat_name || item.name,
-        pl_number: item.pl_number || item.plan_number,
-        pl_name: item.pl_name || item.plan_name,
-        defq: item.defq || item.description,
-      }));
-    }
-    */
-
-    // OPTION 2: Use Supabase (COMMENTED FOR TESTING GOVMAP API)
-    /*
-    // Try to use RPC function if available
-    const { data: rpcData, error: rpcError } = await supabase
-      .rpc('get_land_use_mavat_geojson', { page_num: 1, page_size: 100 });
-
-    if (!rpcError && rpcData?.features) {
-      // Filter features by proximity to coordinates (simplified - should use spatial query)
-      // For now, return first few features
-      const features = rpcData.features.slice(0, 5);
-      
-      return features.map((f: any) => ({
-        mavat_code: f.properties?.mavat_code,
-        mavat_name: f.properties?.mavat_name,
-        pl_number: f.properties?.pl_number,
-        pl_name: f.properties?.pl_name,
-        defq: f.properties?.defq,
-      }));
-    }
-    */
-
-    // Fallback: direct query (COMMENTED FOR TESTING GOVMAP API)
-    /*
-    const { data: landUse, error } = await supabase
-      .from("land_use_mavat")
-      .select("mavat_code, mavat_name, pl_number, pl_name, defq")
-      .not("mavat_name", "is", null)
-      .limit(10);
-
-    if (error || !landUse) {
+    const [wmX, wmY] = wgs84ToWebMercator(coordinates.lat, coordinates.lng);
+    const entries = await fetchLandUseMavatByPoint(wmX, wmY);
+    if (!entries.length) {
+      console.log("ℹ️ GovMap layer 14 (יעודי קרקע - מבא״ת) returned no entries for point", coordinates);
       return [];
     }
 
-    return landUse.map((item: any) => ({
-      mavat_code: item.mavat_code,
-      mavat_name: item.mavat_name,
-      pl_number: item.pl_number,
-      pl_name: item.pl_name,
-      defq: item.defq,
+    const mapped: LandUseInfo[] = entries.map((entry) => ({
+      mavat_name: entry.title ?? undefined,
+      pl_number: entry.planNumber ?? undefined,
+      pl_name: pickFieldValue(entry, /שם\s*תוכנית|שם\s*תכנית/),
+      defq: pickFieldValue(entry, /תיאור|פירוט|הערות?/),
+      mavat_code: parseNumericOrUndef(
+        pickFieldValue(entry, /קוד\s*י(?:י)?עוד|קוד\s*מבא/),
+      ),
     }));
-    */
-    
-    return [];
+
+    console.log(`✅ Loaded ${mapped.length} land-use (מבא״ת) entries from GovMap layer 14`);
+    return mapped;
   } catch (error) {
     console.error("Error getting land use info:", error);
     return [];
@@ -749,30 +660,8 @@ export async function getPreparingPlans(
   city?: string
 ): Promise<PreparingPlanInfo[]> {
   try {
-    // COMMENTED FOR TESTING GOVMAP API
-    /*
-    let query = supabase
-      .from("govmap_talar_prep")
-      .select("tochnit, migrash, mishasava, raw")
-      .not("tochnit", "is", null)
-      .limit(20);
-
-    // TODO: Add spatial filtering or city filtering when available
-
-    const { data: plans, error } = await query;
-
-    if (error || !plans) {
-      return [];
-    }
-
-    return plans.map((plan: any) => ({
-      tochnit: plan.tochnit,
-      migrash: plan.migrash,
-      mishasava: plan.mishasava,
-      status: plan.raw?.status || "בהכנה",
-    }));
-    */
-    
+    void coordinates;
+    void city;
     return [];
   } catch (error) {
     console.error("Error getting preparing plans:", error);
@@ -960,8 +849,8 @@ async function getDealsFromGovMapAPI(
 
 
 /**
- * Get valuation data from deals directly (from Nadlan scraping script)
- * NO Supabase queries - uses deals returned directly from the scraping script
+ * Get valuation data from deals directly (from Nadlan scraping script).
+ * Uses deals returned from the scraping flow (no DB round-trip here).
  */
 function getValuationDataFromDeals(deals: any[]): ValuationData {
   try {
@@ -1040,25 +929,9 @@ export async function getUrbanRenewalProjects(
   radiusKm: number = 1
 ): Promise<UrbanRenewalProject[]> {
   try {
-    // COMMENTED FOR TESTING GOVMAP API
-    /*
-    let query = supabase.from("urban_renewal_projects").select("*");
-
-    if (city) {
-      query = query.ilike("city_name", `%${city}%`);
-    }
-
-    const { data: projects, error } = await query.limit(20);
-
-    if (error || !projects) {
-      return [];
-    }
-
-    // TODO: Implement spatial filtering to find projects within radius
-    // For now, return projects filtered by city
-    return projects as UrbanRenewalProject[];
-    */
-    
+    void coordinates;
+    void city;
+    void radiusKm;
     return [];
   } catch (error) {
     console.error("Error getting urban renewal projects:", error);
@@ -1082,32 +955,12 @@ export async function getUrbanRenewalMitchamim(
     }
 
     console.log(`🏘️ Fetching urban renewal mitchamim for city: ${city}, street: ${street || 'N/A'}...`);
-    console.log(`🔍 [getUrbanRenewalMitchamim] Building query...`);
 
-    let query = supabase
-      .from("urban_renewal_mitchamim_rashut")
-      .select("*");
-
-    // Filter by city (yeshuv)
-    if (city) {
-      console.log(`🔍 [getUrbanRenewalMitchamim] Filtering by city (yeshuv): ${city}`);
-      query = query.ilike("yeshuv", `%${city}%`);
-    }
-
-    // If street is provided, also search in shem_mitcham (name of compound)
-    // This helps match addresses that might be mentioned in the compound name
-    if (street) {
-      console.log(`🔍 [getUrbanRenewalMitchamim] Also filtering by street (shem_mitcham): ${street}`);
-      // Search in shem_mitcham field for street name
-      query = query.or(`shem_mitcham.ilike.%${street}%`);
-    }
-
-    console.log(`📤 [getUrbanRenewalMitchamim] Executing Supabase query...`);
-    const { data: mitchamim, error } = await query.limit(20);
-
-    if (error) {
-      console.error("❌ [getUrbanRenewalMitchamim] Supabase error:", error);
-      console.error("❌ [getUrbanRenewalMitchamim] Error details:", JSON.stringify(error, null, 2));
+    let mitchamim: UrbanRenewalMitcham[] = [];
+    try {
+      mitchamim = (await landCheckApi.getMitchamim(city, street)) as UrbanRenewalMitcham[];
+    } catch (error: any) {
+      console.error("❌ [getUrbanRenewalMitchamim] Lookup failed:", error?.message || error);
       return [];
     }
 
@@ -1136,24 +989,9 @@ export async function getNearbyDangerousBuildings(
   radiusKm: number = 0.5
 ): Promise<any[]> {
   try {
-    // COMMENTED FOR TESTING GOVMAP API
-    /*
-    let query = supabase.from("dangerous_buildings_active").select("*");
-
-    if (city) {
-      query = query.ilike("city_name", `%${city}%`);
-    }
-
-    const { data: buildings, error } = await query.limit(50);
-
-    if (error || !buildings) {
-      return [];
-    }
-
-    // TODO: Implement spatial filtering
-    return buildings;
-    */
-    
+    void coordinates;
+    void city;
+    void radiusKm;
     return [];
   } catch (error) {
     console.error("Error getting dangerous buildings:", error);
@@ -1225,9 +1063,8 @@ async function getConstructionProgressProjects(
 }
 
 /**
- * Scrape deals from Nadlan.gov.il via backend
- * Uses the Nadlan scraping script to fetch deals data AND price trends for the address
- * Returns both deals and trends data directly (no Supabase query needed!)
+ * Scrape deals from Nadlan.gov.il via backend.
+ * Uses the Nadlan scraping script to fetch deals data AND price trends for the address.
  */
 async function scrapeDealsFromNadlan(
   city: string,

@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, MapPin, Calendar, Clock, FileText, ChevronLeft, ChevronRight, Search, X, Filter, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
-import { tenderQueries, type MichrazActive } from "@/lib/tender-queries";
+import { tenderQueries, type MichrazActive } from "@/lib/api/tendersApi";
 
 interface TenderWithDetails extends MichrazActive {
   title?: string;

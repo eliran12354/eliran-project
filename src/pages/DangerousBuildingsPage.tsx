@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/lib/supabase";
+import { dangerousBuildingsQueries } from "@/lib/api/dangerousBuildingsApi";
 
 interface DangerousBuilding {
   "כתובת"?: string;
@@ -76,14 +76,7 @@ export default function DangerousBuildingsPage() {
 
   const loadBuildingsFromDatabase = async (): Promise<DangerousBuilding[]> => {
     try {
-      const { data, error } = await supabase
-        .from('dangerous_buildings_active')
-        .select('*');
-
-      if (error) {
-        console.error('Error loading from database:', error);
-        return [];
-      }
+      const data = await dangerousBuildingsQueries.getActive();
 
       if (!data) return [];
 

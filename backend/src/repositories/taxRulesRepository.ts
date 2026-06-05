@@ -1,4 +1,4 @@
-import { supabase } from '../config/database.js';
+import { query, queryOne, execute } from '../config/database.js';
 import type {
   CapitalGainsRuleRow,
   PurchaseTaxAdjustmentRow,
@@ -65,16 +65,12 @@ export async function getActiveRuleVersionByDate(
   taxType: TaxType,
   asOfDate: string
 ): Promise<TaxRuleVersion | null> {
-  const { data, error } = await supabase
-    .from('tax_rule_versions')
-    .select('*')
-    .eq('tax_type', taxType)
-    .eq('is_active', true)
-    .lte('effective_from', asOfDate)
-    .order('effective_from', { ascending: false });
-
-  if (error) throw new Error(`tax_rule_versions: ${error.message}`);
-  const rows = (data ?? []) as Record<string, unknown>[];
+  const rows = await query<Record<string, unknown>>(
+    `SELECT * FROM tax_rule_versions
+     WHERE tax_type = $1 AND is_active = true AND effective_from <= $2
+     ORDER BY effective_from DESC`,
+    [taxType, asOfDate]
+  );
   const valid = rows.filter((row) => {
     const to = row.effective_to;
     if (to == null || to === '') return true;
@@ -87,41 +83,34 @@ export async function getActiveRuleVersionByDate(
 }
 
 export async function getPurchaseBrackets(ruleVersionId: string): Promise<PurchaseTaxBracketRow[]> {
-  const { data, error } = await supabase
-    .from('purchase_tax_brackets')
-    .select('*')
-    .eq('rule_version_id', ruleVersionId)
-    .order('sort_order', { ascending: true })
-    .order('min_amount', { ascending: true });
-
-  if (error) throw new Error(`purchase_tax_brackets: ${error.message}`);
-  return (data ?? []).map((r) => mapBracket(r as Record<string, unknown>));
+  const rows = await query<Record<string, unknown>>(
+    `SELECT * FROM purchase_tax_brackets
+     WHERE rule_version_id = $1
+     ORDER BY sort_order ASC, min_amount ASC`,
+    [ruleVersionId]
+  );
+  return rows.map((r) => mapBracket(r));
 }
 
 export async function getPurchaseAdjustments(ruleVersionId: string): Promise<PurchaseTaxAdjustmentRow[]> {
-  const { data, error } = await supabase
-    .from('purchase_tax_adjustments')
-    .select('*')
-    .eq('rule_version_id', ruleVersionId);
-
-  if (error) throw new Error(`purchase_tax_adjustments: ${error.message}`);
-  return (data ?? []).map((r) => mapAdjustment(r as Record<string, unknown>));
+  const rows = await query<Record<string, unknown>>(
+    `SELECT * FROM purchase_tax_adjustments WHERE rule_version_id = $1`,
+    [ruleVersionId]
+  );
+  return rows.map((r) => mapAdjustment(r));
 }
 
 export async function getCapitalGainsRule(
   ruleVersionId: string,
   assetType: string
 ): Promise<CapitalGainsRuleRow | null> {
-  const { data, error } = await supabase
-    .from('capital_gains_rules')
-    .select('*')
-    .eq('rule_version_id', ruleVersionId)
-    .eq('asset_type', assetType)
-    .maybeSingle();
-
-  if (error) throw new Error(`capital_gains_rules: ${error.message}`);
+  const data = await queryOne<Record<string, unknown>>(
+    `SELECT * FROM capital_gains_rules
+     WHERE rule_version_id = $1 AND asset_type = $2`,
+    [ruleVersionId, assetType]
+  );
   if (!data) return null;
-  return mapCapitalGains(data as Record<string, unknown>);
+  return mapCapitalGains(data);
 }
 
 /** לוג חישוב — insert עם service role בלבד */
@@ -132,15 +121,20 @@ export async function insertCalculationLog(params: {
   resultPayload: unknown;
   ruleVersionId: string | null;
 }): Promise<void> {
-  const { error } = await supabase.from('calculation_logs').insert({
-    user_id: params.userId,
-    calculator_type: params.calculatorType,
-    input_payload: params.inputPayload,
-    result_payload: params.resultPayload,
-    rule_version_id: params.ruleVersionId,
-  });
-
-  if (error) {
-    console.error('[calculation_logs]', error.message);
+  try {
+    await execute(
+      `INSERT INTO calculation_logs
+         (user_id, calculator_type, input_payload, result_payload, rule_version_id)
+       VALUES ($1, $2, $3::jsonb, $4::jsonb, $5)`,
+      [
+        params.userId,
+        params.calculatorType,
+        JSON.stringify(params.inputPayload),
+        JSON.stringify(params.resultPayload),
+        params.ruleVersionId,
+      ]
+    );
+  } catch (err) {
+    console.error('[calculation_logs]', err instanceof Error ? err.message : err);
   }
 }

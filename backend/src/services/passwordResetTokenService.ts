@@ -1,5 +1,5 @@
 /**
- * Requires table `public.password_reset_tokens` in Supabase. Run once in SQL editor:
+ * Requires table `public.password_reset_tokens` in PostgreSQL. Create once (e.g. in pgAdmin):
  *
  * create table if not exists public.password_reset_tokens (
  *   id uuid primary key default gen_random_uuid(),
@@ -15,7 +15,7 @@
  *   on public.password_reset_tokens (user_id);
  */
 
-import { supabase } from '../config/database.js';
+import { queryOne, execute } from '../config/database.js';
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 
@@ -33,13 +33,10 @@ export function resetTokenExpiresAt(): Date {
 }
 
 export async function deleteUnusedTokensForUser(userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('password_reset_tokens')
-    .delete()
-    .eq('user_id', userId)
-    .is('used_at', null);
-
-  if (error) throw error;
+  await execute(
+    `DELETE FROM password_reset_tokens WHERE user_id = $1 AND used_at IS NULL`,
+    [userId]
+  );
 }
 
 export async function insertResetToken(
@@ -47,38 +44,31 @@ export async function insertResetToken(
   tokenHash: string,
   expiresAt: Date
 ): Promise<void> {
-  const { error } = await supabase.from('password_reset_tokens').insert({
-    user_id: userId,
-    token_hash: tokenHash,
-    expires_at: expiresAt.toISOString(),
-  });
-
-  if (error) throw error;
+  await execute(
+    `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+     VALUES ($1, $2, $3)`,
+    [userId, tokenHash, expiresAt.toISOString()]
+  );
 }
 
 export async function findActiveResetByTokenHash(
   tokenHash: string
 ): Promise<PasswordResetRow | null> {
-  const { data, error } = await supabase
-    .from('password_reset_tokens')
-    .select('id, user_id, token_hash, expires_at, used_at, created_at')
-    .eq('token_hash', tokenHash)
-    .is('used_at', null)
-    .maybeSingle();
+  const row = await queryOne<PasswordResetRow>(
+    `SELECT id, user_id, token_hash, expires_at, used_at, created_at
+     FROM password_reset_tokens
+     WHERE token_hash = $1 AND used_at IS NULL`,
+    [tokenHash]
+  );
 
-  if (error) throw error;
-  if (!data) return null;
-
-  const row = data as PasswordResetRow;
+  if (!row) return null;
   if (new Date(row.expires_at) <= new Date()) return null;
   return row;
 }
 
 export async function markResetTokenUsed(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('password_reset_tokens')
-    .update({ used_at: new Date().toISOString() })
-    .eq('id', id);
-
-  if (error) throw error;
+  await execute(
+    `UPDATE password_reset_tokens SET used_at = $1 WHERE id = $2`,
+    [new Date().toISOString(), id]
+  );
 }

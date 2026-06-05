@@ -1,4 +1,4 @@
-import { supabase } from '../config/database.js';
+import { query, count } from '../config/database.js';
 
 /**
  * Service for gushim data operations
@@ -107,21 +107,15 @@ export async function getGushimChunk(
 ): Promise<{ features: any[]; hasMore: boolean; page: number; totalLoaded: number }> {
   try {
     const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
 
-    // Build query with pagination
-    let query = supabase
-      .from('govmap_gushim')
-      .select('id, object_id, gush_num, gush_suffix, status_text, centroid')
-      .not('centroid', 'is', null)
-      .order('id', { ascending: true })
-      .range(from, to);
-
-    const { data, error } = await query;
-
-    if (error) {
-      throw error;
-    }
+    const data = await query<GushRaw>(
+      `SELECT id, object_id, gush_num, gush_suffix, status_text, centroid
+       FROM govmap_gushim
+       WHERE centroid IS NOT NULL
+       ORDER BY id ASC
+       LIMIT $1 OFFSET $2`,
+      [pageSize, from]
+    );
 
     if (!data || data.length === 0) {
       return {
@@ -204,17 +198,9 @@ export async function getGushimChunk(
  */
 export async function getGushimCount(): Promise<number> {
   try {
-    const { count, error } = await supabase
-      .from('govmap_gushim')
-      .select('id', { count: 'exact', head: true })
-      .not('centroid', 'is', null);
-
-    if (error) {
-      console.error('Error getting gushim count:', error);
-      return 0;
-    }
-
-    return count || 0;
+    return await count(
+      `SELECT count(*)::int AS count FROM govmap_gushim WHERE centroid IS NOT NULL`
+    );
   } catch (error) {
     console.error('Error getting gushim count:', error);
     return 0;

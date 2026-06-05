@@ -73,11 +73,9 @@ VITE_API_URL=http://localhost:10000
 
 # GovMap API Token (Optional)
 VITE_GOVMAP_TOKEN=your_govmap_token_here
-
-# Supabase Configuration (Optional, has defaults)
-VITE_SUPABASE_URL=your_supabase_url_here
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 ```
+
+> The frontend loads data through the backend API (`VITE_API_URL`), which connects to PostgreSQL.
 
 ### Google Maps Setup
 
