@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { createTabuRequest } from "@/lib/api/tabuRequestsApi";
 import { useToast } from "@/hooks/use-toast";
+import { SubscriptionGate } from "@/components/SubscriptionGate";
 
 type IdentificationType = "parcel" | "address";
 
@@ -147,6 +148,7 @@ export default function TabuRequestPage() {
           <p className="text-slate-500 dark:text-slate-400">תהליך קצר ופשוט לקבלת מידע ממרשם המקרקעין</p>
         </div>
 
+        <SubscriptionGate>
         {/* Progress Stepper */}
         <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-8 mb-8">
           <div className="flex justify-between relative mb-12">
@@ -505,6 +507,7 @@ export default function TabuRequestPage() {
             </div>
           </form>
         </div>
+        </SubscriptionGate>
       </div>
     </div>
   );

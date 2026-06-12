@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PurchaseTaxCalculator } from "@/components/tax/PurchaseTaxCalculator";
 import { CapitalGainsCalculator } from "@/components/tax/CapitalGainsCalculator";
+import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { Calculator } from "lucide-react";
 
 export default function TaxPage() {
@@ -18,6 +19,7 @@ export default function TaxPage() {
         </p>
       </header>
 
+      <SubscriptionGate>
       <Tabs defaultValue="purchase" className="w-full" dir="rtl">
         <TabsList className="mb-6 grid w-full grid-cols-2">
           <TabsTrigger value="purchase">מס רכישה</TabsTrigger>
@@ -30,6 +32,7 @@ export default function TaxPage() {
           <CapitalGainsCalculator />
         </TabsContent>
       </Tabs>
+      </SubscriptionGate>
     </div>
   );
 }

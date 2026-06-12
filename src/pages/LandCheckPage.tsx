@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
+import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { collectLandCheckData, type LandCheckInput, type LandCheckReport } from "@/lib/services/landCheckService";
 
 type IdentificationType = "parcel" | "address";
@@ -114,6 +115,7 @@ export default function LandCheckPage() {
         </div>
       </div>
 
+      <SubscriptionGate>
       {/* Form Card */}
       <Card className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -548,6 +550,7 @@ export default function LandCheckPage() {
           )}
         </Card>
       )}
+      </SubscriptionGate>
     </div>
   );
 }

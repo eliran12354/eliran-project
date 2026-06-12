@@ -15,6 +15,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { urbanRenewalProjectQueries } from "@/lib/api/urbanRenewalApi";
+import { SubscriptionGate } from "@/components/SubscriptionGate";
 import type { UrbanRenewalProject } from "@/lib/types/db";
 
 // רשימת פרויקטי פינוי-בינוי מבוקשים
@@ -145,6 +146,7 @@ export default function HotAreasPage() {
         </div>
       </div>
 
+      <SubscriptionGate>
       {/* Tabs */}
       <Tabs defaultValue="plans" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 text-right">
@@ -326,6 +328,7 @@ export default function HotAreasPage() {
           )}
         </TabsContent>
       </Tabs>
+      </SubscriptionGate>
     </div>
     </div>
   );
