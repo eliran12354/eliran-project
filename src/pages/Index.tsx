@@ -6,6 +6,27 @@ import { GushHelkaSearchShowcase } from "@/components/GushHelkaSearchShowcase";
 import { LandCheckShowcase } from "@/components/LandCheckShowcase";
 import { HomeHighlightsCarousel } from "@/components/HomeHighlightsCarousel";
 
+const VALUE_PROPS = [
+  {
+    icon: "verified_user",
+    title: "בלעדיות במידע",
+    description:
+      "גישה למאגרי מידע ייחודיים ומקורות גלויים ונסתרים שאינם זמינים לציבור הרחב בממשק אחד.",
+  },
+  {
+    icon: "hub",
+    title: "חיבור נתונים חכם",
+    description:
+      "אלגוריתמיקה מתקדמת המצליבה בין שכבות מידע תכנוני, כלכלי ומשפטי לכדי תמונה אחת ברורה.",
+  },
+  {
+    icon: "trending_up",
+    title: "יתרון תחרותי",
+    description:
+      "היו הראשונים לזהות הזדמנויות בשוק, שינויי ייעוד ועסקאות חריגות לפני כל המתחרים שלכם.",
+  },
+] as const;
+
 const CORE_TOOLS = [
   {
     to: "/plans",
@@ -34,7 +55,7 @@ const CORE_TOOLS = [
 ] as const;
 
 const coreToolLinkClassName =
-  "group flex items-center gap-4 rounded-xl border-2 border-slate-200/90 bg-white p-4 md:p-5 text-right shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition-all hover:border-primary/50 hover:bg-primary/[0.04] hover:shadow-[0_8px_28px_rgba(17,82,212,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
+  "group relative flex items-start gap-5 overflow-hidden rounded-[20px] border border-slate-200/80 bg-gradient-to-br from-white via-[#f8fafc] to-blue-50/60 p-6 md:p-7 text-right shadow-[0_12px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/35 hover:shadow-[0_24px_60px_rgba(17,82,212,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
 
 /** Break out of Layout `main` horizontal padding; document `overflow-x: hidden` avoids 100vw scrollbar overflow. */
 const sectionFullBleedStyle = {
@@ -137,36 +158,29 @@ const Index = () => {
         />
         
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-8 rounded-[16px] bg-white border border-slate-200/60 hover:border-primary/30 transition-all group shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-              <div className="size-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform shadow-[0_2px_8px_rgba(17,82,212,0.1)]">
-                <span className="material-symbols-outlined text-3xl">verified_user</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
+            {VALUE_PROPS.map(({ icon, title, description }) => (
+              <div
+                key={icon}
+                className="group relative overflow-hidden rounded-[20px] border border-slate-200/80 bg-gradient-to-br from-white via-[#f8fafc] to-blue-50/60 p-8 shadow-[0_12px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/35 hover:shadow-[0_24px_60px_rgba(17,82,212,0.16)]"
+              >
+                {/* אייקון ענק דקורטיבי ברקע הכרטיס */}
+                <span
+                  className="material-symbols-outlined pointer-events-none absolute -bottom-7 -left-6 text-[8.5rem] text-[#111318] opacity-[0.04] transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-110"
+                  aria-hidden
+                >
+                  {icon}
+                </span>
+
+                <div className="mb-6 flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-blue-500 text-white shadow-[0_8px_20px_rgba(17,82,212,0.35)] transition-transform duration-300 group-hover:scale-105">
+                  <span className="material-symbols-outlined text-3xl">{icon}</span>
+                </div>
+                <h3 className="mb-3 text-xl font-black text-[#111318] transition-colors group-hover:text-primary">
+                  {title}
+                </h3>
+                <p className="leading-relaxed text-slate-600">{description}</p>
               </div>
-              <h3 className="text-xl font-bold mb-3 text-[#111318]">בלעדיות במידע</h3>
-              <p className="text-slate-600 leading-relaxed">
-                גישה למאגרי מידע ייחודיים ומקורות גלויים ונסתרים שאינם זמינים לציבור הרחב בממשק אחד.
-              </p>
-            </div>
-            
-            <div className="p-8 rounded-[16px] bg-white border border-slate-200/60 hover:border-primary/30 transition-all group shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-              <div className="size-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform shadow-[0_2px_8px_rgba(17,82,212,0.1)]">
-                <span className="material-symbols-outlined text-3xl">hub</span>
-              </div>
-              <h3 className="text-xl font-bold mb-3 text-[#111318]">חיבור נתונים חכם</h3>
-              <p className="text-slate-600 leading-relaxed">
-                אלגוריתמיקה מתקדמת המצליבה בין שכבות מידע תכנוני, כלכלי ומשפטי לכדי תמונה אחת ברורה.
-              </p>
-            </div>
-            
-            <div className="p-8 rounded-[16px] bg-white border border-slate-200/60 hover:border-primary/30 transition-all group shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-              <div className="size-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform shadow-[0_2px_8px_rgba(17,82,212,0.1)]">
-                <span className="material-symbols-outlined text-3xl">trending_up</span>
-              </div>
-              <h3 className="text-xl font-bold mb-3 text-[#111318]">יתרון תחרותי</h3>
-              <p className="text-slate-600 leading-relaxed">
-                היו הראשונים לזהות הזדמנויות בשוק, שינויי ייעוד ועסקאות חריגות לפני כל המתחרים שלכם.
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -192,34 +206,43 @@ const Index = () => {
         />
         
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-            <div>
-              <h2 className="text-3xl md:text-5xl font-black mb-4 text-[#111318] font-display">כלי הנדל״ן המרכזיים</h2>
-              <p className="text-slate-600 text-lg max-w-xl">
-                הכלים המקצועיים שמעניקים לכם שליטה מלאה בנתוני השוק בזמן אמת.
-              </p>
-            </div>
-            <Button 
-              variant="outline"
-              className="flex items-center gap-2 text-primary font-bold hover:gap-3 transition-all border-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
-            >
-              צפייה בכל היכולות
-              <span className="material-symbols-outlined">arrow_back</span>
-            </Button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <header className="mb-12 text-center lg:mb-14">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-primary/80">
+              ארגז הכלים המקצועי
+            </p>
+            <h2 className="font-display text-3xl font-black tracking-tight text-[#111318] md:text-4xl lg:text-5xl">
+              כלי הנדל״ן המרכזיים
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
+              הכלים המקצועיים שמעניקים לכם שליטה מלאה בנתוני השוק בזמן אמת.
+            </p>
+          </header>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {CORE_TOOLS.map(({ to, icon, title, description }) => (
               <Link key={to} to={to} className={coreToolLinkClassName}>
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+                {/* אייקון ענק דקורטיבי ברקע הכרטיס */}
+                <span
+                  className="material-symbols-outlined pointer-events-none absolute -bottom-7 -left-6 text-[8.5rem] text-[#111318] opacity-[0.04] transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-110"
+                  aria-hidden
+                >
+                  {icon}
+                </span>
+
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-blue-500 text-white shadow-[0_8px_20px_rgba(17,82,212,0.35)] transition-transform duration-300 group-hover:scale-105">
                   <span className="material-symbols-outlined text-2xl">{icon}</span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-bold text-[#111318] group-hover:text-primary transition-colors">{title}</h4>
-                  <p className="text-sm text-slate-600 mt-1.5 leading-relaxed">{description}</p>
+                  <h4 className="text-lg font-black text-[#111318] transition-colors group-hover:text-primary">{title}</h4>
+                  <p className="mt-1.5 text-sm leading-relaxed text-slate-600 sm:text-[15px]">{description}</p>
                 </div>
-                <span className="material-symbols-outlined text-slate-400 shrink-0 transition-colors group-hover:text-primary">
-                  chevron_left
+                <span
+                  className="flex size-9 shrink-0 items-center justify-center self-center rounded-full bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-white"
+                  aria-hidden
+                >
+                  <span className="material-symbols-outlined text-lg transition-transform group-hover:-translate-x-0.5">
+                    arrow_back
+                  </span>
                 </span>
               </Link>
             ))}

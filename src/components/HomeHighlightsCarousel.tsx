@@ -10,13 +10,67 @@ import { cn } from "@/lib/utils";
 import { FileText, HeartHandshake, LayoutGrid } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+/** Break out of Layout `main` horizontal padding; document `overflow-x: hidden` avoids 100vw scrollbar overflow. */
+const sectionFullBleedStyle = {
+  marginLeft: "calc(50% - 50vw)",
+  marginRight: "calc(50% - 50vw)",
+  width: "100vw",
+} as const;
+
+type Variant = "blue" | "amber" | "violet";
+
+/** סגנונות לכל וריאנט צבע של כרטיס — מרוכזים במקום אחד */
+const VARIANT_STYLES: Record<
+  Variant,
+  {
+    shell: string;
+    iconWrap: string;
+    badge: string;
+    titleHover: string;
+    cta: string;
+    footBorder: string;
+    arrowCircle: string;
+  }
+> = {
+  blue: {
+    shell:
+      "border-slate-200/80 bg-gradient-to-br from-white via-[#f8fafc] to-blue-50/80 hover:border-primary/35 hover:shadow-[0_24px_60px_rgba(17,82,212,0.16)] focus-visible:ring-primary",
+    iconWrap: "bg-gradient-to-br from-primary to-blue-500 shadow-[0_8px_20px_rgba(17,82,212,0.35)]",
+    badge: "bg-primary/10 text-primary",
+    titleHover: "group-hover:text-primary",
+    cta: "text-primary",
+    footBorder: "border-slate-200/60",
+    arrowCircle: "bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white",
+  },
+  amber: {
+    shell:
+      "border-slate-200/80 bg-gradient-to-br from-white via-[#fffbf5] to-amber-50/70 hover:border-amber-400/40 hover:shadow-[0_24px_60px_rgba(234,88,12,0.14)] focus-visible:ring-amber-500",
+    iconWrap: "bg-gradient-to-br from-amber-500 to-orange-600 shadow-[0_8px_20px_rgba(234,88,12,0.3)]",
+    badge: "bg-amber-500/12 text-amber-900",
+    titleHover: "group-hover:text-amber-800",
+    cta: "text-amber-800",
+    footBorder: "border-amber-200/50",
+    arrowCircle: "bg-amber-500/10 text-amber-700 group-hover:bg-amber-600 group-hover:text-white",
+  },
+  violet: {
+    shell:
+      "border-slate-200/80 bg-gradient-to-br from-white via-[#f5f3ff] to-violet-50/80 hover:border-violet-400/45 hover:shadow-[0_24px_60px_rgba(109,40,217,0.14)] focus-visible:ring-violet-600",
+    iconWrap: "bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-[0_8px_20px_rgba(109,40,217,0.3)]",
+    badge: "bg-violet-500/12 text-violet-900",
+    titleHover: "group-hover:text-violet-800",
+    cta: "text-violet-800",
+    footBorder: "border-violet-200/50",
+    arrowCircle: "bg-violet-500/10 text-violet-700 group-hover:bg-violet-600 group-hover:text-white",
+  },
+};
+
 type CardDef = {
   to: string;
   badge: string;
   title: string;
   description: string;
   cta: string;
-  variant: "blue" | "amber" | "violet";
+  variant: Variant;
   Icon: LucideIcon;
 };
 
@@ -54,141 +108,107 @@ const CARDS: CardDef[] = [
 ];
 
 function HighlightCard({ card }: { card: CardDef }) {
-  const { to, badge, title, description, cta, variant, Icon } = card;
-
-  const shell =
-    variant === "blue"
-      ? "border-slate-200/80 bg-gradient-to-br from-white via-[#f8fafc] to-blue-50/80 hover:border-primary/35 hover:shadow-[0_20px_50px_rgba(17,82,212,0.14)] focus-visible:ring-primary"
-      : variant === "amber"
-        ? "border-slate-200/80 bg-gradient-to-br from-white via-[#fffbf5] to-amber-50/70 hover:border-amber-400/40 hover:shadow-[0_20px_50px_rgba(234,88,12,0.12)] focus-visible:ring-amber-500"
-        : "border-slate-200/80 bg-gradient-to-br from-white via-[#f5f3ff] to-violet-50/80 hover:border-violet-400/45 hover:shadow-[0_20px_50px_rgba(109,40,217,0.12)] focus-visible:ring-violet-600";
-
-  const topBar =
-    variant === "blue"
-      ? "from-primary via-blue-500 to-cyan-500"
-      : variant === "amber"
-        ? "from-amber-500 via-orange-500 to-rose-600"
-        : "from-violet-600 via-fuchsia-500 to-indigo-600";
-
-  const iconWrap =
-    variant === "blue"
-      ? "bg-primary/10 text-primary ring-primary/15"
-      : variant === "amber"
-        ? "bg-amber-500/12 text-amber-800 ring-amber-500/20 dark:text-amber-300"
-        : "bg-violet-500/12 text-violet-800 ring-violet-500/25 dark:text-violet-200";
-
-  const badgeCls =
-    variant === "blue"
-      ? "bg-primary/10 text-primary"
-      : variant === "amber"
-        ? "bg-amber-500/12 text-amber-900 dark:text-amber-200"
-        : "bg-violet-500/12 text-violet-900 dark:text-violet-100";
-
-  const titleHover =
-    variant === "blue"
-      ? "group-hover:text-primary"
-      : variant === "amber"
-        ? "group-hover:text-amber-800 dark:group-hover:text-amber-300"
-        : "group-hover:text-violet-800 dark:group-hover:text-violet-200";
-
-  const ctaCls =
-    variant === "blue"
-      ? "text-primary"
-      : variant === "amber"
-        ? "text-amber-800 dark:text-amber-300"
-        : "text-violet-800 dark:text-violet-200";
-
-  const borderFoot =
-    variant === "blue"
-      ? "border-slate-200/60"
-      : variant === "amber"
-        ? "border-amber-200/50"
-        : "border-violet-200/50";
-
-  const chevronHover =
-    variant === "blue"
-      ? "group-hover:text-primary/60"
-      : variant === "amber"
-        ? "group-hover:text-amber-600/70"
-        : "group-hover:text-violet-600/70";
+  const { to, badge, title, description, cta, Icon } = card;
+  const styles = VARIANT_STYLES[card.variant];
 
   return (
     <Link
       to={to}
       className={cn(
-        "group relative flex h-full min-h-[300px] flex-col rounded-2xl border p-6 text-right shadow-[0_12px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:min-h-[320px] sm:p-8",
-        shell,
+        "group relative flex h-full min-h-[300px] flex-col overflow-hidden rounded-[20px] border p-6 text-right shadow-[0_12px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:min-h-[320px] sm:p-8",
+        styles.shell,
       )}
     >
-      <div
-        className={cn("absolute top-0 left-0 right-0 h-1 rounded-t-2xl bg-gradient-to-l opacity-90", topBar)}
+      {/* אייקון ענק דקורטיבי ברקע הכרטיס */}
+      <Icon
+        className="pointer-events-none absolute -bottom-7 -left-7 size-36 text-[#111318] opacity-[0.04] transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-110"
         aria-hidden
       />
-      <div className="flex items-start gap-4 mb-5">
+
+      <div className="mb-5 flex items-start gap-4">
         <div
           className={cn(
-            "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-inner ring-1 transition-transform duration-300 group-hover:scale-105",
-            iconWrap,
+            "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white transition-transform duration-300 group-hover:scale-105",
+            styles.iconWrap,
           )}
         >
           <Icon className="size-7" aria-hidden />
         </div>
         <div className="min-w-0 flex-1 space-y-2">
-          <span className={cn("inline-flex items-center rounded-full px-3 py-0.5 text-xs font-bold", badgeCls)}>
+          <span className={cn("inline-flex items-center rounded-full px-3 py-0.5 text-xs font-bold", styles.badge)}>
             {badge}
           </span>
-          <h3 className={cn("text-lg font-black text-[#111318] leading-snug sm:text-xl md:text-2xl", titleHover)}>
+          <h3 className={cn("text-lg font-black leading-snug text-[#111318] transition-colors sm:text-xl md:text-2xl", styles.titleHover)}>
             {title}
           </h3>
         </div>
       </div>
-      <p className="text-slate-600 leading-relaxed text-[15px] sm:text-base mb-6 flex-1">{description}</p>
-      <div className={cn("flex items-center justify-between gap-3 pt-2 border-t", borderFoot)}>
-        <span className={cn("text-sm font-bold inline-flex items-center gap-1 transition-all group-hover:gap-2", ctaCls)}>
+
+      <p className="mb-6 flex-1 text-[15px] leading-relaxed text-slate-600 sm:text-base">{description}</p>
+
+      <div className={cn("flex items-center justify-between gap-3 border-t pt-4", styles.footBorder)}>
+        <span className={cn("inline-flex items-center gap-1 text-sm font-bold transition-all group-hover:gap-2", styles.cta)}>
           {cta}
-          <span className="material-symbols-outlined text-lg transition-transform group-hover:-translate-x-0.5" aria-hidden>
+        </span>
+        <span
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-full transition-all duration-300",
+            styles.arrowCircle,
+          )}
+          aria-hidden
+        >
+          <span className="material-symbols-outlined text-lg transition-transform group-hover:-translate-x-0.5">
             arrow_back
           </span>
-        </span>
-        <span className={cn("material-symbols-outlined text-slate-300 text-2xl transition-colors", chevronHover)} aria-hidden>
-          chevron_left
         </span>
       </div>
     </Link>
   );
 }
 
-const sectionFullBleedStyle = {
-  marginLeft: "calc(50% - 50vw)",
-  marginRight: "calc(50% - 50vw)",
-  width: "100vw",
-} as const;
-
 /**
- * קרוסלת הדגשים לעמוד הבית — מובייל: כרטיס מלא + מגע; מסכים רחבים: 2–3 כרטיסים בפריים.
+ * קרוסלת הדגשים לעמוד הבית — מובייל: כרטיס מלא + מגע; מסכים רחבים: שלושת הכרטיסים גלויים.
  */
 export function HomeHighlightsCarousel() {
   return (
-    <section className="relative py-20 sm:py-24 lg:py-28 bg-white overflow-hidden" style={sectionFullBleedStyle}>
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.04]"
-        style={{
-          backgroundImage: `radial-gradient(circle at 20% 30%, rgba(17, 82, 212, 0.35), transparent 45%),
-            radial-gradient(circle at 80% 70%, rgba(234, 88, 12, 0.2), transparent 42%)`,
-        }}
-        aria-hidden
-      />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
-        <div className="text-center md:text-right mb-10 lg:mb-12">
-          <p className="text-sm font-semibold text-primary mb-2 tracking-wide">ליווי, משקיעים ומכרזים</p>
-          <h2 className="text-3xl md:text-4xl font-black text-[#111318] font-display mb-4">
+    <section
+      className="relative overflow-hidden bg-gradient-to-b from-white via-[#f8fafc] to-white py-20 sm:py-24 lg:py-28"
+      style={sectionFullBleedStyle}
+    >
+      {/* הילות צבע רכות + רשת קווים עדינה לרקע */}
+      <div className="pointer-events-none absolute inset-0">
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: `radial-gradient(circle at 20% 30%, rgba(17, 82, 212, 0.35), transparent 45%),
+              radial-gradient(circle at 80% 70%, rgba(234, 88, 12, 0.2), transparent 42%)`,
+          }}
+        />
+        <div
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, rgba(17, 82, 212, 0.08) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(17, 82, 212, 0.08) 1px, transparent 1px)
+            `,
+            backgroundSize: "40px 40px",
+          }}
+        />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
+        <header className="mb-12 text-center lg:mb-14">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-primary/80">
+            ליווי, משקיעים ומכרזים
+          </p>
+          <h2 className="font-display text-3xl font-black tracking-tight text-[#111318] md:text-4xl lg:text-5xl">
             מהניתוח — לפעולה בשטח
           </h2>
-          <p className="text-slate-600 text-base sm:text-lg max-w-2xl md:mr-0 mx-auto leading-relaxed">
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
             ליווי אישי עד רכישה, לוחות נדל״ן למשקיעים ומכרזים חמים — כלים שמחברים בין ניתוח הנתונים לבין צעדים
             מעשיים בשוק.
           </p>
-        </div>
+        </header>
 
         <Carousel
           opts={{
@@ -210,8 +230,9 @@ export function HomeHighlightsCarousel() {
             ))}
           </CarouselContent>
 
+          {/* חיצי הניווט מוסתרים במסכים רחבים — שלושת הכרטיסים כבר גלויים */}
           <div
-            className="mt-8 flex items-center justify-center gap-4"
+            className="mt-8 flex items-center justify-center gap-4 lg:hidden"
             aria-label="ניווט בין כרטיסים"
           >
             <CarouselPrevious
