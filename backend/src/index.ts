@@ -31,6 +31,7 @@ import tama70Router from './routes/tama70.js';
 import dangerousBuildingsRouter from './routes/dangerousBuildings.js';
 import tabuRequestsRouter from './routes/tabuRequests.js';
 import landCheckRouter from './routes/landCheck.js';
+import billingRouter from './routes/billing.js';
 
 const app = express();
 
@@ -56,12 +57,14 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-// Global JSON parser with the default 100KB limit. The tender-analysis route
-// handles its own JSON parsing with a much larger limit because PDF/DOCX
-// uploads arrive as base64, so we skip the global parser for that path only.
+// Global JSON parser with the default 100KB limit. Two route groups opt out:
+// tender-analysis parses its own JSON with a much larger limit (base64 PDF/DOCX
+// uploads), and billing needs the raw body for webhook signature verification.
 const defaultJsonParser = express.json();
 app.use((req, res, next) => {
-  if (req.path.startsWith('/api/tender-analysis')) return next();
+  if (req.path.startsWith('/api/tender-analysis') || req.path.startsWith('/api/billing')) {
+    return next();
+  }
   return defaultJsonParser(req, res, next);
 });
 
@@ -105,6 +108,7 @@ app.use('/api/tama70', tama70Router);
 app.use('/api/dangerous-buildings', dangerousBuildingsRouter);
 app.use('/api/tabu-requests', tabuRequestsRouter);
 app.use('/api/land-check', landCheckRouter);
+app.use('/api/billing', billingRouter);
 
 // Start server
 const PORT = config.server.port;

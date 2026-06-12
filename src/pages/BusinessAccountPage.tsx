@@ -1,6 +1,10 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LEMONSQUEEZY_CHECKOUT_URL } from "@/config/lemonsqueezy";
+import { LoginDialog } from "@/components/LoginDialog";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { createCheckoutSession } from "@/lib/api/billingApi";
 import { cn } from "@/lib/utils";
 
 const BENEFITS: { icon: string; title: string; description: string; to: string }[] = [
@@ -46,6 +50,45 @@ const BENEFITS: { icon: string; title: string; description: string; to: string }
 const SUBTLE_NOISE_BG = `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V4h4V2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V4h4V2H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
 
 export default function BusinessAccountPage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
+  // Set when checkout was requested while logged out, so login continues straight to payment.
+  const [pendingCheckout, setPendingCheckout] = useState(false);
+
+  const startCheckout = async () => {
+    setRedirecting(true);
+    try {
+      window.location.href = await createCheckoutSession();
+    } catch {
+      toast({
+        title: "שגיאה",
+        description: "לא ניתן לפתוח את עמוד התשלום, נסה שוב",
+        variant: "destructive",
+      });
+      setRedirecting(false);
+    }
+  };
+
+  const handleCheckoutClick = () => {
+    if (user) {
+      void startCheckout();
+    } else {
+      setPendingCheckout(true);
+      setLoginDialogOpen(true);
+    }
+  };
+
+  useEffect(() => {
+    if (user && pendingCheckout) {
+      setPendingCheckout(false);
+      setLoginDialogOpen(false);
+      void startCheckout();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, pendingCheckout]);
+
   return (
     <div
       className="relative w-full min-h-screen bg-[#F5F7FA] overflow-hidden"
@@ -117,19 +160,20 @@ export default function BusinessAccountPage() {
             מעבר לתשלום
           </h2>
           <p className="text-slate-300 mb-8 max-w-xl mx-auto leading-relaxed">
-            לאחר התשלום תוכלו להשלים את הגדרת החשבון העסקי. התשלום מאובטח דרך Lemon Squeezy.
+            מנוי חודשי — ₪50 לחודש, ניתן לבטל בכל עת. התשלום מאובטח דרך CHING.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
-              asChild
               size="lg"
+              disabled={redirecting}
+              onClick={handleCheckoutClick}
               className={cn(
-                "lemonsqueezy-button h-14 px-10 text-lg font-bold rounded-xl",
+                "h-14 px-10 text-lg font-bold rounded-xl",
                 "bg-primary text-primary-foreground hover:bg-primary/90",
                 "shadow-[0_8px_24px_rgba(17,82,212,0.3)]",
               )}
             >
-              <a href={LEMONSQUEEZY_CHECKOUT_URL}>המשך לתשלום מאובטח</a>
+              {redirecting ? "מעביר לתשלום..." : "המשך לתשלום מאובטח"}
             </Button>
             <Button
               asChild
@@ -142,6 +186,8 @@ export default function BusinessAccountPage() {
           </div>
         </section>
       </div>
+
+      <LoginDialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen} />
     </div>
   );
 }

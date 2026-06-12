@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { listUsers } from '../services/authService.js';
 import { listContactSubmissions } from '../services/contactService.js';
-import { getDashboardStats } from '../services/adminStatsService.js';
+import { getDashboardStats, getMonthlyDashboardStats } from '../services/adminStatsService.js';
 
 export async function getUsers(req: Request, res: Response): Promise<void> {
   try {
@@ -20,6 +20,16 @@ export async function getStats(req: Request, res: Response): Promise<void> {
   } catch (e: unknown) {
     console.error('Admin getStats error:', e);
     res.status(500).json({ success: false, error: 'Failed to fetch stats' });
+  }
+}
+
+export async function getMonthlyStats(req: Request, res: Response): Promise<void> {
+  try {
+    const months = await getMonthlyDashboardStats();
+    res.json({ months });
+  } catch (e: unknown) {
+    console.error('Admin getMonthlyStats error:', e);
+    res.status(500).json({ success: false, error: 'Failed to fetch monthly stats' });
   }
 }
 

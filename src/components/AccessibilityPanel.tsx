@@ -176,7 +176,8 @@ export function AccessibilityPanel() {
     <>
       <ContactDialog open={contactOpen} onOpenChange={setContactOpen} />
 
-      <div className="fixed right-4 bottom-6 z-[45] flex flex-col items-end gap-2" dir="rtl">
+      {/* בצד שמאל — כדי לא לחפוף לסיידבר הקבוע בצד ימין */}
+      <div className="fixed left-4 bottom-6 z-[45] flex flex-col items-start gap-2" dir="rtl">
         <Button
           type="button"
           size="icon"

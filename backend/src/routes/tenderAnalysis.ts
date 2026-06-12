@@ -8,9 +8,11 @@
 
 import { Router, json } from 'express';
 import { analyzeTenderController } from '../controllers/tenderAnalysisController.js';
+import { requireAuth } from '../middleware/auth.js';
+import { requireSubscription } from '../middleware/subscription.js';
 
 const router = Router();
 
-router.post('/', json({ limit: '32mb' }), analyzeTenderController);
+router.post('/', json({ limit: '32mb' }), requireAuth, requireSubscription, analyzeTenderController);
 
 export default router;

@@ -1,445 +1,364 @@
 import {
-  Home,
-  MapPin,
+  AlertTriangle,
+  Briefcase,
+  Building2,
+  Calculator,
+  ChevronDown,
+  FileSearch,
   FileText,
+  Flame,
+  Hammer,
+  HeartHandshake,
+  Home,
+  Landmark,
+  LayoutDashboard,
+  LayoutGrid,
+  LogOut,
+  MapPin,
+  MapPinned,
+  Menu,
+  ScrollText,
   Search,
   Settings,
-  Building2,
-  ChevronDown,
-  ChevronUp,
-  Hammer,
-  AlertTriangle,
-  FileSearch,
-  LayoutDashboard,
-  Flame,
-  Warehouse,
-  Calculator,
   User,
-  LogOut,
-  Menu,
-  Briefcase,
-  HeartHandshake,
-  LayoutGrid,
-  Landmark,
-  MapPinned,
-  ScrollText,
+  Warehouse,
+  type LucideIcon,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
-import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { LoginDialog } from "@/components/LoginDialog";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsLgUp } from "@/hooks/use-media-query";
+import { cn } from "@/lib/utils";
 
-/** מרווח פנימי + שבירת שורות — לעקוף whitespace-nowrap של Button שלא יידחק הכיתוב לקצה */
-/** dir=ltr על הכפתור: סדר flex [טקסט, אייקון] ⇒ אייקון מימין; הטקסט ב-NavLabel עם dir=rtl */
-const sidebarNavBtnClass =
-  "flex h-auto min-h-14 w-full min-w-0 flex-row items-start justify-start gap-3 px-3.5 py-3 text-sm font-medium leading-snug whitespace-normal transition-all duration-300 sm:text-[0.9375rem] [&>svg]:shrink-0 [&>svg]:mt-0.5";
+interface NavLink {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+  badge?: string;
+  adminOnly?: boolean;
+  /** ברירת מחדל: התאמה מדויקת ל-pathname */
+  isActive?: (pathname: string, tab: string | null) => boolean;
+}
 
-const sidebarNavSubBtnClass =
-  "flex h-auto min-h-16 w-full min-w-0 flex-row items-start justify-start gap-3 px-3.5 py-3 text-sm font-medium leading-snug whitespace-normal transition-all duration-300 sm:text-[0.9375rem] [&>svg]:shrink-0 [&>svg]:mt-0.5";
+interface NavGroup {
+  label: string;
+  icon: LucideIcon;
+  badge?: string;
+  children: NavLink[];
+}
 
-const sidebarNavTogglerClass =
-  "flex h-auto min-h-14 w-full min-w-0 flex-row items-start justify-between gap-3 px-3.5 py-3 text-sm font-medium leading-snug whitespace-normal transition-all duration-300 sm:text-[0.9375rem] [&>svg]:shrink-0";
+type NavEntry = NavLink | NavGroup;
 
-function NavLabel({ children }: { children: ReactNode }) {
+interface NavSection {
+  label: string;
+  entries: NavEntry[];
+}
+
+const isGroup = (entry: NavEntry): entry is NavGroup => "children" in entry;
+
+const navSections: NavSection[] = [
+  {
+    label: "ראשי",
+    entries: [
+      { to: "/", label: "עמוד ראשי", icon: Home },
+      { to: "/professionals", label: "בעלי מקצוע מומלצים", icon: Briefcase },
+      {
+        to: "/personal-accompaniment",
+        label: "ליווי אישי עד קנייה",
+        icon: HeartHandshake,
+        isActive: (pathname) => pathname.startsWith("/personal-accompaniment"),
+      },
+      { to: "/govmap", label: "מפת מידע נדל״ן GovMap", icon: MapPin },
+    ],
+  },
+  {
+    label: "חיפוש ומכרזים",
+    entries: [
+      { to: "/gush-helka-search", label: "חיפוש לפי גוש וחלקה", icon: MapPinned },
+      {
+        label: "מכרזים חמים",
+        icon: FileText,
+        badge: "חדש",
+        children: [
+          {
+            to: "/listings?tab=rami",
+            label: "מכרזי רמ״י",
+            icon: Hammer,
+            isActive: (pathname, tab) => pathname === "/listings" && tab !== "execution",
+          },
+          {
+            to: "/listings?tab=execution",
+            label: "מכרזי הוצאה לפועל",
+            icon: Hammer,
+            isActive: (pathname, tab) => pathname === "/listings" && tab === "execution",
+          },
+        ],
+      },
+      { to: "/tender-analysis", label: "ניתוח חוזים חכם", icon: ScrollText },
+      { to: "/hot-areas", label: "אזורים חמים למעקב", icon: Flame },
+    ],
+  },
+  {
+    label: "השקעות ותכנון",
+    entries: [
+      { to: "/hot-investor-boards", label: "לוחות נדל״ן חמים למשקיעים", icon: LayoutGrid },
+      { to: "/urban-renewal", label: "מתחמי התחדשות עירונית", icon: Building2 },
+      { to: "/plans", label: "תוכניות בנייה", icon: Search },
+      { to: "/mavat-search", label: "חיפוש תכנון (מנהל התכנון)", icon: Landmark },
+      { to: "/dangerous-buildings", label: "איתור מבנים מסוכנים", icon: AlertTriangle },
+    ],
+  },
+  {
+    label: "מסמכים ובדיקות",
+    entries: [
+      { to: "/tabu-request", label: "הפקת נסח טאבו", icon: FileText },
+      { to: "/land-check", label: "בדיקת קרקע מתקדמת", icon: FileSearch },
+      { to: "/residential-inventory", label: "מלאי תכנוני למגורים", icon: Warehouse },
+      { to: "/tax", label: "מחשבון מס רכישה", icon: Calculator },
+    ],
+  },
+  {
+    label: "ניהול וחשבון",
+    entries: [
+      { to: "/admin-dashboard", label: "דשבורד ניהול", icon: LayoutDashboard, adminOnly: true },
+      { to: "/settings", label: "הגדרות", icon: Settings },
+    ],
+  },
+];
+
+function NavBadge({ children }: { children: string }) {
   return (
-    <span className="min-w-0 flex-1 break-words text-right leading-inherit" dir="rtl">
+    <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[0.625rem] font-semibold text-primary">
       {children}
     </span>
   );
 }
 
-function SidebarNavBody({
-  isActive,
-  currentTab,
-  location,
-  openHotTenders,
-  setOpenHotTenders,
-  setLoginDialogOpen,
+function NavItemLink({
+  item,
+  active,
+  nested = false,
+}: {
+  item: NavLink;
+  active: boolean;
+  nested?: boolean;
+}) {
+  const Icon = item.icon;
+  return (
+    <Link
+      to={item.to}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm leading-snug transition-colors duration-150",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+        nested && "py-1.5",
+        active
+          ? "bg-primary/10 font-semibold text-primary"
+          : "font-medium text-foreground/80 hover:bg-muted hover:text-foreground",
+      )}
+    >
+      <Icon
+        className={cn(
+          "size-[1.125rem] shrink-0 transition-colors",
+          active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+        )}
+      />
+      <span className="min-w-0 flex-1 break-words text-right">{item.label}</span>
+      {item.badge && <NavBadge>{item.badge}</NavBadge>}
+    </Link>
+  );
+}
+
+function NavGroupItem({
+  group,
+  open,
+  onToggle,
+  isItemActive,
+}: {
+  group: NavGroup;
+  open: boolean;
+  onToggle: () => void;
+  isItemActive: (item: NavLink) => boolean;
+}) {
+  const Icon = group.icon;
+  const childActive = group.children.some(isItemActive);
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className={cn(
+          "group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium leading-snug transition-colors duration-150",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+          childActive
+            ? "font-semibold text-primary"
+            : "text-foreground/80 hover:bg-muted hover:text-foreground",
+        )}
+      >
+        <Icon
+          className={cn(
+            "size-[1.125rem] shrink-0 transition-colors",
+            childActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+          )}
+        />
+        <span className="min-w-0 flex-1 break-words text-right">{group.label}</span>
+        {group.badge && <NavBadge>{group.badge}</NavBadge>}
+        <ChevronDown
+          className={cn(
+            "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+            open && "rotate-180",
+          )}
+        />
+      </button>
+
+      {open && (
+        <div className="mt-1 space-y-0.5 border-r border-border pr-3.5 mr-[1.375rem]">
+          {group.children.map((child) => (
+            <NavItemLink key={child.to} item={child} active={isItemActive(child)} nested />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SidebarHeader({
   user,
   profile,
   logout,
-  isAdmin,
+  setLoginDialogOpen,
   showNotificationBell,
 }: {
-  isActive: (path: string) => boolean;
-  currentTab: string | null;
-  location: ReturnType<typeof useLocation>;
-  openHotTenders: boolean;
-  setOpenHotTenders: Dispatch<SetStateAction<boolean>>;
-  setLoginDialogOpen: (v: boolean) => void;
   user: ReturnType<typeof useAuth>["user"];
   profile: ReturnType<typeof useAuth>["profile"];
   logout: () => void;
-  isAdmin: boolean;
+  setLoginDialogOpen: (v: boolean) => void;
   showNotificationBell: boolean;
 }) {
-  return (
-    <>
-      <div className="text-center mb-10">
-        <Link to="/" className="flex items-center justify-center gap-3 mb-4 group">
-          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
-            <Home className="w-7 h-7 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-blue-600">נדל״ן חכם</h1>
-        </Link>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          מערכת אינטרנטית חכמה למכרזים, נכסים והשקעות נדל״ן
-        </p>
-      </div>
+  const email = profile?.email || user?.email || "";
+  const avatarInitial = email.charAt(0).toUpperCase() || "?";
 
-      <div className="mb-6 pb-4 border-b border-border/50">
+  return (
+    <div className="border-b border-border px-4 pb-4 pt-5">
+      <Link to="/" className="group flex items-center gap-2.5">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary shadow-soft transition-shadow duration-200 group-hover:shadow-medium">
+          <Home className="size-5 text-primary-foreground" />
+        </div>
+        <span className="text-lg font-bold text-foreground">נדל״ן חכם</span>
+      </Link>
+      <p className="mt-1.5 text-[0.6875rem] leading-relaxed text-muted-foreground">
+        מערכת אינטרנטית חכמה למכרזים, נכסים והשקעות נדל״ן
+      </p>
+
+      <div className="mt-3.5">
         {user ? (
-          <div className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 rounded-lg">
-            {showNotificationBell && <NotificationBell />}
-            <User className="w-4 h-4 text-blue-600 shrink-0" />
-            <span className="text-sm font-medium truncate min-w-0 flex-1" title={profile?.email || user.email}>
-              {profile?.email || user.email}
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-2.5 py-2">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+              {avatarInitial}
+            </div>
+            <span className="min-w-0 flex-1 truncate text-xs font-medium text-muted-foreground" title={email}>
+              {email}
             </span>
-            <Button variant="ghost" size="icon" onClick={logout} className="shrink-0 h-8 w-8" title="התנתק">
-              <LogOut className="w-4 h-4" />
+            {showNotificationBell && <NotificationBell />}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={logout}
+              className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
+              title="התנתק"
+            >
+              <LogOut className="size-3.5" />
             </Button>
           </div>
         ) : (
-          <Button
-            dir="ltr"
-            onClick={() => setLoginDialogOpen(true)}
-            className="flex h-auto min-h-10 w-full flex-row items-center justify-start gap-2 whitespace-normal px-3.5 py-3 text-sm"
-          >
-            <span className="min-w-0 flex-1 text-right" dir="rtl">
-              התחבר
-            </span>
-            <User className="h-4 w-4 shrink-0" />
+          <Button onClick={() => setLoginDialogOpen(true)} className="h-9 w-full gap-2 text-sm">
+            <User className="size-4 shrink-0" />
+            התחבר
           </Button>
         )}
       </div>
+    </div>
+  );
+}
 
-      <nav className="space-y-2.5">
-        <div>
-          <Link to="/">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                isActive("/") ? "bg-blue-600 shadow-md text-white" : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
-              }`}
-            >
-              <NavLabel>עמוד ראשי</NavLabel>
-              <Home className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
+function SidebarNav({ isAdmin }: { isAdmin: boolean }) {
+  const location = useLocation();
+  const currentTab = useMemo(
+    () => new URLSearchParams(location.search).get("tab"),
+    [location.search],
+  );
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
-        <div>
-          <Link to="/professionals">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                isActive("/professionals")
-                  ? "bg-blue-600 shadow-md text-white"
-                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
-              }`}
-            >
-              <NavLabel>בעלי מקצוע מומלצים</NavLabel>
-              <Briefcase className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
+  const isItemActive = (item: NavLink) =>
+    item.isActive ? item.isActive(location.pathname, currentTab) : location.pathname === item.to;
 
-        <div>
-          <Link to="/personal-accompaniment">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                location.pathname.startsWith("/personal-accompaniment")
-                  ? "bg-blue-600 shadow-md text-white"
-                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
-              }`}
-            >
-              <NavLabel>ליווי אישי עד קנייה</NavLabel>
-              <HeartHandshake className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
+  const isGroupOpen = (group: NavGroup) =>
+    openGroups[group.label] ?? group.children.some(isItemActive);
 
-        <div>
-          <Link to="/govmap">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                isActive("/govmap")
-                  ? "bg-blue-600 shadow-md text-white"
-                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
-              }`}
-            >
-              <NavLabel>מפת מידע נדל״ן GovMap</NavLabel>
-              <MapPin className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
+  return (
+    <nav className="flex-1 overflow-y-auto px-3 py-3" aria-label="ניווט ראשי">
+      {navSections.map((section, sectionIndex) => {
+        const entries = section.entries.filter((entry) => isGroup(entry) || !entry.adminOnly || isAdmin);
+        if (entries.length === 0) return null;
 
-        <div>
-          <Link to="/gush-helka-search">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                isActive("/gush-helka-search")
-                  ? "bg-emerald-600 shadow-md text-white"
-                  : "hover:bg-emerald-500/5 hover:text-emerald-600 hover-lift"
-              }`}
-            >
-              <NavLabel>חיפוש לפי גוש וחלקה</NavLabel>
-              <MapPinned className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
-
-        <div>
-          <Button
-            dir="ltr"
-            variant="default"
-            onClick={() => setOpenHotTenders((v) => !v)}
-            className={`${sidebarNavTogglerClass} bg-blue-600 shadow-md text-white hover:shadow-lg`}
-          >
-            <span className="flex min-w-0 flex-1 flex-row items-start gap-3" dir="ltr">
-              <NavLabel>מכרזים חמים</NavLabel>
-              <FileText className="size-5 shrink-0 mt-0.5" />
-            </span>
-            {openHotTenders ? <ChevronUp className="size-5 shrink-0" /> : <ChevronDown className="size-5 shrink-0" />}
-          </Button>
-          {openHotTenders && (
-            <div className="mt-1.5 space-y-1.5 pr-2">
-              <Link to="/listings?tab=rami">
-                <Button
-                  dir="ltr"
-                  className={`${sidebarNavSubBtnClass} text-blue-600 ${
-                    location.pathname === "/listings" && currentTab !== "execution"
-                      ? "bg-blue-500/10"
-                      : "hover:bg-blue-500/5 hover-lift"
-                  }`}
-                  variant="ghost"
-                >
-                  <NavLabel>מכרזי רמ״י</NavLabel>
-                  <Hammer className="size-5 shrink-0" />
-                </Button>
-              </Link>
-              <Link to="/listings?tab=execution">
-                <Button
-                  dir="ltr"
-                  className={`${sidebarNavSubBtnClass} text-blue-600 ${
-                    location.pathname === "/listings" && currentTab === "execution"
-                      ? "bg-blue-500/10"
-                      : "hover:bg-blue-500/5 hover-lift"
-                  }`}
-                  variant="ghost"
-                >
-                  <NavLabel>מכרזי הוצאה לפועל</NavLabel>
-                  <Hammer className="size-5 shrink-0" />
-                </Button>
-              </Link>
+        return (
+          <div key={section.label}>
+            {sectionIndex > 0 && <div className="mx-2 my-2.5 h-px bg-border" />}
+            <p className="mb-1.5 px-3 pt-1 text-[0.625rem] font-semibold tracking-wider text-muted-foreground">
+              {section.label}
+            </p>
+            <div className="space-y-0.5">
+              {entries.map((entry) =>
+                isGroup(entry) ? (
+                  <NavGroupItem
+                    key={entry.label}
+                    group={entry}
+                    open={isGroupOpen(entry)}
+                    onToggle={() =>
+                      setOpenGroups((prev) => ({ ...prev, [entry.label]: !isGroupOpen(entry) }))
+                    }
+                    isItemActive={isItemActive}
+                  />
+                ) : (
+                  <NavItemLink key={entry.to} item={entry} active={isItemActive(entry)} />
+                ),
+              )}
             </div>
-          )}
-        </div>
-
-        <div>
-          <Link to="/tender-analysis">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                isActive("/tender-analysis")
-                  ? "bg-blue-600 shadow-md text-white"
-                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
-              }`}
-            >
-              <NavLabel>ניתוח מכרזים חכם</NavLabel>
-              <ScrollText className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
-
-        <div>
-          <Link to="/hot-areas">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                isActive("/hot-areas")
-                  ? "bg-gradient-to-r from-orange-500 to-red-500 shadow-glow text-white"
-                  : "hover:bg-orange-500/5 hover:text-orange-600 hover-lift"
-              }`}
-            >
-              <NavLabel>אזורים חמים למעקב</NavLabel>
-              <Flame className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
-
-        <div>
-          <Link to="/hot-investor-boards">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                isActive("/hot-investor-boards")
-                  ? "bg-gradient-to-r from-amber-500 to-orange-600 shadow-md text-white"
-                  : "hover:bg-amber-500/5 hover:text-amber-700 dark:hover:text-amber-300 hover-lift"
-              }`}
-            >
-              <NavLabel>לוחות נדל״ן חמים למשקיעים</NavLabel>
-              <LayoutGrid className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
-
-        <div>
-          <Link to="/urban-renewal">
-            <Button dir="ltr" className={`${sidebarNavBtnClass} hover:bg-blue-500/5 hover:text-blue-600 hover-lift`}>
-              <NavLabel>מתחמי התחדשות עירונית</NavLabel>
-              <Building2 className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
-
-        <div>
-          <Link to="/plans">
-            <Button dir="ltr" className={`${sidebarNavBtnClass} hover:bg-blue-500/5 hover:text-blue-600 hover-lift`}>
-              <NavLabel>תוכניות בנייה</NavLabel>
-              <Search className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
-
-        <div>
-          <Link to="/mavat-search">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                isActive("/mavat-search")
-                  ? "bg-blue-600 shadow-md text-white"
-                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
-              }`}
-            >
-              <NavLabel>חיפוש תכנון (מנהל התכנון)</NavLabel>
-              <Landmark className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
-
-        <div>
-          <Link to="/dangerous-buildings">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                isActive("/dangerous-buildings")
-                  ? "bg-blue-600 shadow-md text-white"
-                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
-              }`}
-            >
-              <NavLabel>איתור מבנים מסוכנים</NavLabel>
-              <AlertTriangle className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
-
-        <div>
-          <Link to="/tabu-request">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                isActive("/tabu-request")
-                  ? "bg-blue-600 shadow-md text-white"
-                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
-              }`}
-            >
-              <NavLabel>הפקת נסח טאבו</NavLabel>
-              <FileText className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
-
-        <div>
-          <Link to="/land-check">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                isActive("/land-check")
-                  ? "bg-blue-600 shadow-md text-white"
-                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
-              }`}
-            >
-              <NavLabel>בדיקת קרקע מתקדמת</NavLabel>
-              <FileSearch className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
-
-        <div>
-          <Link to="/residential-inventory">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                isActive("/residential-inventory")
-                  ? "bg-blue-600 shadow-md text-white"
-                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
-              }`}
-            >
-              <NavLabel>מלאי תכנוני למגורים</NavLabel>
-              <Warehouse className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
-
-        <div>
-          <Link to="/tax">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                isActive("/tax")
-                  ? "bg-blue-600 shadow-md text-white"
-                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
-              }`}
-            >
-              <NavLabel>מחשבון מס רכישה</NavLabel>
-              <Calculator className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
-
-        {isAdmin && (
-          <div>
-            <Link to="/admin-dashboard">
-              <Button
-                dir="ltr"
-                className={`${sidebarNavBtnClass} ${
-                  isActive("/admin-dashboard")
-                    ? "bg-blue-600 shadow-md text-white"
-                    : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
-                }`}
-              >
-                <NavLabel>דשבורד ניהול</NavLabel>
-                <LayoutDashboard className="size-5 shrink-0" />
-              </Button>
-            </Link>
           </div>
-        )}
+        );
+      })}
+    </nav>
+  );
+}
 
-        <div>
-          <Link to="/settings">
-            <Button
-              dir="ltr"
-              className={`${sidebarNavBtnClass} ${
-                isActive("/settings")
-                  ? "bg-blue-600 shadow-md text-white"
-                  : "hover:bg-blue-500/5 hover:text-blue-600 hover-lift"
-              }`}
-            >
-              <NavLabel>הגדרות</NavLabel>
-              <Settings className="size-5 shrink-0" />
-            </Button>
-          </Link>
-        </div>
-      </nav>
-    </>
+function SidebarBody({
+  showNotificationBell,
+  className,
+}: {
+  showNotificationBell: boolean;
+  className?: string;
+}) {
+  const { user, profile, logout, isAdmin } = useAuth();
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
+
+  return (
+    <div className={cn("flex h-full min-h-0 flex-col", className)} dir="rtl">
+      <LoginDialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen} />
+      <SidebarHeader
+        user={user}
+        profile={profile}
+        logout={logout}
+        setLoginDialogOpen={setLoginDialogOpen}
+        showNotificationBell={showNotificationBell}
+      />
+      <SidebarNav isAdmin={isAdmin} />
+    </div>
   );
 }
 
@@ -450,44 +369,18 @@ export function Sidebar() {
   /** עמוד הבית: תמיד מסך מלא בלי סרגל צד קבוע (כמו landing) */
   const showCompactHeader = !isLgUp || isHome;
   const showDesktopAside = isLgUp && !isHome;
-  const [openHotTenders, setOpenHotTenders] = useState(false);
-  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const { user, profile, logout, isAdmin } = useAuth();
-
-  const isActive = (path: string) => location.pathname === path;
-  const currentTab = useMemo(() => {
-    const search = new URLSearchParams(location.search);
-    return search.get("tab");
-  }, [location.search]);
+  const { user } = useAuth();
 
   useEffect(() => {
     setMobileNavOpen(false);
   }, [location.pathname, location.search]);
 
-  const navPropsDesktop = {
-    isActive,
-    currentTab,
-    location,
-    openHotTenders,
-    setOpenHotTenders,
-    setLoginDialogOpen,
-    user,
-    profile,
-    logout,
-    isAdmin,
-    showNotificationBell: true as const,
-  };
-
-  const navPropsMobileSheet = { ...navPropsDesktop, showNotificationBell: false as const };
-
   return (
     <>
-      <LoginDialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen} />
-
       {showCompactHeader && (
         <>
-          <header className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center gap-3 border-b border-border/50 bg-gradient-card px-4 shadow-md">
+          <header className="fixed left-0 right-0 top-0 z-50 flex h-14 items-center gap-3 border-b border-border bg-card px-4 shadow-soft">
             <Button
               type="button"
               variant="outline"
@@ -496,20 +389,23 @@ export function Sidebar() {
               aria-label="פתח תפריט ניווט"
               onClick={() => setMobileNavOpen(true)}
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="size-5" />
             </Button>
-            <Link to="/" className="min-w-0 flex-1 truncate text-center text-lg font-bold text-blue-600">
+            <Link to="/" className="min-w-0 flex-1 truncate text-center text-lg font-bold text-primary">
               נדל״ן חכם
             </Link>
-            <div className="flex w-10 shrink-0 justify-end">{user ? <NotificationBell /> : <span className="inline-block w-10" aria-hidden />}</div>
+            <div className="flex w-10 shrink-0 justify-end">
+              {user ? <NotificationBell /> : <span className="inline-block w-10" aria-hidden />}
+            </div>
           </header>
 
           <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
             <SheetContent
-              side="left"
-              className="flex w-[min(100vw,18rem)] max-w-[18rem] flex-col overflow-y-auto border-r border-border/50 bg-gradient-card p-6 sm:max-w-[18rem]"
+              side="right"
+              className="flex w-[min(100vw,18rem)] max-w-[18rem] flex-col border-l border-border bg-card p-0 sm:max-w-[18rem]"
             >
-              <SidebarNavBody {...navPropsMobileSheet} />
+              {/* pt-6 — מפנה מקום לכפתור הסגירה המובנה של ה-Sheet בפינה העליונה */}
+              <SidebarBody showNotificationBell={false} className="pt-6" />
             </SheetContent>
           </Sheet>
         </>
@@ -517,10 +413,10 @@ export function Sidebar() {
 
       {showDesktopAside && (
         <aside
-          className="fixed left-0 top-0 z-40 flex h-screen w-72 flex-col overflow-y-auto border-r border-border/50 bg-gradient-card p-6 shadow-lg animate-slide-up"
+          className="fixed right-0 top-0 z-40 flex h-screen w-72 flex-col border-l border-border bg-card shadow-soft"
           aria-label="תפריט ניווט"
         >
-          <SidebarNavBody {...navPropsDesktop} />
+          <SidebarBody showNotificationBell />
         </aside>
       )}
     </>

@@ -16,3 +16,4 @@ export {
 
 export { ScannedPdfError } from './ingestion/pdfExtractor.js';
 export { STAGE, type StageName } from './extractors/index.js';
+export { saveTenderAnalysis } from './repository.js';

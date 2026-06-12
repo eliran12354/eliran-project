@@ -6,7 +6,40 @@ export type AdminDashboardStats = {
   usersCount: number;
   propertiesCount: number;
   contactSubmissionsCount: number;
+  tenderAnalysesCount: number;
+  tenderTokensUsed: number;
 };
+
+export type AdminMonthlyStat = {
+  /** מפתח חודש בפורמט YYYY-MM */
+  month: string;
+  /** סך משתמשים מצטבר עד סוף החודש */
+  totalUsers: number;
+  /** כמות פעולות שתועדו במערכת באותו חודש */
+  activityCount: number;
+};
+
+export async function fetchAdminMonthlyStats(): Promise<
+  { success: true; months: AdminMonthlyStat[] } | { success: false; error: string }
+> {
+  const token = getToken();
+  if (!token) {
+    return { success: false, error: "לא מחובר" };
+  }
+  try {
+    const res = await fetch(`${BASE_URL}/api/admin/stats/monthly`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = (await res.json()) as { months?: AdminMonthlyStat[]; error?: string };
+    if (!res.ok) {
+      return { success: false, error: data.error || "שגיאה בטעינת נתונים" };
+    }
+    return { success: true, months: data.months ?? [] };
+  } catch (e) {
+    const err = e as Error;
+    return { success: false, error: err.message || "שגיאת רשת" };
+  }
+}
 
 export async function fetchAdminStats(): Promise<
   { success: true; stats: AdminDashboardStats } | { success: false; error: string }
@@ -29,6 +62,8 @@ export async function fetchAdminStats(): Promise<
         usersCount: data.usersCount ?? 0,
         propertiesCount: data.propertiesCount ?? 0,
         contactSubmissionsCount: data.contactSubmissionsCount ?? 0,
+        tenderAnalysesCount: data.tenderAnalysesCount ?? 0,
+        tenderTokensUsed: data.tenderTokensUsed ?? 0,
       },
     };
   } catch (e) {

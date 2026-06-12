@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ContactDialog } from "@/components/ContactDialog";
-import { FeaturedProfessionalsShowcase } from "@/components/FeaturedProfessionalsShowcase";
+import { SmartContractAnalysisShowcase } from "@/components/SmartContractAnalysisShowcase";
+import { GushHelkaSearchShowcase } from "@/components/GushHelkaSearchShowcase";
+import { LandCheckShowcase } from "@/components/LandCheckShowcase";
 import { HomeHighlightsCarousel } from "@/components/HomeHighlightsCarousel";
 
 const CORE_TOOLS = [
@@ -228,7 +230,11 @@ const Index = () => {
       {/* Subtle Divider */}
       <div className="h-px bg-gradient-to-r from-transparent via-slate-200/60 to-transparent"></div>
 
-      <FeaturedProfessionalsShowcase />
+      <SmartContractAnalysisShowcase />
+
+      <GushHelkaSearchShowcase />
+
+      <LandCheckShowcase />
 
       {/* Subtle Divider */}
       <div className="h-px bg-gradient-to-r from-transparent via-slate-200/60 to-transparent"></div>

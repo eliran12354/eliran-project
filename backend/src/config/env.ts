@@ -39,6 +39,15 @@ export const config = {
     resendApiKey: process.env.RESEND_API_KEY || '',
     from: process.env.EMAIL_FROM || 'noreply@example.com',
   },
+  ching: {
+    /** CHING secret API key (ck_test_* / ck_live_*). Server-side only. */
+    apiKey: process.env.CHING_API_KEY || '',
+    /** HMAC secret (whsec_*) for verifying incoming webhooks. */
+    webhookSecret: process.env.CHING_WEBHOOK_SECRET || '',
+    apiBase: process.env.CHING_API_BASE || 'https://api.ching.co.il',
+    /** Recurring price id (price_*) of the monthly subscription plan. */
+    monthlyPriceId: process.env.CHING_MONTHLY_PRICE_ID || '',
+  },
 };
 
 // Validate required environment variables

@@ -1,3 +1,5 @@
+import { getToken } from "./authApi";
+
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:10000";
 
 /* ─────────────── Result shape (mirror of backend) ─────────────── */
@@ -142,9 +144,13 @@ export async function analyzeTender(
 
     let res: Response;
     try {
+      const token = getToken();
       res = await fetch(`${BASE_URL}/api/tender-analysis`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(body),
         signal: ac.signal,
       });

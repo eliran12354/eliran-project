@@ -32,6 +32,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -294,18 +295,43 @@ export default function GushHelkaSearchPage() {
                   <MapPinned className="size-7" aria-hidden />
                 </div>
               </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight font-display text-foreground mb-1">
+              <div className="min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight font-display text-foreground mb-1.5">
                   חיפוש לפי גוש וחלקה
                 </h1>
-                <p className="text-sm text-muted-foreground max-w-xl leading-relaxed">
-                  מפת חלקה חיה - הכל בלחיצה אחת.
+                <p className="text-sm sm:text-[15px] text-muted-foreground max-w-2xl leading-relaxed">
+                  הזינו גוש וחלקה — וקבלו בתוך שניות את מה שלוקח לאחרים שעות לאסוף:
+                  גבולות החלקה על מפה חיה, מוצלבים מ
+                  <span className="font-semibold text-foreground">ארבעה מאגרים ממשלתיים</span>
+                  {" "}לדוח תכנוני אחד וברור.
                 </p>
+                <ul className="flex flex-wrap items-center gap-2 mt-3.5" aria-label="מקורות המידע">
+                  {[
+                    { icon: Layers, label: "ייעודי קרקע ותב״ע", classes: "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" },
+                    { icon: Building2, label: "התחדשות עירונית", classes: "border-blue-500/25 bg-blue-500/10 text-blue-700 dark:text-blue-300" },
+                    { icon: Hammer, label: "מכרזי רמ״י", classes: "border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300" },
+                    { icon: Warehouse, label: "מלאי תכנוני למגורים", classes: "border-purple-500/25 bg-purple-500/10 text-purple-700 dark:text-purple-300" },
+                  ].map(({ icon: Icon, label, classes }) => (
+                    <li
+                      key={label}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-full border px-3 py-1.5",
+                        "text-xs font-semibold whitespace-nowrap",
+                        "transition-transform hover:-translate-y-0.5",
+                        classes,
+                      )}
+                    >
+                      <Icon className="size-3.5 shrink-0" aria-hidden />
+                      {label}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
         </header>
 
+        <SubscriptionGate>
         <Card className="card-gradient mb-6 overflow-hidden rounded-2xl border border-primary/10 shadow-medium animate-slide-up">
           <div className="h-1 w-full bg-gradient-to-l from-primary via-emerald-400 to-teal-500" aria-hidden />
           <form
@@ -460,6 +486,7 @@ export default function GushHelkaSearchPage() {
             </button>
           )}
         </Card>
+        </SubscriptionGate>
       </div>
 
       <ResultsDialog

@@ -7,9 +7,9 @@
  *     passes a base64-encoded document body (data URL prefix is stripped if
  *     present)
  *
- * Returns the full `TenderAnalysisResult` from the orchestrator. We do NOT
- * persist anything by default — keep the surface area minimal and let a
- * future DB migration add history once the feature stabilizes.
+ * Returns the full `TenderAnalysisResult` from the orchestrator. Each analysis
+ * is also recorded in `tender_analyses` (best-effort) so the admin dashboard
+ * can report aggregate usage such as total token spend.
  */
 
 import { Request, Response } from 'express';
@@ -17,6 +17,8 @@ import {
   ScannedPdfError,
   analyzeTenderFromBuffer,
   analyzeTenderFromUrl,
+  saveTenderAnalysis,
+  type TenderAnalysisResult,
 } from '../services/tenderAnalysis/index.js';
 
 const MAX_FILE_SIZE_BYTES = 30 * 1024 * 1024; // 30 MB after decoding base64
@@ -29,12 +31,27 @@ interface AnalyzeRequestBody {
   mimeType?: string;
 }
 
+/**
+ * Records the analysis for admin reporting. Never throws — a failed audit
+ * insert must not break the user-facing response.
+ */
+async function recordAnalysis(result: TenderAnalysisResult, userId: string | null): Promise<void> {
+  try {
+    await saveTenderAnalysis(result, userId);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error('⚠️ saveTenderAnalysis failed:', message);
+  }
+}
+
 export async function analyzeTenderController(req: Request, res: Response) {
   const body = (req.body ?? {}) as AnalyzeRequestBody;
+  const userId = req.user?.sub ?? null;
 
   try {
     if (body.url && typeof body.url === 'string') {
       const result = await analyzeTenderFromUrl(body.url.trim());
+      await recordAnalysis(result, userId);
       return res.json({ success: true, result });
     }
 
@@ -69,6 +86,7 @@ export async function analyzeTenderController(req: Request, res: Response) {
         mimeType: body.mimeType || 'application/octet-stream',
         fileName: body.fileName,
       });
+      await recordAnalysis(result, userId);
       return res.json({ success: true, result });
     }
 

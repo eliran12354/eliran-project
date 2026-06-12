@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ScrollText, Loader2, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { TenderAnalysisInputForm } from "@/components/tenderAnalysis/TenderAnalysisInputForm";
 import { TenderAnalysisResults } from "@/components/tenderAnalysis/TenderAnalysisResults";
 import {
@@ -105,6 +106,7 @@ export default function TenderAnalysisPage() {
           </div>
         </header>
 
+        <SubscriptionGate>
         <TenderAnalysisInputForm
           loading={loading}
           onSubmit={handleSubmit}
@@ -138,6 +140,7 @@ export default function TenderAnalysisPage() {
             <TenderAnalysisResults key={result.generatedAt} result={result} />
           </div>
         )}
+        </SubscriptionGate>
       </div>
     </div>
   );

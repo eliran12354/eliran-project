@@ -21,7 +21,7 @@ export function Layout({ children }: LayoutProps) {
         id="main-content"
         tabIndex={-1}
         className={`min-h-screen min-w-0 overflow-x-hidden pl-4 pr-4 sm:pl-6 sm:pr-6 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-          isHome ? "ml-0" : "ml-0 lg:ml-72"
+          isHome ? "mr-0" : "mr-0 lg:mr-72"
         } ${
           isHome
             ? "pt-14 pb-0"

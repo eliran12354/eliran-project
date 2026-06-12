@@ -27,6 +27,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { ConfidenceBadge, SeverityBadge } from "./SeverityBadge";
 import type {
@@ -830,7 +831,11 @@ function RequiredDocumentsCard({ docs }: { docs: RequiredDocument[] }) {
 
 /* ─────────────────────── footer / shared ─────────────────────── */
 
+/** Token/timing metadata is internal usage data — only shown to admins. */
 function MetadataFooter({ result }: { result: TenderAnalysisResult }) {
+  const { isAdmin } = useAuth();
+  if (!isAdmin) return null;
+
   const generatedAt = formatDate(result.generatedAt);
   return (
     <p className="text-xs text-muted-foreground text-center pt-2">
