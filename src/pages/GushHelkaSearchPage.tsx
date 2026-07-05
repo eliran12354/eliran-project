@@ -3,8 +3,9 @@
  * (autocomplete → entitiesByPoint עם x-trace-id / x-user-id).
  *
  * UX: תוך כדי החיפוש נפתח דיאלוג עם 4 שלבי טעינה אנימטיביים. בסיומו אותו
- * דיאלוג מתחלף לתצוגת תוצאות עם Accordion לכל אחד מארבעת מקורות הנתונים
- * (מבא״ת, התחדשות עירונית, מכרזי רמ״י, מלאי תכנוני למגורים).
+ * דיאלוג מתחלף לתצוגת תוצאות עם Accordion לכל אחד מששת מקורות הנתונים
+ * (יעודי קרקע מבא״ת, קווים כחולים מבא״ת, התחדשות עירונית, מכרזי רמ״י,
+ * מלאי תכנוני למגורים, רחובות טובים).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType, SVGProps } from "react";
@@ -24,8 +25,10 @@ import {
   Loader2,
   MapPin,
   MapPinned,
+  Route,
   Search as SearchIcon,
   Sparkles,
+  Spline,
   Warehouse,
   X,
 } from "lucide-react";
@@ -104,9 +107,11 @@ type SuccessState = {
   parcel: Feature<Polygon | MultiPolygon>;
   fieldsForDisplay: { label: string; value: string }[];
   landUse: GovMapLandUseEntry[];
+  blueLines: GovMapPointLayerEntry[];
   urbanRenewal: GovMapPointLayerEntry[];
   ramiTenders: GovMapPointLayerEntry[];
   residentialInventory: GovMapPointLayerEntry[];
+  goodStreets: GovMapPointLayerEntry[];
 };
 
 type SearchState =
@@ -139,7 +144,7 @@ const LOADING_STEPS: ReadonlyArray<{
   {
     id: "cross-reference",
     label: "הצלבת מאגרי תכנון",
-    description: "שואלים את שכבות מבא״ת, התחדשות עירונית, רמ״י ומלאי תכנוני",
+    description: "שואלים את שכבות מבא״ת (יעודים וקווים כחולים), התחדשות עירונית, רמ״י, מלאי תכנוני ורחובות טובים",
   },
   {
     id: "rendering",
@@ -220,9 +225,11 @@ export default function GushHelkaSearchPage() {
             parcel: result.geojson,
             fieldsForDisplay: result.fieldsForDisplay,
             landUse: result.landUse,
+            blueLines: result.blueLines,
             urbanRenewal: result.urbanRenewal,
             ramiTenders: result.ramiTenders,
             residentialInventory: result.residentialInventory,
+            goodStreets: result.goodStreets,
           });
           setDialogOpen(true);
         } catch (err) {
@@ -302,15 +309,17 @@ export default function GushHelkaSearchPage() {
                 <p className="text-sm sm:text-[15px] text-muted-foreground max-w-2xl leading-relaxed">
                   הזינו גוש וחלקה — וקבלו בתוך שניות את מה שלוקח לאחרים שעות לאסוף:
                   גבולות החלקה על מפה חיה, מוצלבים מ
-                  <span className="font-semibold text-foreground">ארבעה מאגרים ממשלתיים</span>
+                  <span className="font-semibold text-foreground">שישה מאגרים ממשלתיים</span>
                   {" "}לדוח תכנוני אחד וברור.
                 </p>
                 <ul className="flex flex-wrap items-center gap-2 mt-3.5" aria-label="מקורות המידע">
                   {[
-                    { icon: Layers, label: "ייעודי קרקע ותב״ע", classes: "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" },
+                    { icon: Layers, label: "יעודי קרקע — מבא״ת", classes: "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" },
+                    { icon: Spline, label: "קווים כחולים — מבא״ת", classes: "border-sky-500/25 bg-sky-500/10 text-sky-700 dark:text-sky-300" },
                     { icon: Building2, label: "התחדשות עירונית", classes: "border-blue-500/25 bg-blue-500/10 text-blue-700 dark:text-blue-300" },
                     { icon: Hammer, label: "מכרזי רמ״י", classes: "border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300" },
                     { icon: Warehouse, label: "מלאי תכנוני למגורים", classes: "border-purple-500/25 bg-purple-500/10 text-purple-700 dark:text-purple-300" },
+                    { icon: Route, label: "רחובות טובים", classes: "border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-300" },
                   ].map(({ icon: Icon, label, classes }) => (
                     <li
                       key={label}
@@ -613,7 +622,7 @@ function LoadingPanel({
               <span className="tabular-nums text-primary">{state.helka.toLocaleString("he-IL")}</span>
             </DialogTitle>
             <DialogDescription className="text-sm mt-1.5 leading-relaxed">
-              מצליבים ארבעה מאגרי תכנון — זה לוקח מספר שניות
+              מצליבים שישה מאגרי מידע — זה לוקח מספר שניות
             </DialogDescription>
           </div>
         </div>
@@ -699,7 +708,7 @@ function LoadingPanel({
 // Results panel
 // ---------------------------------------------------------------------------
 
-type AccentName = "emerald" | "blue" | "amber" | "purple";
+type AccentName = "emerald" | "sky" | "blue" | "amber" | "purple" | "rose";
 
 const ACCENT_CLASSES: Record<
   AccentName,
@@ -728,7 +737,20 @@ const ACCENT_CLASSES: Record<
     countBg: "bg-emerald-500/15",
     countText: "text-emerald-700 dark:text-emerald-300",
     entryBorder: "border-emerald-500/15 hover:border-emerald-500/30",
-    shortLabel: "מבא״ת",
+    shortLabel: "יעודים",
+  },
+  sky: {
+    statCard: "border-sky-500/20 bg-gradient-to-br from-sky-500/10 to-cyan-500/5",
+    statIcon: "text-sky-600",
+    iconBg: "bg-gradient-to-br from-sky-500 to-cyan-600 shadow-sky-500/25 shadow-md",
+    iconText: "text-white",
+    triggerHover: "hover:bg-sky-500/5",
+    openBg: "data-[state=open]:bg-gradient-to-l data-[state=open]:from-sky-500/8 data-[state=open]:to-transparent",
+    openBorder: "data-[state=open]:border-s-4 data-[state=open]:border-s-sky-500",
+    countBg: "bg-sky-500/15",
+    countText: "text-sky-700 dark:text-sky-300",
+    entryBorder: "border-sky-500/15 hover:border-sky-500/30",
+    shortLabel: "קווים כחולים",
   },
   blue: {
     statCard: "border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-indigo-500/5",
@@ -769,6 +791,19 @@ const ACCENT_CLASSES: Record<
     entryBorder: "border-purple-500/15 hover:border-purple-500/30",
     shortLabel: "מלאי",
   },
+  rose: {
+    statCard: "border-rose-500/20 bg-gradient-to-br from-rose-500/10 to-pink-500/5",
+    statIcon: "text-rose-600",
+    iconBg: "bg-gradient-to-br from-rose-500 to-pink-600 shadow-rose-500/25 shadow-md",
+    iconText: "text-white",
+    triggerHover: "hover:bg-rose-500/5",
+    openBg: "data-[state=open]:bg-gradient-to-l data-[state=open]:from-rose-500/8 data-[state=open]:to-transparent",
+    openBorder: "data-[state=open]:border-s-4 data-[state=open]:border-s-rose-500",
+    countBg: "bg-rose-500/15",
+    countText: "text-rose-700 dark:text-rose-300",
+    entryBorder: "border-rose-500/15 hover:border-rose-500/30",
+    shortLabel: "רחובות",
+  },
 };
 
 type LucideIcon = ComponentType<SVGProps<SVGSVGElement>>;
@@ -782,6 +817,8 @@ type Topic = {
   emptyMessage: string;
   fallbackTitle: string;
   entries: GovMapPointLayerEntry[];
+  /** היכן נמצאו הפריטים — ברירת מחדל "בנקודה" (לרחובות טובים: חיפוש סביבתי). */
+  foundSuffix?: string;
 };
 
 function ResultsPanel({
@@ -807,6 +844,16 @@ function ResultsPanel({
           subtitle: e.planNumber,
           fieldsForDisplay: e.fieldsForDisplay,
         })),
+      },
+      {
+        id: "blueLines",
+        icon: Spline,
+        accent: "sky",
+        label: "קווים כחולים — מבא״ת",
+        layerBadge: "שכבה 203",
+        emptyMessage: "לא נמצאו גבולות תוכניות (קווים כחולים) בנקודה זו.",
+        fallbackTitle: "תוכנית ללא שם",
+        entries: state.blueLines,
       },
       {
         id: "urbanRenewal",
@@ -838,8 +885,19 @@ function ResultsPanel({
         fallbackTitle: "תוכנית ללא שם",
         entries: state.residentialInventory,
       },
+      {
+        id: "goodStreets",
+        icon: Route,
+        accent: "rose",
+        label: "רחובות טובים",
+        layerBadge: "שכבה 159206",
+        emptyMessage: "לא נמצאו רחובות טובים בסביבת החלקה.",
+        fallbackTitle: "רחוב ללא שם",
+        entries: state.goodStreets,
+        foundSuffix: "בסביבת החלקה",
+      },
     ],
-    [state.landUse, state.urbanRenewal, state.ramiTenders, state.residentialInventory],
+    [state.landUse, state.blueLines, state.urbanRenewal, state.ramiTenders, state.residentialInventory, state.goodStreets],
   );
 
   /** פותחים אוטומטית את הנושא הראשון שיש בו נתונים. */
@@ -886,7 +944,7 @@ function ResultsPanel({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-5">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-5">
           {topics.map((topic) => {
             const accent = ACCENT_CLASSES[topic.accent];
             const Icon = topic.icon;
@@ -1024,8 +1082,8 @@ function TopicAccordionItem({ topic }: { topic: Topic }) {
               {isEmpty
                 ? topic.emptyMessage
                 : topic.entries.length === 1
-                  ? "פריט אחד נמצא בנקודה"
-                  : `${topic.entries.length} פריטים נמצאו בנקודה`}
+                  ? `פריט אחד נמצא ${topic.foundSuffix ?? "בנקודה"}`
+                  : `${topic.entries.length} פריטים נמצאו ${topic.foundSuffix ?? "בנקודה"}`}
             </p>
           </div>
           <span

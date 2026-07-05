@@ -11,8 +11,13 @@ const sectionFullBleedStyle = {
 const DATA_SOURCES = [
   {
     icon: "layers",
-    title: "מבא״ת",
-    description: "תוכניות בנייה ומסמכים תכנוניים החלים על החלקה",
+    title: "יעודי קרקע — מבא״ת",
+    description: "ייעודי הקרקע והתוכניות התקפות החלות על החלקה",
+  },
+  {
+    icon: "polyline",
+    title: "קווים כחולים — מבא״ת",
+    description: "גבולות תוכניות בניין עיר החלות על החלקה וסביבתה",
   },
   {
     icon: "location_city",
@@ -28,6 +33,11 @@ const DATA_SOURCES = [
     icon: "warehouse",
     title: "מלאי תכנוני",
     description: "פוטנציאל יחידות דיור ומלאי תכנוני למגורים",
+  },
+  {
+    icon: "route",
+    title: "רחובות טובים",
+    description: "רחובות מדורגים על ידי הציבור בסביבת החלקה",
   },
 ] as const;
 
@@ -109,13 +119,13 @@ export function GushHelkaSearchShowcase() {
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-300 md:text-lg">
             הזינו מספר גוש וחלקה — והמערכת תאתר את הקרקע במפה ותצליב עבורכם
-            ארבעה מקורות מידע ממשלתיים בלחיצה אחת.
+            שישה מקורות מידע ממשלתיים בלחיצה אחת.
           </p>
         </header>
 
         <SearchBarMock />
 
-        <div className="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {DATA_SOURCES.map(({ icon, title, description }) => (
             <div
               key={icon}

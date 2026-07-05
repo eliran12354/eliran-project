@@ -322,18 +322,29 @@ export type GovMapEntitiesByPointPayload = {
 /** GovMap layer ids used in this app. */
 export const GOVMAP_LAYER_PARCEL = "15";
 export const GOVMAP_LAYER_LAND_USE_MAVAT = "14";
+/** קווים כחולים — גבולות תוכניות מבא״ת (מחוזיות/מקומיות). */
+export const GOVMAP_LAYER_BLUE_LINES_MAVAT = "203";
 /** מתחמי התחדשות עירונית (פוליגונים) ב-GovMap. */
 export const GOVMAP_LAYER_URBAN_RENEWAL = "200720";
 /** תוכניות לשיווק מכרזים – מינהל מקרקעי ישראל (רמ״י). */
 export const GOVMAP_LAYER_RAMI_REAL_ESTATE_TENDERS = "363";
 /** מלאי תכנוני למגורים (תוכניות בייעוד מגורים בשלבי תכנון). */
 export const GOVMAP_LAYER_RESIDENTIAL_INVENTORY = "340";
+/** רחובות טובים (קווי רחוב מדירוג ציבורי). */
+export const GOVMAP_LAYER_GOOD_STREETS = "159206";
+
+/**
+ * שכבת רחובות טובים היא שכבת קווים — בנקודת חלקה מדויקת כמעט אף פעם אין פגיעה
+ * ישירה, לכן שואלים אותה בנפרד עם טולרנס סביבתי (מטרים ב-Web Mercator).
+ */
+const GOOD_STREETS_TOLERANCE = 200;
 
 export async function govMapEntitiesByPointWebMercator(
   wmX: number,
   wmY: number,
   layerIds: readonly string[] = [GOVMAP_LAYER_PARCEL],
   signal?: AbortSignal,
+  tolerance: number = GOVMAP_ENTITIES_TOLERANCE,
 ): Promise<GovMapLayer[]> {
   const res = await fetch(GOVMAP_ENTITIES_BY_POINT, {
     method: "POST",
@@ -341,7 +352,7 @@ export async function govMapEntitiesByPointWebMercator(
     body: JSON.stringify({
       point: [wmX, wmY],
       layers: layerIds.map((id) => ({ layerId: id })),
-      tolerance: GOVMAP_ENTITIES_TOLERANCE,
+      tolerance,
     }),
     signal,
   });
@@ -369,10 +380,20 @@ function entityMatchesGushHelka(
   return g === gush && h === helka;
 }
 
+const ISO_DATE_VALUE_RE = /^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}:\d{2}/;
+
+/** ערכי תאריך מ-GovMap מגיעים כ-ISO ("2014-07-20T00:00:00.000Z") — מוצגים כתאריך עברי קריא. */
+function formatFieldValue(value: string | number): string {
+  const s = String(value ?? "").trim();
+  const m = s.match(ISO_DATE_VALUE_RE);
+  if (m) return `${m[3]}.${m[2]}.${m[1]}`;
+  return s;
+}
+
 function entityFieldsForDisplay(entity: GovMapEntity): { label: string; value: string }[] {
   return (entity.fields || [])
     .filter((f) => f.isVisible !== false)
-    .map((f) => ({ label: String(f.fieldName), value: String(f.fieldValue ?? "") }))
+    .map((f) => ({ label: String(f.fieldName), value: formatFieldValue(f.fieldValue) }))
     .filter((row) => row.value.trim() !== "");
 }
 
@@ -445,11 +466,14 @@ function entityToLandUseEntry(
 }
 
 function extractLandUseEntries(layers: GovMapLayer[]): GovMapLandUseEntry[] {
+  // הערה: caption של קווים כחולים ("קווים כחולים - מבא''ת") גם מכיל "מבא",
+  // לכן ההתאמה כאן היא לפי "יעוד" בלבד + שמות שכבה מפורשים.
   const layer = layers.find(
     (l) =>
       l.name === "land_use_mavat" ||
       l.name === "land_use" ||
-      /יעוד|ייעוד|מבא/.test(l.caption ?? ""),
+      l.name === "mehoziot_app_yk" ||
+      /יעוד|ייעוד/.test(l.caption ?? ""),
   );
   if (!layer || !Array.isArray(layer.entities)) return [];
   return layer.entities.map((en) => entityToLandUseEntry(en, layer.fieldsMapping));
@@ -555,6 +579,42 @@ function extractResidentialInventoryEntries(
   );
 }
 
+function extractBlueLinesEntries(layers: GovMapLayer[]): GovMapPointLayerEntry[] {
+  return extractPointLayerEntries(
+    layers,
+    {
+      name: [/^mehoziot_app_taba$/, /blue[_-]?lines/i],
+      caption: [/קווים\s*כחולים/],
+    },
+    {
+      keys: ["pl_name", "plan_name"],
+      literals: ["שם תכנית", /שם\s*ת(?:ו)?כנית/],
+    },
+    {
+      keys: ["pl_number", "plan_number"],
+      literals: ["מספר תכנית", /מס(?:'|"|״)?\s*ת(?:ו)?כנית/],
+    },
+  );
+}
+
+function extractGoodStreetsEntries(layers: GovMapLayer[]): GovMapPointLayerEntry[] {
+  return extractPointLayerEntries(
+    layers,
+    {
+      name: [/^159206$/, /good[_-]?streets/i],
+      caption: [/רחובות\s*טובים/],
+    },
+    {
+      keys: ["street_name", "value2", "name"],
+      literals: ["שם רחוב", /שם.*רחוב/],
+    },
+    {
+      keys: ["city_name", "value1"],
+      literals: ["שם עיר", /שם.*עיר|יישוב/],
+    },
+  );
+}
+
 /**
  * Fetch GovMap land-use Mavat (שכבה 14) entries at a Web-Mercator point.
  * Convenience wrapper around `govMapEntitiesByPointWebMercator` + `extractLandUseEntries`.
@@ -582,9 +642,11 @@ export type ResolveGushHelkaOnOwnMapResult =
       geojson: Feature<Polygon | MultiPolygon>;
       fieldsForDisplay: { label: string; value: string }[];
       landUse: GovMapLandUseEntry[];
+      blueLines: GovMapPointLayerEntry[];
       urbanRenewal: GovMapPointLayerEntry[];
       ramiTenders: GovMapPointLayerEntry[];
       residentialInventory: GovMapPointLayerEntry[];
+      goodStreets: GovMapPointLayerEntry[];
     }
   | { ok: false; error: string };
 
@@ -648,19 +710,35 @@ export async function resolveGushHelkaForOwnMap(
   }
 
   let layers: GovMapLayer[];
+  let goodStreetsLayers: GovMapLayer[];
   try {
-    layers = await govMapEntitiesByPointWebMercator(
-      wm[0],
-      wm[1],
-      [
-        GOVMAP_LAYER_PARCEL,
-        GOVMAP_LAYER_LAND_USE_MAVAT,
-        GOVMAP_LAYER_URBAN_RENEWAL,
-        GOVMAP_LAYER_RAMI_REAL_ESTATE_TENDERS,
-        GOVMAP_LAYER_RESIDENTIAL_INVENTORY,
-      ],
-      signal,
-    );
+    // רחובות טובים היא שכבת קווים — נשאלת במקביל עם טולרנס סביבתי רחב יותר.
+    [layers, goodStreetsLayers] = await Promise.all([
+      govMapEntitiesByPointWebMercator(
+        wm[0],
+        wm[1],
+        [
+          GOVMAP_LAYER_PARCEL,
+          GOVMAP_LAYER_LAND_USE_MAVAT,
+          GOVMAP_LAYER_BLUE_LINES_MAVAT,
+          GOVMAP_LAYER_URBAN_RENEWAL,
+          GOVMAP_LAYER_RAMI_REAL_ESTATE_TENDERS,
+          GOVMAP_LAYER_RESIDENTIAL_INVENTORY,
+        ],
+        signal,
+      ),
+      govMapEntitiesByPointWebMercator(
+        wm[0],
+        wm[1],
+        [GOVMAP_LAYER_GOOD_STREETS],
+        signal,
+        GOOD_STREETS_TOLERANCE,
+      ).catch((e: Error) => {
+        if (e.name === "AbortError") throw e;
+        // כשל בשכבה משלימה לא מפיל את כל החיפוש.
+        return [] as GovMapLayer[];
+      }),
+    ]);
   } catch (e) {
     const err = e as Error;
     if (err.name === "AbortError") return { ok: false, error: "הבקשה בוטלה" };
@@ -681,9 +759,11 @@ export async function resolveGushHelkaForOwnMap(
   }
 
   const landUse = extractLandUseEntries(layers);
+  const blueLines = extractBlueLinesEntries(layers);
   const urbanRenewal = extractUrbanRenewalEntries(layers);
   const ramiTenders = extractRamiTenderEntries(layers);
   const residentialInventory = extractResidentialInventoryEntries(layers);
+  const goodStreets = extractGoodStreetsEntries(goodStreetsLayers);
 
   onProgress?.({ step: "rendering", percent: 95 });
 
@@ -718,9 +798,11 @@ export async function resolveGushHelkaForOwnMap(
       },
       fieldsForDisplay: entityFieldsForDisplay(entity),
       landUse,
+      blueLines,
       urbanRenewal,
       ramiTenders,
       residentialInventory,
+      goodStreets,
     };
   }
 
@@ -732,8 +814,10 @@ export async function resolveGushHelkaForOwnMap(
     geojson: gj,
     fieldsForDisplay: entityFieldsForDisplay(entity),
     landUse,
+    blueLines,
     urbanRenewal,
     ramiTenders,
     residentialInventory,
+    goodStreets,
   };
 }
